@@ -1,0 +1,123 @@
+
+import { GoogleGenAI, Type } from "@google/genai";
+import { Run, InsightResponse, UserProfile } from '../types';
+
+const apiKey = process.env.API_KEY || '';
+// Initialize only if key exists to avoid immediate crash, handle missing key in UI
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Promise<InsightResponse | null> => {
+  if (!ai) return null;
+
+  // Sort runs by date desc
+  const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Take last 15 runs to avoid token limits if user has thousands
+  const recentRuns = sortedRuns.slice(0, 15);
+
+  let profileContext = "";
+  if (profile) {
+    profileContext = `
+      User Profile:
+      - Name: ${profile.name || 'Runner'}
+      - Age: ${profile.age}
+      - Sex: ${profile.sex}
+      - Weight: ${profile.weight}kg
+      - Height: ${profile.height}cm
+      - Current Shoe: ${profile.shoeModel}
+      
+      Take this biomechanical profile into account when analyzing form, potential injury risks (e.g. heavier runners load joints differently), and age-graded performance.
+      Address the user by name if available.
+    `;
+  }
+
+  const prompt = `
+    Act as an elite running coach and biomechanics expert.
+    Analyze the following running data from my recent training history. 
+    Note that some runs include advanced metrics like Cadence (spm), Stride Length (m), and Ground Contact Time (ms).
+    
+    ${profileContext}
+
+    Data:
+    ${JSON.stringify(recentRuns)}
+    
+    Provide a comprehensive analysis including:
+    1. A summary of my current fitness level.
+    2. An analysis of my RUNNING FORM based on cadence and stride length data (and height if provided).
+    3. An INJURY RISK assessment based on training load, intensity changes, and biomechanics.
+    4. 3 distinct trends you observe (e.g., pace progression, heart rate drift, consistency issues). Label them as positive, negative, or neutral.
+    5. A specific primary training focus for the next 4 weeks.
+    6. 3 concrete, actionable tips to improve performance or prevent injury based on this specific data.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            fitnessSummary: { type: Type.STRING },
+            formAnalysis: { type: Type.STRING },
+            injuryRiskAssessment: { type: Type.STRING },
+            trends: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  description: { type: Type.STRING },
+                  type: { type: Type.STRING, enum: ['positive', 'negative', 'neutral'] }
+                }
+              }
+            },
+            trainingFocus: { type: Type.STRING },
+            actionableTips: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          }
+        }
+      }
+    });
+
+    const jsonText = response.text;
+    if (!jsonText) return null;
+    return JSON.parse(jsonText) as InsightResponse;
+  } catch (error) {
+    console.error("Error analyzing runs:", error);
+    throw error;
+  }
+};
+
+export const chatWithRunCoach = async (history: {role: 'user'|'model', text: string}[], newMessage: string, runs: Run[], profile?: UserProfile) => {
+    if (!ai) throw new Error("API Key missing");
+
+    const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
+    
+    const profileStr = profile ? `User Profile: Name: ${profile.name || 'Runner'}, Age ${profile.age}, ${profile.sex}, ${profile.weight}kg, ${profile.height}cm.` : '';
+
+    const systemInstruction = `
+      You are "Stride", an AI running coach. 
+      You have access to the user's recent running data including advanced metrics like cadence and stride length: ${JSON.stringify(sortedRuns)}.
+      ${profileStr}
+      Refer to specific runs (dates, distances, paces, cadence) to support your answers.
+      Be encouraging but realistic. Focus on longevity, form, and performance.
+      Keep answers concise (under 150 words) unless asked for a detailed plan.
+    `;
+
+    const chat = ai.chats.create({
+        model: 'gemini-2.5-flash',
+        config: {
+            systemInstruction,
+        },
+        history: history.map(h => ({
+            role: h.role,
+            parts: [{ text: h.text }]
+        }))
+    });
+
+    const result = await chat.sendMessage({ message: newMessage });
+    return result.text;
+};

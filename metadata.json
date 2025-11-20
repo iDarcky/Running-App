@@ -1,0 +1,5 @@
+{
+  "name": "StrideAI Coach",
+  "description": "An AI-powered running tracker that aggregates your running data, spots trends using Gemini 2.5 Flash, and provides actionable training insights to help you reach your next PB.",
+  "requestFramePermissions": []
+}
