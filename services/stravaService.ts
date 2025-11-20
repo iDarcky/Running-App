@@ -19,7 +19,10 @@ export const exchangeStravaToken = async (clientId: string, clientSecret: string
   try {
     const response = await fetch(`${STRAVA_OAUTH_BASE}/token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json' // Ensure we get JSON back
+      },
       body: JSON.stringify({
         client_id: clientId,
         client_secret: clientSecret,
@@ -29,7 +32,12 @@ export const exchangeStravaToken = async (clientId: string, clientSecret: string
     });
 
     if (!response.ok) {
-      throw new Error(`Token exchange failed: ${response.statusText}`);
+      let errorDetail = response.statusText;
+      try {
+          const errJson = await response.json();
+          errorDetail = JSON.stringify(errJson);
+      } catch (e) { /* ignore */ }
+      throw new Error(`Token exchange failed (${response.status}): ${errorDetail}`);
     }
 
     const data = await response.json();
@@ -49,7 +57,10 @@ export const refreshStravaToken = async (clientId: string, clientSecret: string,
   try {
     const response = await fetch(`${STRAVA_OAUTH_BASE}/token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+      },
       body: JSON.stringify({
         client_id: clientId,
         client_secret: clientSecret,

@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, RunSource, StravaToken, GoogleToken } from '../types';
-import { Plus, Trash2, MapPin, Clock, Heart, Activity, Watch, Smartphone, Footprints, Filter, X, CheckCircle, Chrome, Zap, BatteryCharging, Trophy, Copy, AlertTriangle, Info, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, MapPin, Clock, Heart, Activity, Watch, Smartphone, Footprints, Filter, X, CheckCircle, Chrome, Zap, BatteryCharging, Trophy, Copy, AlertTriangle, Info, ExternalLink, Loader2 } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
 
@@ -36,6 +36,21 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
   // Domain Detection
   const [detectedHostname, setDetectedHostname] = useState('');
   const [detectedOrigin, setDetectedOrigin] = useState('');
+
+  // Refs for event listeners and double-invoke protection
+  const authCodeProcessed = useRef(false);
+  const stravaCredentialsRef = useRef({ id: '', secret: '' });
+  const googleCredentialsRef = useRef({ id: '', secret: '' });
+
+  // Update refs when state changes
+  useEffect(() => {
+    stravaCredentialsRef.current = { id: stravaClientId, secret: stravaClientSecret };
+  }, [stravaClientId, stravaClientSecret]);
+
+  useEffect(() => {
+    googleCredentialsRef.current = { id: googleClientId, secret: googleClientSecret };
+  }, [googleClientId, googleClientSecret]);
+
 
   // Load credentials & tokens on mount
   useEffect(() => {
@@ -74,21 +89,52 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
     const code = urlParams.get('code');
     const state = urlParams.get('state');
     
-    if (code) {
-        if (state === 'strava' && savedStravaId && savedStravaSecret) {
-            handleStravaTokenExchange(code, savedStravaId, savedStravaSecret);
-        } else if (state === 'google' && savedGoogleId && savedGoogleSecret) {
-            handleGoogleTokenExchange(code, savedGoogleId, savedGoogleSecret);
+    if (code && !authCodeProcessed.current) {
+        // Prevent double-execution in strict mode
+        authCodeProcessed.current = true;
+        
+        // Clear the code from URL to prevent re-submission on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        if (state === 'strava') {
+            // Use saved ID/Secret or fall back to localStorage if state wasn't fully loaded yet
+            const cId = savedStravaId || localStorage.getItem('strava_client_id') || '';
+            const cSecret = savedStravaSecret || localStorage.getItem('strava_client_secret') || '';
+            if(cId && cSecret) {
+                handleStravaTokenExchange(code, cId, cSecret);
+            } else {
+                setStravaError("Missing Client ID/Secret. Please try again.");
+                setIsStravaModalOpen(true);
+            }
+        } else if (state === 'google') {
+            const cId = savedGoogleId || localStorage.getItem('google_client_id') || '';
+            const cSecret = savedGoogleSecret || localStorage.getItem('google_client_secret') || '';
+            if (cId && cSecret) {
+                handleGoogleTokenExchange(code, cId, cSecret);
+            } else {
+                setGoogleError("Missing Client ID/Secret. Please try again.");
+                setIsGoogleModalOpen(true);
+            }
         }
     }
 
     // Listen for storage changes (if we are the main window and popup updated tokens)
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'strava_tokens' && e.newValue) {
-            setStravaTokenData(JSON.parse(e.newValue));
+            const newTokens = JSON.parse(e.newValue);
+            setStravaTokenData(newTokens);
+            // Trigger Sync on Main Window using Ref credentials
+            if (stravaCredentialsRef.current.id && stravaCredentialsRef.current.secret) {
+                handleStravaSync(newTokens, stravaCredentialsRef.current.id, stravaCredentialsRef.current.secret);
+            }
         }
         if (e.key === 'google_tokens' && e.newValue) {
-            setGoogleTokenData(JSON.parse(e.newValue));
+            const newTokens = JSON.parse(e.newValue);
+            setGoogleTokenData(newTokens);
+             // Trigger Sync on Main Window
+            if (googleCredentialsRef.current.id && googleCredentialsRef.current.secret) {
+                handleGoogleSync(newTokens, googleCredentialsRef.current.id, googleCredentialsRef.current.secret);
+            }
         }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -106,25 +152,27 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
 
   const handleStravaTokenExchange = async (code: string, clientId: string, clientSecret: string) => {
       setAuthStatus('exchanging');
-      setIsStravaModalOpen(true);
+      // Ensure modal is open to show status
+      setIsStravaModalOpen(true); 
+      
       try {
           const tokens = await exchangeStravaToken(clientId, clientSecret, code);
+          
           setStravaTokenData(tokens);
           localStorage.setItem('strava_tokens', JSON.stringify(tokens));
           setAuthStatus('connected');
           setStravaError('');
           
           // Immediately sync after connecting
-          await handleStravaSync(tokens);
+          await handleStravaSync(tokens, clientId, clientSecret);
 
           // If we are in a popup/new window opened by the app, close self
           if (window.opener) {
-              setTimeout(() => window.close(), 2000); // Delay slightly so user sees success
-          } else {
-              window.history.replaceState({}, document.title, window.location.pathname);
+              setTimeout(() => window.close(), 1500); 
           }
       } catch (err: any) {
-          setStravaError(`OAuth Failed: ${err.message}`);
+          console.error("Strava Exchange Error:", err);
+          setStravaError(err.message || 'Authentication failed');
           setAuthStatus('idle');
       }
   };
@@ -156,10 +204,13 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
       setAuthStatus('idle');
   };
 
-  const handleStravaSync = async (tokensOverride?: StravaToken) => {
+  const handleStravaSync = async (tokensOverride?: StravaToken, clientIdOverride?: string, clientSecretOverride?: string) => {
     const tokens = tokensOverride || stravaTokenData;
-    if (!tokens || !stravaClientId || !stravaClientSecret) {
-        setIsStravaModalOpen(true);
+    const cId = clientIdOverride || stravaClientId;
+    const cSecret = clientSecretOverride || stravaClientSecret;
+
+    if (!tokens || !cId || !cSecret) {
+        if (!window.opener) setIsStravaModalOpen(true);
         return;
     }
 
@@ -168,7 +219,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
 
     try {
         const activities = await getStravaActivities(
-            tokens, stravaClientId, stravaClientSecret,
+            tokens, cId, cSecret,
             (newTokens) => {
                 setStravaTokenData(newTokens);
                 localStorage.setItem('strava_tokens', JSON.stringify(newTokens));
@@ -187,11 +238,13 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
             }
         });
         // Only close modal if not in popup mode (if opener exists, we wait for close)
-        if (count > 0 && !window.opener) setIsStravaModalOpen(false);
+        if (count >= 0 && !window.opener && isStravaModalOpen) setIsStravaModalOpen(false);
     } catch (err: any) {
         const errMsg = err.message || 'Sync failed.';
         setStravaError(errMsg);
-        setIsStravaModalOpen(true);
+        // Don't open modal if in popup mode to avoid jarring UX, just show error on screen
+        if (!window.opener) setIsStravaModalOpen(true);
+        
         if (errMsg.includes('Permission Denied') || errMsg.includes('Unauthorized')) {
              disconnectStrava();
         }
@@ -213,12 +266,10 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
           setGoogleError('');
           
           // Immediately sync
-          await handleGoogleSync(tokens);
+          await handleGoogleSync(tokens, clientId, clientSecret);
 
           if (window.opener) {
-              setTimeout(() => window.close(), 2000);
-          } else {
-              window.history.replaceState({}, document.title, window.location.pathname);
+              setTimeout(() => window.close(), 1500);
           }
       } catch (err: any) {
           setGoogleError(`Google Auth Failed: ${err.message}`);
@@ -252,10 +303,13 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
       setAuthStatus('idle');
   };
 
-  const handleGoogleSync = async (tokensOverride?: GoogleToken) => {
+  const handleGoogleSync = async (tokensOverride?: GoogleToken, clientIdOverride?: string, clientSecretOverride?: string) => {
       const tokens = tokensOverride || googleTokenData;
-      if (!tokens || !googleClientId || !googleClientSecret) {
-          setIsGoogleModalOpen(true);
+      const cId = clientIdOverride || googleClientId;
+      const cSecret = clientSecretOverride || googleClientSecret;
+
+      if (!tokens || !cId || !cSecret) {
+          if (!window.opener) setIsGoogleModalOpen(true);
           return;
       }
 
@@ -264,7 +318,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
 
       try {
           const googleRuns = await getGoogleFitActivities(
-              tokens, googleClientId, googleClientSecret,
+              tokens, cId, cSecret,
               (newTokens) => {
                   setGoogleTokenData(newTokens);
                   localStorage.setItem('google_tokens', JSON.stringify(newTokens));
@@ -279,10 +333,10 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
                   count++;
               }
           });
-          if (count > 0 && !window.opener) setIsGoogleModalOpen(false);
+          if (count >= 0 && !window.opener && isGoogleModalOpen) setIsGoogleModalOpen(false);
       } catch (err: any) {
           setGoogleError(err.message || 'Google sync failed');
-          setIsGoogleModalOpen(true);
+          if (!window.opener) setIsGoogleModalOpen(true);
           if (err.message.includes('Expired') || err.message.includes('Auth')) {
               disconnectGoogle();
           }
@@ -369,8 +423,12 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
                   <CheckCircle className="text-emerald-400" size={32} />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Successfully Connected!</h2>
-              <p className="text-slate-400 mb-4">Your runs are syncing...</p>
-              <p className="text-xs text-slate-500">This window will close automatically.</p>
+              <p className="text-slate-400 mb-4">Syncing runs and closing window...</p>
+              {isSyncing && (
+                <div className="flex items-center justify-center gap-2 text-brand-400 text-sm animate-pulse">
+                    <Loader2 size={14} className="animate-spin" /> Syncing...
+                </div>
+              )}
           </div>
       );
   }
@@ -391,7 +449,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
                     : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
                 } disabled:opacity-50`}
              >
-                <Activity size={16} />
+                {isSyncing && stravaTokenData ? <Loader2 size={16} className="animate-spin" /> : <Activity size={16} />}
                 {isSyncing && stravaTokenData ? 'Syncing...' : stravaTokenData ? 'Sync Strava' : 'Connect Strava'}
              </button>
 
@@ -405,7 +463,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
                     : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
                 } disabled:opacity-50`}
              >
-                <Chrome size={16} />
+                {isSyncing && googleTokenData ? <Loader2 size={16} className="animate-spin" /> : <Chrome size={16} />}
                 {isSyncing && googleTokenData ? 'Syncing...' : googleTokenData ? 'Sync Google' : 'Google Fit'}
              </button>
 
@@ -443,7 +501,13 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
                     </button>
                 </div>
                 <div className="space-y-4">
-                    {stravaTokenData ? (
+                    {authStatus === 'exchanging' ? (
+                        <div className="py-12 flex flex-col items-center justify-center text-center">
+                            <Loader2 className="text-[#FC4C02] animate-spin mb-4" size={32} />
+                            <h4 className="text-white font-medium">Connecting to Strava...</h4>
+                            <p className="text-slate-500 text-sm mt-2">Please wait while we verify your credentials.</p>
+                        </div>
+                    ) : stravaTokenData ? (
                         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center space-y-3">
                             <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
                                 <CheckCircle className="text-emerald-400" size={24} />
@@ -477,7 +541,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
                                         </button>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-1">
-                                        * Note: In AI Studio/IDX previews, this domain looks like a long random string (e.g. 8000-idx...). You must use this exact value.
+                                        * Note: In AI Studio/IDX previews, this domain looks like a long random string. You must use this exact value.
                                     </p>
                                 </div>
                             </div>
@@ -490,9 +554,9 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
                         </>
                     )}
                     {stravaError && (
-                        <div className="text-rose-400 text-xs bg-rose-500/10 border border-rose-500/20 p-3 rounded flex items-start gap-2">
+                        <div className="text-rose-400 text-xs bg-rose-500/10 border border-rose-500/20 p-3 rounded flex items-start gap-2 max-h-32 overflow-y-auto">
                             <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                            <div className="break-words">{stravaError}</div>
+                            <div className="break-words font-mono">{stravaError}</div>
                         </div>
                     )}
                 </div>
@@ -514,7 +578,12 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
                     </button>
                 </div>
                 <div className="space-y-4">
-                    {googleTokenData ? (
+                    {authStatus === 'exchanging' ? (
+                        <div className="py-12 flex flex-col items-center justify-center text-center">
+                            <Loader2 className="text-blue-500 animate-spin mb-4" size={32} />
+                            <h4 className="text-white font-medium">Connecting to Google...</h4>
+                        </div>
+                    ) : googleTokenData ? (
                         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center space-y-3">
                             <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
                                 <CheckCircle className="text-emerald-400" size={24} />
