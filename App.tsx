@@ -45,6 +45,27 @@ const App: React.FC = () => {
     if (savedProfile) {
       setProfile(JSON.parse(savedProfile));
     }
+
+    // Check for Strava OAuth Code to redirect to log tab
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('code')) {
+        setActiveTab('log');
+    }
+
+    // Listen for updates from other tabs/popups
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'stride_runs' && e.newValue) {
+            setRuns(JSON.parse(e.newValue));
+        }
+        if (e.key === 'stride_goals' && e.newValue) {
+            setGoals(JSON.parse(e.newValue));
+        }
+        if (e.key === 'stride_profile' && e.newValue) {
+            setProfile(JSON.parse(e.newValue));
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const saveRuns = (newRuns: Run[]) => {

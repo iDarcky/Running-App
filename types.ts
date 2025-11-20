@@ -8,7 +8,7 @@ export enum RunType {
   RECOVERY = 'Recovery'
 }
 
-export type RunSource = 'Manual' | 'Garmin' | 'Strava' | 'Apple Health' | 'Health Connect';
+export type RunSource = 'Manual' | 'Garmin' | 'Strava' | 'Apple Health' | 'Health Connect' | 'Google Fit';
 
 export interface Run {
   id: string;
@@ -55,4 +55,18 @@ export interface Goal {
   type: GoalType;
   targetValue: number;
   period: GoalPeriod;
+}
+
+export interface StravaToken {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number; // Unix timestamp
+  athlete?: any;
+}
+
+export interface GoogleToken {
+  access_token: string;
+  refresh_token?: string;
+  expires_at: number; // Unix timestamp (ms)
+  scope: string;
 }
