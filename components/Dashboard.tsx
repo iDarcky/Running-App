@@ -284,10 +284,10 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
         </div>
       </div>
 
-      {/* Charts Row 1: Volume & Intensity */}
+      {/* Combined Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Distance Chart */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
+        {/* Distance Chart - Full Width (col-span-2) and Taller */}
+        <div className="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
              <h3 className="text-lg font-semibold text-white">Distance History</h3>
              <div className="flex gap-2 flex-wrap justify-end">
@@ -306,7 +306,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
              </div>
           </div>
           {chartData.length > 0 ? (
-            <div className="h-64 w-full">
+            <div className="h-96 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
@@ -341,7 +341,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                 </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 w-full flex items-center justify-center text-slate-500 italic">
+            <div className="h-96 w-full flex items-center justify-center text-slate-500 italic">
                 No runs in this period
             </div>
           )}
@@ -358,7 +358,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                     Max HR: {220 - (profile?.age && profile.age > 0 ? profile.age : 30)} bpm
                 </div>
            </div>
-           <div className="h-64 w-full relative">
+           <div className="h-72 w-full relative">
              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hrZoneData} layout="vertical" margin={{ left: 10, right: 30 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
@@ -397,15 +397,12 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
              </ResponsiveContainer>
            </div>
         </div>
-      </div>
 
-      {/* Charts Row 2: Trends & Form */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          {/* Pace vs HR Chart */}
          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
           <h3 className="text-lg font-semibold text-white mb-6">Physiology (Pace vs HR)</h3>
           {chartData.length > 0 ? (
-            <div className="h-64 w-full">
+            <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
@@ -438,21 +435,21 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                 </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 w-full flex items-center justify-center text-slate-500 italic">
+            <div className="h-72 w-full flex items-center justify-center text-slate-500 italic">
                 No data available
             </div>
           )}
         </div>
 
-        {/* Form Analysis Chart */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
+        {/* Form Analysis Chart - Full Width */}
+        <div className="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
           <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
              <Ruler size={20} className="text-purple-400" />
              Form Analysis
           </h3>
           {chartData.length > 0 ? (
             <>
-                <div className="h-64 w-full relative">
+                <div className="h-72 w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
@@ -480,7 +477,6 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                         />
                         <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#f1f5f9' }} />
                         
-                        {/* Ideal Cadence Zone (170-185) */}
                         <ReferenceArea 
                             yAxisId="left" 
                             y1={170} 
@@ -509,7 +505,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                 </div>
             </>
           ) : (
-            <div className="h-64 w-full flex items-center justify-center text-slate-500 italic">
+            <div className="h-72 w-full flex items-center justify-center text-slate-500 italic">
                 No data available
             </div>
           )}
