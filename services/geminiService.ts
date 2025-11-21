@@ -2,41 +2,41 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Run, InsightResponse, UserProfile, Race } from '../types';
 
-const apiKey = process.env.API_KEY || '';
-// Initialize only if key exists to avoid immediate crash, handle missing key in UI
+// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+const apiKey = process.env.API_KEY;
+// Initialize only if key exists, but throw specific errors in functions if it's missing.
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Promise<InsightResponse | null> => {
-  if (!ai) return null;
+export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Promise<InsightResponse> => {
+  if (!ai) throw new Error("Gemini API Key is missing. Please check your configuration.");
 
   // Sort runs by date desc
   const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   // Take last 15 runs to avoid token limits if user has thousands
   const recentRuns = sortedRuns.slice(0, 15);
 
-  let profileContext = "";
-  if (profile) {
-    profileContext = `
-      User Profile:
-      - Name: ${profile.name || 'Runner'}
-      - Age: ${profile.age}
-      - Sex: ${profile.sex}
-      - Weight: ${profile.weight}kg
-      - Height: ${profile.height}cm
-      - Current Shoe: ${profile.shoeModel}
-      
-      Take this biomechanical profile into account when analyzing form, potential injury risks (e.g. heavier runners load joints differently), and age-graded performance.
-      Address the user by name if available.
-    `;
-  }
+  const profileContext = profile ? `
+    User Profile:
+    - Name: ${profile.name || 'Runner'}
+    - Age: ${profile.age}
+    - Sex: ${profile.sex}
+    - Weight: ${profile.weight}kg
+    - Height: ${profile.height}cm
+    - Current Shoe: ${profile.shoeModel}
+  ` : 'User Profile: Not provided';
+
+  const systemInstruction = `
+    You are an elite running coach and biomechanics expert.
+    Your goal is to analyze running data to prevent injury, improve form, and suggest training focus.
+    ${profileContext}
+    Take the user's biomechanical profile into account when analyzing form (cadence, stride) and injury risks.
+    Address the user by name if available.
+  `;
 
   const prompt = `
-    Act as an elite running coach and biomechanics expert.
     Analyze the following running data from my recent training history. 
     Note that some runs include advanced metrics like Cadence (spm), Stride Length (m), and Ground Contact Time (ms).
     
-    ${profileContext}
-
     Data:
     ${JSON.stringify(recentRuns)}
     
@@ -47,7 +47,7 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
     4. An INJURY RISK assessment based on training load, intensity changes, and biomechanics.
     5. 3 distinct trends you observe (e.g., pace progression, heart rate drift, consistency issues). Label them as positive, negative, or neutral.
     6. A specific primary training focus for the next 4 weeks.
-    7. 3 concrete, actionable tips to improve performance or prevent injury based on this specific data.
+    7. 3 concrete, actionable tips to improve performance or prevent injury.
   `;
 
   try {
@@ -55,6 +55,7 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
+        systemInstruction: systemInstruction,
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
@@ -85,7 +86,7 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
     });
 
     const jsonText = response.text;
-    if (!jsonText) return null;
+    if (!jsonText) throw new Error("Received empty response from AI");
     return JSON.parse(jsonText) as InsightResponse;
   } catch (error) {
     console.error("Error analyzing runs:", error);
@@ -94,35 +95,43 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
 };
 
 export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserProfile): Promise<string | null> => {
-  if (!ai) return null;
+  if (!ai) throw new Error("Gemini API Key is missing. Please check your configuration.");
+
+  const profileContext = profile ? `User: ${profile.name}, Age ${profile.age}, ${profile.weight}kg` : '';
+
+  const systemInstruction = `
+    You are an expert running coach specializing in race preparation.
+    Create personalized, high-level training strategies for specific races.
+    Format your response using strict Markdown for readability:
+    - Use "## " for main sections (e.g. "Current Status", "The Plan", "Key Workouts").
+    - Use "### " for subsections or specific weeks.
+    - Use "- " for bullet points.
+    - Use "**bold**" for emphasis on key workouts or paces.
+    Keep the tone encouraging but realistic.
+  `;
 
   const prompt = `
-    I have a race coming up: ${race.name} on ${race.date}.
+    Race: ${race.name} on ${race.date}.
     Distance: ${race.distance}km.
     Goal Time: ${race.targetTime || 'Finish strong'}.
     
-    My profile: ${profile ? JSON.stringify(profile) : 'N/A'}
+    ${profileContext}
     
     Recent runs: ${JSON.stringify(runs.slice(0, 10))}
 
     Create a personalized training strategy for this race.
     Analyze my recent volume and pace compared to the race distance and goal.
-    
-    Structure the response clearly using these specific markdown features:
-    - Use "## " for main sections (e.g. "Current Status", "The Plan", "Key Workouts").
-    - Use "### " for subsections or specific weeks.
-    - Use "- " for bullet points.
-    - Use "**bold**" for emphasis on key workouts or paces.
-    
     Provide a high-level weekly structure (e.g. "Focus on long runs for 2 weeks, then taper").
     Include specific key workouts.
-    Keep it concise but actionable.
   `;
 
   try {
       const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: prompt,
+          config: {
+              systemInstruction: systemInstruction
+          }
       });
       return response.text;
   } catch (e) {
@@ -132,7 +141,7 @@ export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserPr
 };
 
 export const chatWithRunCoach = async (history: {role: 'user'|'model', text: string}[], newMessage: string, runs: Run[], profile?: UserProfile) => {
-    if (!ai) throw new Error("API Key missing");
+    if (!ai) throw new Error("Gemini API Key is missing.");
 
     const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
     

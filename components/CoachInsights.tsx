@@ -42,8 +42,9 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
     try {
       const data = await analyzeRunningData(runs, profile);
       setInsights(data);
-    } catch (err) {
-      setError("Failed to connect to Stride. Please check your API Key configuration.");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to generate insights. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -62,7 +63,7 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
       const response = await chatWithRunCoach(messages, userMsg, runs, profile);
       setMessages(prev => [...prev, { role: 'model', text: response }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'model', text: "Sorry, I'm having trouble thinking right now. Please try again later." }]);
+      setMessages(prev => [...prev, { role: 'model', text: "Sorry, I'm having trouble connecting to the Coach right now." }]);
     } finally {
       setChatLoading(false);
     }
@@ -115,8 +116,8 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
                 <Sparkles size={20} /> Generate Report
               </button>
               {error && (
-                <div className="mt-6 text-error flex items-center justify-center gap-2 bg-error-container py-3 px-6 rounded-xl font-medium">
-                  <AlertCircle size={18} /> {error}
+                <div className="mt-6 text-error flex items-center justify-center gap-2 bg-error-container py-3 px-6 rounded-xl font-medium max-w-md text-center text-sm">
+                  <AlertCircle size={18} className="shrink-0" /> {error}
                 </div>
               )}
             </div>

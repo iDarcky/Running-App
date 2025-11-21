@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Race, Run, UserProfile } from '../types';
 import { generateRacePlan } from '../services/geminiService';
-import { Flag, Calendar, Clock, Plus, Trash2, BrainCircuit, Loader2, X, MapPin, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Flag, Calendar, Clock, Plus, Trash2, BrainCircuit, Loader2, X, MapPin, Trophy, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 
 interface RacePrepProps {
     races: Race[];
@@ -75,6 +75,7 @@ const RacePrep: React.FC<RacePrepProps> = ({ races, runs, profile, onAddRace, on
     const [isAdding, setIsAdding] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [generatingId, setGeneratingId] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     
     const [newRace, setNewRace] = useState<Partial<Race>>({
         name: '',
@@ -100,14 +101,15 @@ const RacePrep: React.FC<RacePrepProps> = ({ races, runs, profile, onAddRace, on
 
     const handleGeneratePlan = async (race: Race) => {
         setGeneratingId(race.id);
+        setError(null);
         try {
             const plan = await generateRacePlan(race, runs, profile);
             if(plan) {
                 onUpdateRace({ ...race, aiPlan: plan });
                 setExpandedId(race.id);
             }
-        } catch(e) {
-            alert("Failed to generate plan. Please try again.");
+        } catch(e: any) {
+            setError(e.message || "Failed to generate plan. Please try again.");
         } finally {
             setGeneratingId(null);
         }
@@ -243,6 +245,12 @@ const RacePrep: React.FC<RacePrepProps> = ({ races, runs, profile, onAddRace, on
 
                                  {isExpanded && (
                                      <div className="border-t border-outline-variant/10 bg-surface-container-low p-6 animate-slide-down">
+                                         {error && generatingId === race.id && (
+                                            <div className="mb-4 bg-error-container text-error-on-container p-3 rounded-xl text-sm flex items-center gap-2">
+                                                <AlertCircle size={16} /> {error}
+                                            </div>
+                                         )}
+                                         
                                          {!race.aiPlan ? (
                                              <div className="text-center py-8">
                                                  <BrainCircuit className="mx-auto mb-3 text-primary" size={32} />
@@ -251,7 +259,7 @@ const RacePrep: React.FC<RacePrepProps> = ({ races, runs, profile, onAddRace, on
                                                  <button 
                                                     onClick={() => handleGeneratePlan(race)}
                                                     disabled={generatingId === race.id}
-                                                    className="px-6 py-3 bg-primary text-primary-on rounded-full font-bold text-sm shadow-lg flex items-center gap-2 mx-auto disabled:opacity-70"
+                                                    className="px-6 py-3 bg-primary text-primary-on rounded-full font-bold text-sm shadow-lg flex items-center gap-2 mx-auto disabled:opacity-70 hover:scale-105 transition-transform"
                                                  >
                                                      {generatingId === race.id ? <Loader2 className="animate-spin" size={16} /> : <BrainCircuit size={16} />}
                                                      Generate Strategy
