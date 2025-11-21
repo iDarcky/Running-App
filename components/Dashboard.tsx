@@ -190,6 +190,23 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  if (runs.length === 0) {
+    return (
+      <div className="animate-fade-in flex flex-col items-center justify-center py-20 text-center space-y-6">
+        <div className="bg-brand-500/20 p-6 rounded-full">
+           <Activity size={64} className="text-brand-500" />
+        </div>
+        <h1 className="text-4xl font-bold text-white">Welcome to StrideAI</h1>
+        <p className="text-slate-400 max-w-md text-lg">
+          Your personal AI running coach. Connect your accounts or log a run manually to get started with insights, trends, and goals.
+        </p>
+        <div className="text-brand-400 font-medium text-sm">
+          Go to the "Logs" tab to import or add data.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Greeting Header & Filter */}

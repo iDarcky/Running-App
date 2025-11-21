@@ -29,17 +29,10 @@ const App: React.FC = () => {
     
     if (savedRuns) {
       setRuns(JSON.parse(savedRuns));
-    } else {
-        // Init with sample data if empty
-        setRuns(SAMPLE_RUNS);
-        localStorage.setItem('stride_runs', JSON.stringify(SAMPLE_RUNS));
     }
 
     if (savedGoals) {
       setGoals(JSON.parse(savedGoals));
-    } else {
-        setGoals(SAMPLE_GOALS);
-        localStorage.setItem('stride_goals', JSON.stringify(SAMPLE_GOALS));
     }
 
     if (savedProfile) {

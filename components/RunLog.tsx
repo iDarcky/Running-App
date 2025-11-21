@@ -379,27 +379,6 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
     setIsFormOpen(false);
   };
 
-  const simulateSync = (source: RunSource) => {
-    setIsSyncing(true);
-    setTimeout(() => {
-        const mockRun: Run = {
-            id: Date.now().toString(),
-            date: new Date().toISOString().split('T')[0],
-            distance: Number((Math.random() * 10 + 3).toFixed(2)),
-            duration: Math.floor(Math.random() * 40 + 20),
-            type: RunType.EASY,
-            avgHr: Math.floor(Math.random() * 40 + 130),
-            rpe: Math.floor(Math.random() * 4 + 4),
-            cadence: Math.floor(Math.random() * 20 + 160),
-            strideLength: Number((Math.random() * 0.3 + 0.8).toFixed(2)),
-            source: source,
-            notes: `Imported from ${source}`
-        };
-        onAddRun(mockRun);
-        setIsSyncing(false);
-    }, 1500);
-  };
-
   const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const filteredRuns = filterType === 'All' ? sortedRuns : sortedRuns.filter(run => run.type === filterType);
 
@@ -465,16 +444,6 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onDeleteRun }) => {
              >
                 {isSyncing && googleTokenData ? <Loader2 size={16} className="animate-spin" /> : <Chrome size={16} />}
                 {isSyncing && googleTokenData ? 'Syncing...' : googleTokenData ? 'Sync Google' : 'Google Fit'}
-             </button>
-
-             {/* Other Buttons */}
-             <button 
-                onClick={() => simulateSync('Garmin')}
-                disabled={isSyncing}
-                className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 px-3 py-2 rounded-lg transition-colors text-sm"
-             >
-                <Watch size={16} />
-                Garmin
              </button>
              
              <button 
