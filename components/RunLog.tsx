@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, StravaToken, GoogleToken } from '../types';
+import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
 import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Watch, Edit2, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
@@ -266,31 +267,6 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  // RedLine Style: Clean white surface, color-coded border
-  const getRunStyle = (type: RunType) => {
-    const base = 'bg-surface-container border-l-[6px] transition-all hover:translate-x-1';
-    switch (type) {
-      case RunType.EASY: return `${base} border-gray-400`;
-      case RunType.TEMPO: return `${base} border-red-500`;
-      case RunType.INTERVAL: return `${base} border-red-700`;
-      case RunType.LONG: return `${base} border-black dark:border-white`;
-      case RunType.RACE: return `${base} border-red-600`;
-      case RunType.RECOVERY: return `${base} border-gray-300`;
-      default: return `${base} border-gray-500`;
-    }
-  };
-
-  const getRunTypeColorText = (type: RunType) => {
-    switch (type) {
-        case RunType.EASY: return 'text-gray-500';
-        case RunType.TEMPO: return 'text-red-600';
-        case RunType.INTERVAL: return 'text-red-800';
-        case RunType.LONG: return 'text-black dark:text-white';
-        case RunType.RACE: return 'text-red-600';
-        default: return 'text-gray-500';
-    }
-  };
-
   const getRunTypeIcon = (type: RunType, size: number = 14) => {
     switch (type) {
       case RunType.EASY: return <Feather size={size} className="shrink-0" />;
@@ -353,20 +329,29 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
 
       {/* Filter Chips */}
       <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-2">
-        {['All', ...Object.values(RunType)].map(type => (
-             <button
-                key={type}
-                onClick={() => setFilterType(type as any)}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border flex items-center gap-2 ${
-                    filterType === type 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg' 
-                    : 'bg-surface text-surface-on-variant border-outline-variant/50 hover:bg-surface-container-high'
-                }`}
-             >
-                {type !== 'All' && getRunTypeIcon(type as RunType)}
-                {type}
-             </button>
-        ))}
+        {['All', ...RUN_TYPE_ORDER].map(type => {
+             const isActive = filterType === type;
+             const typeColor = type === 'All' ? '#000000' : RUN_TYPE_COLORS[type as RunType];
+             
+             return (
+                 <button
+                    key={type}
+                    onClick={() => setFilterType(type as any)}
+                    style={{
+                        backgroundColor: isActive && type !== 'All' ? typeColor : undefined,
+                        borderColor: isActive && type !== 'All' ? typeColor : undefined,
+                    }}
+                    className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border flex items-center gap-2 ${
+                        isActive
+                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg' 
+                        : 'bg-surface text-surface-on-variant border-outline-variant/50 hover:bg-surface-container-high'
+                    }`}
+                 >
+                    {type !== 'All' && getRunTypeIcon(type as RunType)}
+                    {type}
+                 </button>
+             );
+        })}
       </div>
 
       {/* Stats Row */}
@@ -403,13 +388,14 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                     <div 
                         key={run.id} 
                         onClick={() => toggleExpand(run.id)}
-                        className={`rounded-2xl cursor-pointer overflow-hidden group ${getRunStyle(run.type)} ${isExpanded ? 'shadow-md' : 'shadow-sm'}`}
+                        style={{ borderLeftColor: RUN_TYPE_COLORS[run.type] }}
+                        className={`rounded-2xl cursor-pointer overflow-hidden group bg-surface-container border-l-[6px] transition-all hover:translate-x-1 ${isExpanded ? 'shadow-md' : 'shadow-sm'}`}
                     >
                         {/* Summary Section */}
                         <div className="p-5">
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-3">
-                                     <div className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${getRunTypeColorText(run.type)}`}>
+                                     <div style={{ color: RUN_TYPE_COLORS[run.type] }} className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1`}>
                                         {getRunTypeIcon(run.type)}
                                         <span>{run.type}</span>
                                      </div>

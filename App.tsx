@@ -7,7 +7,7 @@ import RunLog from './components/RunLog';
 import CoachInsights from './components/CoachInsights';
 import RacePrep from './components/RacePrep';
 import Profile from './components/Profile';
-import { LayoutDashboard, CalendarRange, Sparkles, Activity, User, Flag } from 'lucide-react';
+import { LayoutGrid, CalendarDays, Bot, Activity, User, Trophy } from 'lucide-react';
 
 // Moved outside App to prevent re-creation on every render
 const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false }: { tab: string, activeTab: string, icon: any, label: string, onClick: (t: any) => void, mobile?: boolean }) => {
@@ -16,10 +16,10 @@ const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false 
         <button 
             onClick={() => onClick(tab)}
             className={`
-                flex items-center justify-center gap-2 transition-all duration-300 group relative
+                flex items-center transition-all duration-300 group relative
                 ${mobile 
-                    ? `flex-col h-full w-full rounded-2xl ${isActive ? 'text-primary' : 'text-surface-on-variant/60 hover:text-surface-on-variant'}` 
-                    : `w-full px-4 py-3 rounded-full mb-2 ${isActive ? 'bg-primary text-primary-on shadow-lg shadow-primary/25 font-bold' : 'text-surface-on-variant hover:bg-surface-container-highest hover:text-surface-on'}`
+                    ? `justify-center flex-col gap-1 h-full w-full rounded-2xl ${isActive ? 'text-primary' : 'text-surface-on-variant/60 hover:text-surface-on-variant'}` 
+                    : `justify-start gap-3 w-full px-4 py-3 rounded-full mb-2 ${isActive ? 'bg-primary text-primary-on shadow-lg shadow-primary/25 font-bold' : 'text-surface-on-variant hover:bg-surface-container-highest hover:text-surface-on'}`
                 }
             `}
         >
@@ -167,10 +167,10 @@ const App: React.FC = () => {
                 </div>
 
                 <nav className="flex-1 space-y-2">
-                    <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Dashboard" onClick={setActiveTab} />
-                    <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Training Log" onClick={setActiveTab} />
-                    <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} />
-                    <NavButton tab="race" activeTab={activeTab} icon={Flag} label="Race Prep" onClick={setActiveTab} />
+                    <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutGrid} label="Dashboard" onClick={setActiveTab} />
+                    <NavButton tab="log" activeTab={activeTab} icon={CalendarDays} label="Training Log" onClick={setActiveTab} />
+                    <NavButton tab="coach" activeTab={activeTab} icon={Bot} label="Coach" onClick={setActiveTab} />
+                    <NavButton tab="race" activeTab={activeTab} icon={Trophy} label="Race Prep" onClick={setActiveTab} />
                 </nav>
 
                 <div 
@@ -239,10 +239,10 @@ const App: React.FC = () => {
             {/* Floating Bottom Nav (Mobile) - Updated for Safe Area support */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe z-50 flex justify-center pointer-events-none">
                  <div className="bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 w-full max-w-md pointer-events-auto">
-                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
-                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
-                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
-                     <NavButton tab="race" activeTab={activeTab} icon={Flag} label="Race" onClick={setActiveTab} mobile />
+                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutGrid} label="Home" onClick={setActiveTab} mobile />
+                     <NavButton tab="log" activeTab={activeTab} icon={CalendarDays} label="Log" onClick={setActiveTab} mobile />
+                     <NavButton tab="coach" activeTab={activeTab} icon={Bot} label="Coach" onClick={setActiveTab} mobile />
+                     <NavButton tab="race" activeTab={activeTab} icon={Trophy} label="Race" onClick={setActiveTab} mobile />
                      <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
                  </div>
             </nav>

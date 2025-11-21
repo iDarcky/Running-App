@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Info } from 'lucide-react';
+import { X, Info, ChevronDown } from 'lucide-react';
 
 export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
     <div className={`bg-surface-container rounded-[24px] p-6 shadow-sm border border-outline-variant/20 transition-all hover:shadow-md ${className}`}>
@@ -31,9 +31,9 @@ export const StatCard: React.FC<{ title: string; value: string; icon: React.Reac
 );
 
 export const Input: React.FC<any> = ({ label, icon: Icon, type = "text", value, onChange, placeholder, required = false, className = '', ...props }) => (
-    <div className={`relative group ${className}`}>
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            {Icon && <Icon className="text-surface-on-variant opacity-70" size={20} />}
+    <div className="relative w-full pt-2 group">
+        <div className="absolute top-[26px] left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
+            {Icon && <Icon className="text-surface-on-variant/70 group-focus-within:text-primary transition-colors" size={20} />}
         </div>
         <input
             type={type}
@@ -42,40 +42,45 @@ export const Input: React.FC<any> = ({ label, icon: Icon, type = "text", value, 
             required={required}
             placeholder={placeholder}
             className={`
-                block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 pt-7 pb-2.5 
+                block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 pt-6 pb-2 
                 bg-surface-container-highest rounded-xl border-b border-outline-variant/30 focus:border-primary 
-                text-surface-on placeholder-surface-on-variant/30 focus:outline-none transition-colors font-semibold text-base
+                text-surface-on placeholder-surface-on-variant/30 focus:outline-none transition-colors font-semibold
                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                ${className}
             `}
             {...props}
         />
-        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-2.5 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none`}>
+        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-2 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-focus-within:text-primary`}>
             {label}
         </label>
     </div>
 );
 
 export const Select: React.FC<any> = ({ label, icon: Icon, value, onChange, options, className = '' }) => (
-    <div className={`relative group ${className}`}>
-         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            {Icon && <Icon className="text-surface-on-variant opacity-70" size={20} />}
+    <div className="relative w-full pt-2 group">
+         <div className="absolute top-[26px] left-0 pl-4 flex items-center pointer-events-none">
+            {Icon && <Icon className="text-surface-on-variant/70 group-focus-within:text-primary transition-colors" size={20} />}
         </div>
         <select 
             value={value}
             onChange={onChange}
             className={`
-                block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 pt-7 pb-2.5 
+                block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-10 pt-6 pb-2 
                 bg-surface-container-highest rounded-xl border-b border-outline-variant/30 text-surface-on 
-                appearance-none focus:border-primary focus:outline-none cursor-pointer font-semibold text-base transition-colors
+                appearance-none focus:border-primary focus:outline-none cursor-pointer font-semibold transition-colors
+                ${className}
             `}
         >
             {options.map((opt: any) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
         </select>
-        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-2.5 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none`}>
+        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-2 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-focus-within:text-primary`}>
             {label}
         </label>
+        <div className="absolute top-[26px] right-4 pointer-events-none text-surface-on-variant group-focus-within:text-primary transition-colors">
+            <ChevronDown size={16} />
+        </div>
     </div>
 );
 

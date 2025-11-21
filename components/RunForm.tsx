@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Run, RunType } from '../types';
+import { RUN_TYPE_ORDER, RUN_TYPE_COLORS } from '../constants';
 import { Input } from './UIComponents';
 import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map, Trophy, BatteryCharging } from 'lucide-react';
 
@@ -86,21 +87,29 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing }) =
                 <div>
                     <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-2">Run Type</label>
                     <div className="grid grid-cols-3 gap-2">
-                        {Object.values(RunType).map(t => (
-                            <button
-                                key={t}
-                                type="button"
-                                onClick={() => setFormData({...formData, type: t})}
-                                className={`py-3 px-2 rounded-xl text-xs font-medium border transition-all flex flex-col items-center gap-2 ${
-                                    formData.type === t 
-                                    ? 'bg-primary-container text-primary-on-container border-primary shadow-sm' 
-                                    : 'bg-surface-container-high text-surface-on-variant border-transparent hover:bg-surface-container-highest'
-                                }`}
-                            >
-                                {getRunTypeIcon(t)}
-                                {t}
-                            </button>
-                        ))}
+                        {RUN_TYPE_ORDER.map(t => {
+                            const isSelected = formData.type === t;
+                            const color = RUN_TYPE_COLORS[t as RunType];
+                            
+                            return (
+                                <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => setFormData({...formData, type: t})}
+                                    style={{
+                                        borderColor: isSelected ? color : 'transparent',
+                                        backgroundColor: isSelected ? `${color}20` : undefined, // 20 is hex for ~12% opacity
+                                        color: isSelected ? color : undefined,
+                                    }}
+                                    className={`py-3 px-2 rounded-xl text-xs font-medium border transition-all flex flex-col items-center gap-2 ${
+                                        !isSelected ? 'bg-surface-container-high text-surface-on-variant hover:bg-surface-container-highest' : 'shadow-sm'
+                                    }`}
+                                >
+                                    {getRunTypeIcon(t as RunType)}
+                                    {t}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
