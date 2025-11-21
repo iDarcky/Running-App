@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo } from 'react';
 import { Run, Goal, GoalType, GoalPeriod } from '../types';
-import { Target, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { Target, Plus, Trash2, CheckCircle, Trophy, Flag } from 'lucide-react';
 
 interface GoalTrackerProps {
   runs: Run[];
@@ -67,87 +68,104 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ runs, goals, onAddGoal, onDel
   };
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg mb-6">
+    <div className="bg-surface-container rounded-[24px] p-6 shadow-sm border border-outline-variant/20 mb-6">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Target className="text-brand-500" size={20} />
+        <h3 className="text-xl font-bold text-surface-on flex items-center gap-2">
+          <Target className="text-primary" size={24} />
           Goals & Progress
         </h3>
         <button 
           onClick={() => setIsAdding(!isAdding)}
-          className="text-sm text-brand-400 hover:text-brand-300 flex items-center gap-1"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-container text-primary-on-container hover:bg-primary/20 transition-colors text-sm font-medium"
         >
-          <Plus size={16} /> Set Goal
+          <Plus size={16} /> {isAdding ? 'Cancel' : 'Set Goal'}
         </button>
       </div>
 
       {isAdding && (
-        <form onSubmit={handleSubmit} className="bg-slate-900/50 p-4 rounded-lg mb-6 border border-slate-700 animate-fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-            <select 
-              className="bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm outline-none focus:border-brand-500"
-              value={newGoal.type}
-              onChange={(e) => setNewGoal({...newGoal, type: e.target.value as GoalType})}
-            >
-              <option value="distance">Distance (km)</option>
-              <option value="duration">Duration (min)</option>
-              <option value="frequency">Frequency (runs)</option>
-            </select>
-            <select 
-               className="bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm outline-none focus:border-brand-500"
-               value={newGoal.period}
-               onChange={(e) => setNewGoal({...newGoal, period: e.target.value as GoalPeriod})}
-            >
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-            <input 
-              type="number" 
-              className="bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm outline-none focus:border-brand-500"
-              placeholder="Target Value"
-              required
-              value={newGoal.targetValue}
-              onChange={(e) => setNewGoal({...newGoal, targetValue: parseFloat(e.target.value)})}
-            />
+        <form onSubmit={handleSubmit} className="bg-surface-container-high p-4 rounded-2xl mb-6 border border-outline-variant/20 animate-slide-down">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div className="relative">
+                 <label className="text-[10px] font-bold uppercase text-surface-on-variant mb-1 block ml-2">Type</label>
+                 <select 
+                  className="w-full bg-surface-container-highest border-b border-outline-variant text-surface-on rounded-t-lg px-4 py-3 text-sm outline-none focus:border-primary"
+                  value={newGoal.type}
+                  onChange={(e) => setNewGoal({...newGoal, type: e.target.value as GoalType})}
+                >
+                  <option value="distance">Distance (km)</option>
+                  <option value="duration">Duration (min)</option>
+                  <option value="frequency">Frequency (runs)</option>
+                </select>
+            </div>
+            <div className="relative">
+                <label className="text-[10px] font-bold uppercase text-surface-on-variant mb-1 block ml-2">Period</label>
+                <select 
+                   className="w-full bg-surface-container-highest border-b border-outline-variant text-surface-on rounded-t-lg px-4 py-3 text-sm outline-none focus:border-primary"
+                   value={newGoal.period}
+                   onChange={(e) => setNewGoal({...newGoal, period: e.target.value as GoalPeriod})}
+                >
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+            </div>
+            <div className="relative">
+                <label className="text-[10px] font-bold uppercase text-surface-on-variant mb-1 block ml-2">Target</label>
+                <input 
+                  type="number" 
+                  className="w-full bg-surface-container-highest border-b border-outline-variant text-surface-on rounded-t-lg px-4 py-3 text-sm outline-none focus:border-primary font-bold placeholder-surface-on-variant/50"
+                  placeholder="Value"
+                  required
+                  value={newGoal.targetValue}
+                  onChange={(e) => setNewGoal({...newGoal, targetValue: parseFloat(e.target.value)})}
+                />
+            </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setIsAdding(false)} className="text-slate-400 text-sm px-3 py-1">Cancel</button>
-            <button type="submit" className="bg-brand-500 text-white text-sm px-3 py-1 rounded hover:bg-brand-600">Save</button>
+          <div className="flex justify-end">
+            <button type="submit" className="bg-primary text-primary-on text-sm font-bold px-6 py-2 rounded-full hover:shadow-lg transition-all">Save Goal</button>
           </div>
         </form>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {goalsWithProgress.map(goal => (
-          <div key={goal.id} className="bg-slate-900/50 p-4 rounded-lg border border-slate-700 relative group">
-             <div className="flex justify-between items-start mb-2">
-                <div>
-                  <p className="text-slate-400 text-xs uppercase tracking-wider font-semibold">{goal.period} {goal.type}</p>
-                  <p className="text-white font-medium text-lg">
-                    {goal.current.toFixed(1)} / {goal.targetValue} {goal.type === 'distance' ? 'km' : goal.type === 'duration' ? 'm' : 'runs'}
-                  </p>
+          <div key={goal.id} className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 relative group hover:shadow-md transition-all">
+             <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${goal.progress >= 100 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-secondary-container text-secondary-on-container'}`}>
+                        {goal.progress >= 100 ? <Trophy size={18} /> : <Flag size={18} />}
+                    </div>
+                    <div>
+                        <p className="text-surface-on-variant text-xs uppercase tracking-wider font-bold">{goal.period} {goal.type}</p>
+                        <p className="text-surface-on font-bold text-xl leading-none mt-1">
+                            {goal.current.toFixed(0)} <span className="text-sm font-medium text-surface-on-variant">/ {goal.targetValue} {goal.type === 'distance' ? 'km' : goal.type === 'duration' ? 'min' : ''}</span>
+                        </p>
+                    </div>
                 </div>
-                <div className="text-brand-500">
-                   {goal.progress >= 100 ? <CheckCircle size={20} /> : <span className="text-xs font-bold">{Math.round(goal.progress)}%</span>}
-                </div>
+                
+                <button 
+                    onClick={() => onDeleteGoal(goal.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-error-container hover:text-error-on-container rounded-full transition-all text-surface-on-variant"
+                >
+                    <Trash2 size={14} />
+                </button>
              </div>
-             <div className="w-full bg-slate-700 rounded-full h-2">
+             
+             <div className="relative w-full h-2.5 bg-surface-container-highest rounded-full overflow-hidden">
                <div 
-                  className={`h-2 rounded-full transition-all duration-1000 ${goal.progress >= 100 ? 'bg-brand-400' : 'bg-blue-500'}`}
+                  className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out ${goal.progress >= 100 ? 'bg-green-500' : 'bg-primary'}`}
                   style={{ width: `${goal.progress}%` }}
                ></div>
              </div>
-             <button 
-                onClick={() => onDeleteGoal(goal.id)}
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-500 transition-all"
-             >
-                <Trash2 size={14} />
-             </button>
+             <div className="flex justify-end mt-1">
+                <span className={`text-xs font-bold ${goal.progress >= 100 ? 'text-green-600 dark:text-green-400' : 'text-primary'}`}>{Math.round(goal.progress)}%</span>
+             </div>
           </div>
         ))}
         {goals.length === 0 && !isAdding && (
-          <div className="col-span-full text-center py-4 text-slate-500 text-sm">
-            No goals set. Challenge yourself!
+          <div className="col-span-full flex flex-col items-center justify-center py-8 text-surface-on-variant opacity-60 border-2 border-dashed border-outline-variant/30 rounded-2xl">
+            <Target size={32} className="mb-2 opacity-50" />
+            <p className="font-medium">No goals set yet.</p>
+            <p className="text-xs">Add a goal to track your progress.</p>
           </div>
         )}
       </div>

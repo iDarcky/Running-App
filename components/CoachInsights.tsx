@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Run, InsightResponse, UserProfile } from '../types';
 import { analyzeRunningData, chatWithRunCoach } from '../services/geminiService';
-import { Sparkles, MessageSquare, Send, RefreshCw, AlertCircle, CheckCircle2, ArrowRight, BrainCircuit, Activity, Ruler, ShieldCheck } from 'lucide-react';
+import { Sparkles, MessageSquare, Send, RefreshCw, AlertCircle, CheckCircle2, Activity, Ruler, ShieldCheck, TrendingUp } from 'lucide-react';
 
 interface CoachInsightsProps {
   runs: Run[];
@@ -17,7 +17,7 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
 
   // Chat state
   const [messages, setMessages] = useState<{role: 'user'|'model', text: string}[]>([
-    { role: 'model', text: "Hi! I'm Stride, your AI running coach. I've analyzed your data. Ask me anything about your training, race strategy, or injury prevention!" }
+    { role: 'model', text: "Ready to chat about your running metrics and strategy." }
   ]);
   const [input, setInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
@@ -68,122 +68,156 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
     }
   };
 
+  // Auto-analyze on first load if data exists and not analyzed yet
+  useEffect(() => {
+    if (runs.length >= 3 && !insights && !loading && activeTab === 'analysis' && !error) {
+        // handleGenerateInsights(); // Optional: Uncomment to auto-trigger
+    }
+  }, [runs]);
+
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] md:h-auto">
-      {/* Tab Switcher */}
-      <div className="flex p-1 bg-slate-800 rounded-lg mb-6 w-fit border border-slate-700">
-        <button
-          onClick={() => setActiveTab('analysis')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'analysis' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-        >
-          <Sparkles size={16} /> Analysis
-        </button>
-        <button
-          onClick={() => setActiveTab('chat')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chat' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-        >
-          <MessageSquare size={16} /> Coach Chat
-        </button>
+    <div className="flex flex-col h-[calc(100vh-140px)] md:h-auto animate-fade-in">
+        
+      <div className="flex items-center justify-between mb-6">
+          <h2 className="text-3xl font-bold text-surface-on tracking-tight">Performance Lab</h2>
+          
+          <div className="flex bg-surface-container-high p-1 rounded-full border border-outline-variant/20">
+            <button
+                onClick={() => setActiveTab('analysis')}
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'analysis' ? 'bg-primary text-primary-on shadow-md' : 'text-surface-on-variant hover:bg-surface-container-highest'}`}
+            >
+                <Activity size={16} /> Analysis
+            </button>
+            <button
+                onClick={() => setActiveTab('chat')}
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'chat' ? 'bg-primary text-primary-on shadow-md' : 'text-surface-on-variant hover:bg-surface-container-highest'}`}
+            >
+                <MessageSquare size={16} /> Chat
+            </button>
+          </div>
       </div>
 
       {activeTab === 'analysis' && (
-        <div className="animate-fade-in space-y-6">
+        <div className="space-y-6 pb-20">
           {!insights && !loading && (
-            <div className="text-center py-16 bg-slate-800/50 rounded-2xl border border-slate-700 border-dashed">
-              <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BrainCircuit className="text-brand-400" size={32} />
+            <div className="flex flex-col items-center justify-center py-16 bg-surface-container rounded-[32px] border border-dashed border-outline-variant/40">
+              <div className="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center mb-6 shadow-inner">
+                <Sparkles className="text-primary" size={40} />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Ready to Analyze</h3>
-              <p className="text-slate-400 max-w-md mx-auto mb-6">
-                Our AI model will analyze your running history to provide personalized training advice, trend identification, and safety tips.
+              <h3 className="text-2xl font-bold text-surface-on mb-2">Deep Dive Analysis</h3>
+              <p className="text-surface-on-variant max-w-md text-center mb-8">
+                Analyze your recent {runs.length} runs to calculate your Form Score, injury risk, and upcoming training focus.
               </p>
               <button 
                 onClick={handleGenerateInsights}
-                className="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg shadow-brand-500/25 flex items-center gap-2 mx-auto"
+                className="bg-primary text-primary-on px-8 py-4 rounded-full font-bold text-lg transition-all shadow-lg shadow-primary/25 hover:scale-105 flex items-center gap-2"
               >
-                <Sparkles size={18} /> Generate Insights
+                <Sparkles size={20} /> Generate Report
               </button>
               {error && (
-                <div className="mt-6 text-rose-400 flex items-center justify-center gap-2 bg-rose-500/10 py-2 px-4 rounded-lg inline-block">
-                  <AlertCircle size={16} /> {error}
+                <div className="mt-6 text-error flex items-center justify-center gap-2 bg-error-container py-3 px-6 rounded-xl font-medium">
+                  <AlertCircle size={18} /> {error}
                 </div>
               )}
             </div>
           )}
 
           {loading && (
-            <div className="text-center py-20">
-              <div className="animate-spin w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-slate-400 animate-pulse">Analyzing your running biomechanics & history...</p>
+            <div className="flex flex-col items-center justify-center py-32">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-surface-on-variant font-medium animate-pulse">Crunching the numbers...</p>
             </div>
           )}
 
           {insights && (
-            <div className="space-y-6">
-               {/* Fitness Summary */}
-              <div className="bg-gradient-to-br from-brand-900/50 to-slate-800 border border-brand-500/30 rounded-xl p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Activity className="text-brand-400" size={20} /> 
-                    Fitness Summary
-                </h3>
-                <p className="text-slate-300 leading-relaxed">{insights.fitnessSummary}</p>
-              </div>
+            <div className="space-y-6 animate-slide-down">
+               {/* Top Row: Summary & Form Score */}
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-primary-container text-primary-on-container rounded-[32px] p-8 shadow-sm">
+                         <h3 className="text-lg font-bold uppercase opacity-70 tracking-wider mb-2">Fitness Summary</h3>
+                         <p className="text-xl leading-relaxed font-medium">{insights.fitnessSummary}</p>
+                    </div>
+                    
+                    <div className="bg-surface-container rounded-[32px] p-8 shadow-sm flex flex-col items-center justify-center relative overflow-hidden border border-outline-variant/20">
+                        <h3 className="text-sm font-bold text-surface-on-variant uppercase tracking-wider mb-4">Form Score</h3>
+                        <div className="relative w-32 h-32 flex items-center justify-center">
+                            <svg className="w-full h-full" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="var(--md-sys-color-surface-container-highest)" strokeWidth="8" />
+                                <circle 
+                                    cx="50" cy="50" r="45" fill="none" 
+                                    stroke="var(--md-sys-color-primary)" 
+                                    strokeWidth="8" 
+                                    strokeDasharray="283"
+                                    strokeDashoffset={283 - (283 * (insights.formScore || 0) / 100)}
+                                    strokeLinecap="round"
+                                    className="transition-all duration-1000 ease-out"
+                                    transform="rotate(-90 50 50)"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                <span className="text-4xl font-bold text-primary">{insights.formScore || '--'}</span>
+                                <span className="text-[10px] font-bold text-primary/60">/ 100</span>
+                            </div>
+                        </div>
+                    </div>
+               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Form Analysis */}
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                      <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                          <Ruler className="text-purple-400" size={20} /> Form Analysis
+               {/* Metrics & Risk */}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-surface-container rounded-[24px] p-6 border border-outline-variant/10">
+                      <h3 className="text-lg font-bold text-surface-on mb-4 flex items-center gap-2">
+                          <div className="bg-secondary-container p-2 rounded-full text-secondary-on-container"><Ruler size={18} /></div>
+                          Form Analysis
                       </h3>
-                      <p className="text-slate-300 text-sm leading-relaxed mb-4">{insights.formAnalysis}</p>
+                      <p className="text-surface-on-variant leading-relaxed">{insights.formAnalysis}</p>
                   </div>
 
-                  {/* Injury Risk */}
-                  <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                       <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                          <ShieldCheck className="text-emerald-400" size={20} /> Injury Risk Assessment
+                  <div className="bg-surface-container rounded-[24px] p-6 border border-outline-variant/10">
+                       <h3 className="text-lg font-bold text-surface-on mb-4 flex items-center gap-2">
+                          <div className="bg-error-container p-2 rounded-full text-error-on-container"><ShieldCheck size={18} /></div>
+                          Injury Risk
                       </h3>
-                      <p className="text-slate-300 text-sm leading-relaxed mb-4">{insights.injuryRiskAssessment}</p>
+                      <p className="text-surface-on-variant leading-relaxed">{insights.injuryRiskAssessment}</p>
                   </div>
               </div>
 
               {/* Trends */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {insights.trends.map((trend, i) => (
-                  <div key={i} className={`p-4 rounded-xl border ${
-                    trend.type === 'positive' ? 'bg-emerald-500/10 border-emerald-500/20' : 
-                    trend.type === 'negative' ? 'bg-rose-500/10 border-rose-500/20' : 
-                    'bg-slate-700/30 border-slate-600'
+                  <div key={i} className={`p-5 rounded-2xl border ${
+                    trend.type === 'positive' ? 'bg-green-100 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200' : 
+                    trend.type === 'negative' ? 'bg-red-100 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200' : 
+                    'bg-surface-container-high border-outline-variant/20 text-surface-on'
                   }`}>
                     <div className="flex items-center gap-2 mb-2">
-                      {trend.type === 'positive' ? <TrendingUp className="text-emerald-400" size={18} /> :
-                       trend.type === 'negative' ? <AlertCircle className="text-rose-400" size={18} /> :
-                       <Activity className="text-slate-400" size={18} />}
-                      <h4 className="font-semibold text-white text-sm">{trend.title}</h4>
+                      {trend.type === 'positive' ? <TrendingUp size={18} /> :
+                       trend.type === 'negative' ? <AlertCircle size={18} /> :
+                       <Activity size={18} />}
+                      <h4 className="font-bold text-sm">{trend.title}</h4>
                     </div>
-                    <p className="text-xs text-slate-400">{trend.description}</p>
+                    <p className="text-xs opacity-80 font-medium">{trend.description}</p>
                   </div>
                 ))}
               </div>
 
               {/* Focus & Tips */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-xl p-6">
-                   <h3 className="text-lg font-semibold text-white mb-4">Training Focus</h3>
+                <div className="lg:col-span-2 bg-surface-container-low border border-outline-variant/20 rounded-[24px] p-6">
+                   <h3 className="text-lg font-bold text-surface-on mb-4">Training Focus</h3>
                    <div className="flex items-start gap-4">
-                      <div className="bg-brand-500/20 p-3 rounded-lg shrink-0">
-                        <Target className="text-brand-400" size={24} />
+                      <div className="bg-tertiary-container p-3 rounded-xl text-tertiary-on-container shrink-0">
+                        <TrendingUp size={24} />
                       </div>
-                      <p className="text-slate-300">{insights.trainingFocus}</p>
+                      <p className="text-surface-on-variant font-medium text-lg">{insights.trainingFocus}</p>
                    </div>
                 </div>
-                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                   <h3 className="text-lg font-semibold text-white mb-4">Actionable Tips</h3>
-                   <ul className="space-y-3">
+                <div className="bg-surface-container-low border border-outline-variant/20 rounded-[24px] p-6">
+                   <h3 className="text-lg font-bold text-surface-on mb-4">Coach's Tips</h3>
+                   <ul className="space-y-4">
                      {insights.actionableTips.map((tip, i) => (
-                       <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
-                         <CheckCircle2 className="text-brand-400 shrink-0 mt-0.5" size={16} />
-                         <span>{tip}</span>
+                       <li key={i} className="flex items-start gap-3 text-sm text-surface-on-variant">
+                         <CheckCircle2 className="text-primary shrink-0 mt-0.5" size={16} />
+                         <span className="font-medium">{tip}</span>
                        </li>
                      ))}
                    </ul>
@@ -193,7 +227,7 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
               <div className="flex justify-center pt-4">
                 <button 
                   onClick={handleGenerateInsights}
-                  className="text-slate-500 hover:text-brand-400 flex items-center gap-2 text-sm transition-colors"
+                  className="text-primary hover:text-primary/80 flex items-center gap-2 text-sm font-bold transition-colors bg-primary/5 px-4 py-2 rounded-full"
                 >
                   <RefreshCw size={14} /> Refresh Analysis
                 </button>
@@ -204,48 +238,48 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
       )}
 
       {activeTab === 'chat' && (
-        <div className="flex flex-col h-[600px] bg-slate-800 border border-slate-700 rounded-xl overflow-hidden animate-fade-in shadow-xl">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+        <div className="flex flex-col h-[600px] bg-surface-container border border-outline-variant/20 rounded-[32px] overflow-hidden shadow-sm">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-4 rounded-2xl ${
+                <div className={`max-w-[80%] p-5 rounded-2xl shadow-sm ${
                   msg.role === 'user' 
-                    ? 'bg-brand-600 text-white rounded-tr-sm' 
-                    : 'bg-slate-700 text-slate-200 rounded-tl-sm'
+                    ? 'bg-primary text-primary-on rounded-tr-sm' 
+                    : 'bg-surface-container-high text-surface-on rounded-tl-sm'
                 }`}>
                   {msg.role === 'model' && (
-                    <div className="flex items-center gap-2 mb-2 opacity-70 text-xs uppercase tracking-wider font-bold">
+                    <div className="flex items-center gap-2 mb-2 opacity-60 text-xs uppercase tracking-wider font-bold">
                       <Sparkles size={12} /> Stride Coach
                     </div>
                   )}
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed font-medium">{msg.text}</p>
                 </div>
               </div>
             ))}
             {chatLoading && (
                <div className="flex justify-start">
-                <div className="bg-slate-700 p-4 rounded-2xl rounded-tl-sm flex gap-2 items-center">
-                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                <div className="bg-surface-container-high p-4 rounded-2xl rounded-tl-sm flex gap-2 items-center">
+                   <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce"></div>
+                   <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                   <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
           
-          <form onSubmit={handleSendMessage} className="p-4 bg-slate-900 border-t border-slate-700 flex gap-2">
+          <form onSubmit={handleSendMessage} className="p-4 bg-surface-container-low border-t border-outline-variant/20 flex gap-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about your pace, distance, or recovery..."
-              className="flex-1 bg-slate-800 text-white border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 transition-colors"
+              className="flex-1 bg-surface-container-highest text-surface-on border-transparent focus:border-primary rounded-full px-6 py-3 focus:outline-none transition-colors font-medium"
             />
             <button 
               type="submit" 
               disabled={!input.trim() || chatLoading}
-              className="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:hover:bg-brand-500 text-white p-3 rounded-xl transition-colors"
+              className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-on p-3 rounded-full transition-colors shadow-md"
             >
               <Send size={20} />
             </button>
@@ -255,44 +289,5 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
     </div>
   );
 };
-
-// Helper icon for training focus
-const Target = ({size, className}: {size: number, className?: string}) => (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <circle cx="12" cy="12" r="10"/>
-      <circle cx="12" cy="12" r="6"/>
-      <circle cx="12" cy="12" r="2"/>
-    </svg>
-);
-
-// Helper icon for trends
-const TrendingUp = ({size, className}: {size: number, className?: string}) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-    <polyline points="17 6 23 6 23 12"/>
-  </svg>
-);
 
 export default CoachInsights;

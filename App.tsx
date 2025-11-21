@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
-import { Run, Goal, UserProfile, RunType } from './types';
+import { Run, Goal, UserProfile, RunType, Race } from './types';
 import { SAMPLE_RUNS, SAMPLE_GOALS } from './constants';
 import Dashboard from './components/Dashboard';
 import RunLog from './components/RunLog';
 import CoachInsights from './components/CoachInsights';
+import RacePrep from './components/RacePrep';
 import Profile from './components/Profile';
-import { LayoutDashboard, List, BrainCircuit, Activity, User } from 'lucide-react';
+import { LayoutDashboard, List, BrainCircuit, Activity, User, Flag } from 'lucide-react';
 
 // Moved outside App to prevent re-creation on every render
 const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false }: { tab: string, activeTab: string, icon: any, label: string, onClick: (t: any) => void, mobile?: boolean }) => {
@@ -31,9 +33,10 @@ const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false 
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
   const [runs, setRuns] = useState<Run[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [races, setRaces] = useState<Race[]>([]);
   const [profile, setProfile] = useState<UserProfile>({
     name: '',
     height: 0,
@@ -49,6 +52,7 @@ const App: React.FC = () => {
     const loadData = () => {
       const savedRuns = localStorage.getItem('stride_runs');
       const savedGoals = localStorage.getItem('stride_goals');
+      const savedRaces = localStorage.getItem('stride_races');
       const savedProfile = localStorage.getItem('stride_profile');
       const savedTheme = localStorage.getItem('stride_theme');
 
@@ -65,6 +69,10 @@ const App: React.FC = () => {
           try { setGoals(JSON.parse(savedGoals)); } catch(e) { setGoals(SAMPLE_GOALS); }
       } else {
           setGoals(SAMPLE_GOALS);
+      }
+      
+      if (savedRaces) {
+          try { setRaces(JSON.parse(savedRaces)); } catch(e) { setRaces([]); }
       }
 
       if (savedProfile) {
@@ -88,6 +96,11 @@ const App: React.FC = () => {
   const saveGoals = (newGoals: Goal[]) => {
       setGoals(newGoals);
       localStorage.setItem('stride_goals', JSON.stringify(newGoals));
+  };
+  
+  const saveRaces = (newRaces: Race[]) => {
+      setRaces(newRaces);
+      localStorage.setItem('stride_races', JSON.stringify(newRaces));
   };
 
   const saveProfile = (newProfile: UserProfile) => {
@@ -116,12 +129,17 @@ const App: React.FC = () => {
 
   const handleAddGoal = (goal: Goal) => saveGoals([...goals, goal]);
   const handleDeleteGoal = (id: string) => saveGoals(goals.filter(g => g.id !== id));
+  
+  const handleAddRace = (race: Race) => saveRaces([...races, race]);
+  const handleUpdateRace = (updatedRace: Race) => saveRaces(races.map(r => r.id === updatedRace.id ? updatedRace : r));
+  const handleDeleteRace = (id: string) => saveRaces(races.filter(r => r.id !== id));
 
   const handleReset = () => {
       if (window.confirm("Are you sure you want to reset all data? This cannot be undone.")) {
           localStorage.clear();
           setRuns(SAMPLE_RUNS);
           setGoals(SAMPLE_GOALS);
+          setRaces([]);
           setProfile({ name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '' });
           setActiveTab('dashboard');
           window.location.reload();
@@ -144,6 +162,7 @@ const App: React.FC = () => {
                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Dashboard" onClick={setActiveTab} />
                     <NavButton tab="log" activeTab={activeTab} icon={List} label="Training Log" onClick={setActiveTab} />
                     <NavButton tab="coach" activeTab={activeTab} icon={BrainCircuit} label="AI Coach" onClick={setActiveTab} />
+                    <NavButton tab="race" activeTab={activeTab} icon={Flag} label="Race Prep" onClick={setActiveTab} />
                     <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} />
                 </nav>
 
@@ -185,6 +204,16 @@ const App: React.FC = () => {
                     {activeTab === 'coach' && (
                         <CoachInsights runs={runs} profile={profile} />
                     )}
+                    {activeTab === 'race' && (
+                        <RacePrep 
+                            races={races}
+                            runs={runs}
+                            profile={profile}
+                            onAddRace={handleAddRace}
+                            onUpdateRace={handleUpdateRace}
+                            onDeleteRace={handleDeleteRace}
+                        />
+                    )}
                     {activeTab === 'profile' && (
                         <Profile 
                             profile={profile} 
@@ -198,18 +227,11 @@ const App: React.FC = () => {
             </main>
 
             {/* Bottom Nav (Mobile) */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/10 p-2 z-50 flex justify-around items-center safe-area-pb">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/10 p-2 z-50 flex justify-between items-center safe-area-pb px-4">
                  <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
                  <NavButton tab="log" activeTab={activeTab} icon={List} label="Log" onClick={setActiveTab} mobile />
-                 <div className="relative -top-6">
-                     <button 
-                        onClick={() => setActiveTab('log')}
-                        className="w-14 h-14 bg-primary text-primary-on rounded-full flex items-center justify-center shadow-xl shadow-primary/30 active:scale-95 transition-transform"
-                     >
-                        <Activity size={24} />
-                     </button>
-                 </div>
                  <NavButton tab="coach" activeTab={activeTab} icon={BrainCircuit} label="Coach" onClick={setActiveTab} mobile />
+                 <NavButton tab="race" activeTab={activeTab} icon={Flag} label="Race" onClick={setActiveTab} mobile />
                  <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
             </nav>
         </div>

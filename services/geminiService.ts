@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Run, InsightResponse, UserProfile } from '../types';
+import { Run, InsightResponse, UserProfile, Race } from '../types';
 
 const apiKey = process.env.API_KEY || '';
 // Initialize only if key exists to avoid immediate crash, handle missing key in UI
@@ -42,11 +42,12 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
     
     Provide a comprehensive analysis including:
     1. A summary of my current fitness level.
-    2. An analysis of my RUNNING FORM based on cadence and stride length data (and height if provided).
-    3. An INJURY RISK assessment based on training load, intensity changes, and biomechanics.
-    4. 3 distinct trends you observe (e.g., pace progression, heart rate drift, consistency issues). Label them as positive, negative, or neutral.
-    5. A specific primary training focus for the next 4 weeks.
-    6. 3 concrete, actionable tips to improve performance or prevent injury based on this specific data.
+    2. A numerical Form Score from 0 to 100 based on cadence, consistency, and efficiency (0 is poor, 100 is elite).
+    3. An analysis of my RUNNING FORM based on cadence and stride length data.
+    4. An INJURY RISK assessment based on training load, intensity changes, and biomechanics.
+    5. 3 distinct trends you observe (e.g., pace progression, heart rate drift, consistency issues). Label them as positive, negative, or neutral.
+    6. A specific primary training focus for the next 4 weeks.
+    7. 3 concrete, actionable tips to improve performance or prevent injury based on this specific data.
   `;
 
   try {
@@ -59,6 +60,7 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
           type: Type.OBJECT,
           properties: {
             fitnessSummary: { type: Type.STRING },
+            formScore: { type: Type.INTEGER },
             formAnalysis: { type: Type.STRING },
             injuryRiskAssessment: { type: Type.STRING },
             trends: {
@@ -88,6 +90,35 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
   } catch (error) {
     console.error("Error analyzing runs:", error);
     throw error;
+  }
+};
+
+export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserProfile): Promise<string | null> => {
+  if (!ai) return null;
+
+  const prompt = `
+    I have a race coming up: ${race.name} on ${race.date}.
+    Distance: ${race.distance}km.
+    Goal Time: ${race.targetTime || 'Finish strong'}.
+    
+    My profile: ${profile ? JSON.stringify(profile) : 'N/A'}
+    
+    Recent runs: ${JSON.stringify(runs.slice(0, 5))}
+
+    Create a brief, high-level training strategy for the remaining time until the race. 
+    Include key workouts and a tapering strategy.
+    Format the response as clean Markdown.
+  `;
+
+  try {
+      const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+      });
+      return response.text;
+  } catch (e) {
+      console.error(e);
+      throw e;
   }
 };
 

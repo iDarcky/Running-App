@@ -36,6 +36,7 @@ export interface UserProfile {
 
 export interface InsightResponse {
   fitnessSummary: string;
+  formScore: number; // 0 to 100
   formAnalysis: string;
   injuryRiskAssessment: string;
   trends: {
@@ -55,6 +56,15 @@ export interface Goal {
   type: GoalType;
   targetValue: number;
   period: GoalPeriod;
+}
+
+export interface Race {
+  id: string;
+  name: string;
+  date: string;
+  distance: number; // km
+  targetTime?: string; // HH:MM:SS
+  aiPlan?: string;
 }
 
 export interface StravaToken {
