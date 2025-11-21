@@ -33,39 +33,49 @@ export const StatCard: React.FC<{ title: string; value: string; icon: React.Reac
 export const Input: React.FC<any> = ({ label, icon: Icon, type = "text", value, onChange, placeholder, required = false, className = '', ...props }) => (
     <div className={`relative group ${className}`}>
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            {Icon && <Icon className="text-surface-on-variant" size={20} />}
+            {Icon && <Icon className="text-surface-on-variant opacity-70" size={20} />}
         </div>
         <input
             type={type}
             value={value}
             onChange={onChange}
             required={required}
-            placeholder=" "
-            className={`block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 pt-6 pb-2 bg-surface-container-highest rounded-t-xl border-b border-outline-variant text-surface-on placeholder-transparent focus:border-primary focus:ring-0 focus:outline-none transition-colors peer`}
+            placeholder={placeholder}
+            className={`
+                block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 pt-7 pb-2.5 
+                bg-surface-container-highest rounded-xl border-b border-outline-variant/30 focus:border-primary 
+                text-surface-on placeholder-surface-on-variant/30 focus:outline-none transition-colors font-semibold text-base
+                [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+            `}
             {...props}
         />
-        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-4 text-surface-on-variant text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-1 peer-focus:text-xs peer-focus:text-primary pointer-events-none`}>
+        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-2.5 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none`}>
             {label}
         </label>
-        <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-300 peer-focus:w-full"></div>
     </div>
 );
 
 export const Select: React.FC<any> = ({ label, icon: Icon, value, onChange, options, className = '' }) => (
     <div className={`relative group ${className}`}>
          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            {Icon && <Icon className="text-surface-on-variant" size={20} />}
+            {Icon && <Icon className="text-surface-on-variant opacity-70" size={20} />}
         </div>
         <select 
             value={value}
             onChange={onChange}
-            className={`block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 pt-6 pb-2 bg-surface-container-highest rounded-t-xl border-b border-outline-variant text-surface-on appearance-none focus:border-primary focus:outline-none cursor-pointer`}
+            className={`
+                block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 pt-7 pb-2.5 
+                bg-surface-container-highest rounded-xl border-b border-outline-variant/30 text-surface-on 
+                appearance-none focus:border-primary focus:outline-none cursor-pointer font-semibold text-base transition-colors
+            `}
         >
             {options.map((opt: any) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
         </select>
-        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-1 text-xs text-surface-on-variant pointer-events-none`}>{label}</label>
+        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-2.5 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none`}>
+            {label}
+        </label>
     </div>
 );
 
