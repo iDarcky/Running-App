@@ -16,6 +16,7 @@ interface ProfileProps {
 const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
     const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
     const [loginName, setLoginName] = useState('');
+    const [guestName, setGuestName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
@@ -90,13 +91,25 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                     
                     <div className="my-6 border-t border-outline-variant/30"></div>
 
-                    <button 
-                        type="button"
-                        onClick={() => onLogin('Guest Runner')}
-                        className="text-surface-on-variant text-sm font-medium hover:text-surface-on transition-colors"
-                    >
-                        Continue as Guest
-                    </button>
+                    <div className="flex flex-col gap-2">
+                        <p className="text-xs text-surface-on-variant">Quick Start</p>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                placeholder="Guest Name (Optional)" 
+                                value={guestName}
+                                onChange={(e) => setGuestName(e.target.value)}
+                                className="bg-surface-container-highest px-4 py-2 rounded-xl text-sm flex-1 border-none outline-none focus:ring-1 focus:ring-primary text-surface-on"
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => onLogin(guestName.trim() || 'Guest Runner')}
+                                className="bg-surface-container-high hover:bg-surface-container-highest text-surface-on px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+                            >
+                                Go
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,7 +135,19 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSaveProfile(formData);
+    // Prevent empty name from logging out the user
+    const nameToSave = formData.name.trim() === '' ? 'Runner' : formData.name;
+    
+    onSaveProfile({
+        ...formData,
+        name: nameToSave
+    });
+    
+    // Update local form data to reflect fallback if needed
+    if (formData.name.trim() === '') {
+        setFormData(prev => ({ ...prev, name: 'Runner' }));
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -150,7 +175,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
   }
 
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in pb-20">
+    <div className="w-full animate-fade-in pb-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
                 <h2 className="text-3xl font-bold text-surface-on tracking-tight">Profile</h2>
@@ -173,9 +198,9 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Avatar Card */}
-            <div className="bg-surface-container rounded-[32px] p-8 flex flex-col items-center text-center border border-outline-variant/20 shadow-sm">
+            <div className="bg-surface-container rounded-[32px] p-8 flex flex-col items-center text-center border border-outline-variant/20 shadow-sm h-fit">
                  <div className="w-32 h-32 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center justify-center text-5xl font-bold mb-6 shadow-lg">
                      {profile.name.charAt(0).toUpperCase()}
                  </div>
@@ -195,8 +220,17 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
             </div>
 
             {/* Edit Form */}
-            <div className="md:col-span-2 bg-surface-container rounded-[32px] p-8 border border-outline-variant/20 shadow-sm">
+            <div className="lg:col-span-2 bg-surface-container rounded-[32px] p-8 border border-outline-variant/20 shadow-sm">
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    <Input 
+                        label="Display Name" 
+                        type="text" 
+                        value={formData.name || ''} 
+                        onChange={(e: any) => handleChange('name', e.target.value)} 
+                        icon={User}
+                        placeholder="Your Name"
+                    />
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Input 
                             label="Age" 
@@ -212,14 +246,14 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                             <select 
                                 value={formData.sex}
                                 onChange={(e) => handleChange('sex', e.target.value)}
-                                className="block w-full pl-12 pr-4 pt-6 pb-2 bg-surface-container-highest rounded-t-xl border-b border-outline-variant text-surface-on appearance-none focus:border-primary focus:outline-none cursor-pointer"
+                                className="block w-full pl-12 pr-4 pt-6 pb-2 bg-surface-container-highest rounded-t-xl border-b border-outline-variant text-surface-on appearance-none focus:border-primary focus:outline-none cursor-pointer font-bold"
                             >
                                 <option value="">Select Sex</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                                 <option value="Other">Other</option>
                             </select>
-                            <label className="absolute left-12 top-1 text-xs text-surface-on-variant pointer-events-none">Sex</label>
+                            <label className="absolute left-12 top-1 text-[10px] font-bold uppercase tracking-wider text-surface-on-variant pointer-events-none">Sex</label>
                         </div>
                         <Input 
                             label="Height (cm)" 

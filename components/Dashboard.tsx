@@ -401,7 +401,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
   };
 
   return (
-    <div className="animate-fade-in pb-20">
+    <div className="w-full animate-fade-in pb-20">
         {/* Header */}
         <div className="flex flex-col gap-6 mb-8 animate-fade-in">
             <div className="flex justify-between items-start">
@@ -463,8 +463,8 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
             </div>
         )}
 
-        {/* Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Grid Layout - Expanded to 3 columns on XL screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
              {layout.map((widget, index) => (
                  <div 
                     key={widget.id}
@@ -474,7 +474,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                     onDragEnd={handleDragEnd}
                     className={`
                         transition-all duration-300 ease-in-out
-                        ${widget.size === 'full' ? 'lg:col-span-2' : 'lg:col-span-1'}
+                        ${widget.size === 'full' ? 'lg:col-span-2 xl:col-span-2' : 'lg:col-span-1 xl:col-span-1'}
                         ${isEditingLayout ? 'cursor-move ring-2 ring-primary/20 ring-offset-2 rounded-[24px]' : ''}
                         ${draggedItemIndex === index ? 'opacity-50 scale-95' : 'opacity-100'}
                     `}
