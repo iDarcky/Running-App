@@ -61,6 +61,11 @@ const App: React.FC = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // Scroll to top when active tab changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   const saveRuns = (newRuns: Run[]) => {
     setRuns(newRuns);
     localStorage.setItem('stride_runs', JSON.stringify(newRuns));
@@ -81,6 +86,12 @@ const App: React.FC = () => {
     // Sort descending
     newRuns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     saveRuns(newRuns);
+  };
+
+  const handleUpdateRun = (updatedRun: Run) => {
+    const updatedRuns = runs.map(r => r.id === updatedRun.id ? updatedRun : r);
+    updatedRuns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    saveRuns(updatedRuns);
   };
 
   const handleAddRuns = (newRunsData: Run[]) => {
@@ -182,6 +193,7 @@ const App: React.FC = () => {
                 runs={runs} 
                 onAddRun={handleAddRun}
                 onAddRuns={handleAddRuns}
+                onUpdateRun={handleUpdateRun}
                 onDeleteRun={handleDeleteRun} 
             />
         )}

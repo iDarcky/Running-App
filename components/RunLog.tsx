@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, RunSource, StravaToken, GoogleToken } from '../types';
-import { Plus, Trash2, MapPin, Clock, Heart, Activity, Watch, Smartphone, Footprints, Filter, X, CheckCircle, Chrome, Zap, BatteryCharging, Trophy, Copy, AlertTriangle, Info, ExternalLink, Loader2, ArrowRight } from 'lucide-react';
+import { Plus, Trash2, MapPin, Clock, Heart, Activity, Watch, Smartphone, Footprints, Filter, X, CheckCircle, Chrome, Zap, BatteryCharging, Trophy, Copy, AlertTriangle, Info, ExternalLink, Loader2, ArrowRight, Edit, Edit2 } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
 
@@ -9,13 +9,15 @@ interface RunLogProps {
   runs: Run[];
   onAddRun: (run: Run) => void;
   onAddRuns: (runs: Run[]) => void;
+  onUpdateRun: (run: Run) => void;
   onDeleteRun: (id: string) => void;
 }
 
-const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onDeleteRun }) => {
+const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun, onDeleteRun }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [filterType, setFilterType] = useState<RunType | 'All'>('All');
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   // Strava State
   const [isStravaModalOpen, setIsStravaModalOpen] = useState(false);
@@ -345,7 +347,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onDeleteRun 
       }
   };
 
-  // --- MANUAL FORM LOGIC ---
+  // --- MANUAL FORM & EDIT LOGIC ---
   const [newRun, setNewRun] = useState<Partial<Run>>({
     date: new Date().toISOString().split('T')[0],
     type: RunType.EASY,
@@ -359,23 +361,73 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onDeleteRun 
     notes: ''
   });
 
+  const handleEditClick = (run: Run) => {
+    setEditingId(run.id);
+    setNewRun({
+      ...run,
+      date: run.date.split('T')[0], // Ensure YYYY-MM-DD format
+    });
+    setIsFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setIsFormOpen(false);
+    setNewRun({
+        date: new Date().toISOString().split('T')[0],
+        type: RunType.EASY,
+        distance: 5,
+        duration: 30,
+        avgHr: 140,
+        rpe: 5,
+        cadence: 165,
+        strideLength: 1.0,
+        source: 'Manual',
+        notes: ''
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const run: Run = {
-      id: Date.now().toString(),
-      date: newRun.date!,
-      distance: Number(newRun.distance),
-      duration: Number(newRun.duration),
-      type: newRun.type as RunType,
-      avgHr: Number(newRun.avgHr),
-      rpe: Number(newRun.rpe),
-      cadence: newRun.cadence ? Number(newRun.cadence) : undefined,
-      strideLength: newRun.strideLength ? Number(newRun.strideLength) : undefined,
-      source: 'Manual',
-      notes: newRun.notes || ''
-    };
-    onAddRun(run);
-    setIsFormOpen(false);
+
+    if (editingId) {
+      // UPDATE Existing Run
+      const existingRun = runs.find(r => r.id === editingId);
+      if (existingRun) {
+        const updatedRun: Run = {
+          ...existingRun, // Preserve unedited fields (id, source, etc)
+          date: newRun.date!,
+          distance: Number(newRun.distance),
+          duration: Number(newRun.duration),
+          type: newRun.type as RunType,
+          avgHr: Number(newRun.avgHr),
+          rpe: Number(newRun.rpe),
+          cadence: newRun.cadence ? Number(newRun.cadence) : undefined,
+          strideLength: newRun.strideLength ? Number(newRun.strideLength) : undefined,
+          notes: newRun.notes || ''
+        };
+        onUpdateRun(updatedRun);
+      }
+    } else {
+      // ADD New Run
+      const run: Run = {
+        id: Date.now().toString(),
+        date: newRun.date!,
+        distance: Number(newRun.distance),
+        duration: Number(newRun.duration),
+        type: newRun.type as RunType,
+        avgHr: Number(newRun.avgHr),
+        rpe: Number(newRun.rpe),
+        cadence: newRun.cadence ? Number(newRun.cadence) : undefined,
+        strideLength: newRun.strideLength ? Number(newRun.strideLength) : undefined,
+        source: 'Manual',
+        notes: newRun.notes || ''
+      };
+      onAddRun(run);
+    }
+    
+    resetForm();
   };
 
   // --- RENDER POPUP UI ---
@@ -466,11 +518,11 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onDeleteRun 
              </button>
              
              <button 
-                onClick={() => setIsFormOpen(!isFormOpen)}
+                onClick={() => { resetForm(); setIsFormOpen(!isFormOpen); }}
                 className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg transition-colors shadow-lg shadow-brand-500/20"
              >
                 <Plus size={20} />
-                <span>Manual Log</span>
+                <span>{isFormOpen ? 'Close Form' : 'Manual Log'}</span>
              </button>
         </div>
       </div>
@@ -618,10 +670,13 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onDeleteRun 
         </div>
       )}
 
-      {/* Add Run Form */}
+      {/* Add/Edit Run Form */}
       {isFormOpen && (
         <form onSubmit={handleSubmit} className="bg-slate-800 border border-slate-700 p-6 rounded-xl animate-slide-down mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Add New Activity</h3>
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            {editingId ? <Edit2 size={20} className="text-brand-400"/> : <Plus size={20} className="text-brand-400"/>}
+            {editingId ? 'Edit Activity' : 'Add New Activity'}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div>
               <label className="block text-slate-400 text-xs uppercase mb-1">Date</label>
@@ -649,10 +704,21 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onDeleteRun 
                <label className="block text-slate-400 text-xs uppercase mb-1">RPE (1-10)</label>
                <input type="number" min="1" max="10" value={newRun.rpe} onChange={e => setNewRun({...newRun, rpe: parseFloat(e.target.value)})} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-brand-500 outline-none" />
             </div>
+            <div className="md:col-span-2">
+                <label className="block text-slate-400 text-xs uppercase mb-1">Notes</label>
+                <textarea 
+                    value={newRun.notes} 
+                    onChange={e => setNewRun({...newRun, notes: e.target.value})} 
+                    className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:border-brand-500 outline-none text-sm h-[42px] resize-none"
+                    placeholder="How did it feel?"
+                />
+            </div>
           </div>
           <div className="flex justify-end gap-3">
-             <button type="button" onClick={() => setIsFormOpen(false)} className="px-4 py-2 text-slate-400 hover:text-white transition-colors">Cancel</button>
-             <button type="submit" className="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg shadow-lg shadow-brand-500/20 transition-all">Save Run</button>
+             <button type="button" onClick={resetForm} className="px-4 py-2 text-slate-400 hover:text-white transition-colors">Cancel</button>
+             <button type="submit" className="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg shadow-lg shadow-brand-500/20 transition-all">
+                 {editingId ? 'Update Run' : 'Save Run'}
+             </button>
           </div>
         </form>
       )}
@@ -714,17 +780,22 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onDeleteRun 
                         </div>
                     </div>
                     <div className="flex items-center justify-between md:justify-end gap-6 md:w-1/3">
-                        <div className="text-right">
+                        <div className="text-right hidden sm:block">
                             <div className="text-xs text-slate-500 uppercase">Avg HR</div>
                             <div className="text-white font-medium">{run.avgHr || '--'} bpm</div>
                         </div>
-                         <div className="text-right">
+                         <div className="text-right hidden sm:block">
                             <div className="text-xs text-slate-500 uppercase">RPE</div>
                             <div className="text-white font-medium">{run.rpe > 0 ? `${run.rpe}/10` : '--'}</div>
                         </div>
-                        <button onClick={() => onDeleteRun(run.id)} className="text-slate-600 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100 p-2">
-                            <Trash2 size={18} />
-                        </button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <button onClick={() => handleEditClick(run)} className="text-slate-600 hover:text-blue-400 p-2" title="Edit">
+                                <Edit2 size={18} />
+                            </button>
+                            <button onClick={() => onDeleteRun(run.id)} className="text-slate-600 hover:text-rose-500 p-2" title="Delete">
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
                     </div>
                 </div>
                 {run.notes && <div className="mt-3 pt-3 border-t border-slate-700/50 text-slate-400 text-sm italic">"{run.notes}"</div>}
