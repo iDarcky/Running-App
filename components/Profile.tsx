@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { Input } from './UIComponents';
@@ -11,6 +10,13 @@ interface ProfileProps {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
 }
+
+// Custom Logo Component
+const RedLineLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 512 512" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+     <path d="M170 96h100l-50 256h170v80H120V96z" fill="currentColor"/>
+  </svg>
+);
 
 // Auth Screen Component - Separated to isolate state and rendering
 const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
@@ -33,7 +39,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
             <div className="w-full max-w-md bg-surface-container rounded-[32px] p-8 shadow-xl relative overflow-hidden border border-outline-variant/20">
                 <div className="text-center mb-8 relative z-10">
                     <div className="bg-black w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <Activity size={40} className="text-white" />
+                        <RedLineLogo className="w-10 h-10 text-white" />
                     </div>
                     <h2 className="text-3xl font-bold text-surface-on tracking-tight">
                         {authMode === 'login' ? 'Welcome to RedLine' : 'Join RedLine'}

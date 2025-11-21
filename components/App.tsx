@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Run, Goal, UserProfile, Race } from '../types';
 import { SAMPLE_RUNS, SAMPLE_GOALS } from '../constants';
@@ -8,6 +7,13 @@ import CoachInsights from './components/CoachInsights';
 import RacePrep from './components/RacePrep';
 import Profile from './components/Profile';
 import { LayoutDashboard, CalendarRange, Sparkles, Activity, User, FlagTriangleRight } from 'lucide-react';
+
+// Custom Logo Component
+const RedLineLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 512 512" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+     <path d="M170 96h100l-50 256h170v80H120V96z" fill="currentColor"/>
+  </svg>
+);
 
 // Moved outside App to prevent re-creation on every render
 const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false }: { tab: string, activeTab: string, icon: any, label: string, onClick: (t: any) => void, mobile?: boolean }) => {
@@ -160,8 +166,8 @@ const App: React.FC = () => {
             {/* Sidebar (Desktop) */}
             <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10">
                 <div className="flex items-center gap-3 px-4 mb-10">
-                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-                        <Activity className="text-primary-on" size={24} />
+                    <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/10 dark:shadow-white/10">
+                        <RedLineLogo className="w-6 h-6 text-white dark:text-black" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tighter text-surface-on"><span className="text-primary">Red</span>Line</h1>
                 </div>
