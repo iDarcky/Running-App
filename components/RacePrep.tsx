@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Race, Run, UserProfile } from '../types';
 import { generateRacePlan } from '../services/geminiService';
-import { Flag, Calendar, Clock, Plus, Trash2, BrainCircuit, Loader2, X, MapPin, Trophy, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { Flag, Calendar, Clock, Plus, Trash2, BrainCircuit, Loader2, X, Map, Trophy, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 
 interface RacePrepProps {
     races: Race[];
@@ -214,7 +214,7 @@ const RacePrep: React.FC<RacePrepProps> = ({ races, runs, profile, onAddRace, on
                                          <div>
                                              <h3 className="text-xl font-bold text-surface-on">{race.name}</h3>
                                              <div className="flex gap-4 mt-1 text-sm text-surface-on-variant font-medium">
-                                                 <span className="flex items-center gap-1"><MapPin size={14} /> {race.distance} km</span>
+                                                 <span className="flex items-center gap-1"><Map size={14} /> {race.distance} km</span>
                                                  <span className="flex items-center gap-1"><Trophy size={14} /> {race.targetTime || 'No time set'}</span>
                                              </div>
                                          </div>

@@ -6,12 +6,13 @@ import { StatCard, Modal } from './UIComponents';
 import GoalTracker from './GoalTracker';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell, PieChart, Pie, ComposedChart, Legend
+  BarChart, Bar, Cell, PieChart as RePieChart, Pie, ComposedChart, Legend
 } from 'recharts';
 import { 
   Activity, Timer, Heart, Trophy, Medal, 
-  TrendingUp, Calendar, Check, Maximize2, Minimize2, X,
-  Edit3, Plus, ChevronLeft, ChevronRight, MapPin, Circle
+  TrendingUp, Check, Maximize2, Minimize2, X,
+  Settings2, Plus, ChevronLeft, ChevronRight, 
+  Map, Footprints, BarChart3, PieChart, Target
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -33,9 +34,9 @@ interface WidgetLayout {
 const AVAILABLE_WIDGETS = [
     { id: 'stats', label: 'Key Statistics', icon: Activity, defaultSize: 'full' as WidgetSize },
     { id: 'records', label: 'Personal Bests', icon: Medal, defaultSize: 'half' as WidgetSize },
-    { id: 'volume', label: 'Training Volume', icon: Calendar, defaultSize: 'full' as WidgetSize },
-    { id: 'intensity', label: 'Intensity Dist.', icon: Heart, defaultSize: 'half' as WidgetSize },
-    { id: 'goals', label: 'Goals', icon: Trophy, defaultSize: 'full' as WidgetSize },
+    { id: 'volume', label: 'Training Volume', icon: BarChart3, defaultSize: 'full' as WidgetSize },
+    { id: 'intensity', label: 'Intensity Dist.', icon: PieChart, defaultSize: 'half' as WidgetSize },
+    { id: 'goals', label: 'Goals', icon: Target, defaultSize: 'full' as WidgetSize },
     { id: 'trends', label: 'Pace vs Heart Rate', icon: TrendingUp, defaultSize: 'full' as WidgetSize },
 ];
 
@@ -245,7 +246,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                         title="DISTANCE" 
                         value={stats.totalDistance} 
                         subtext="km" 
-                        icon={<Circle fill="currentColor" />} 
+                        icon={<Map />} 
                         colorClass="bg-black text-white dark:bg-white dark:text-black"
                       />
                       <StatCard 
@@ -259,7 +260,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                         title="RUNS" 
                         value={stats.totalRuns.toString()} 
                         subtext="" 
-                        icon={<Calendar />} 
+                        icon={<Footprints />} 
                         colorClass="bg-surface-container-highest text-surface-on"
                       />
                       <StatCard 
@@ -279,7 +280,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                return (
                    <div className="bg-surface-container rounded-[24px] p-6 h-full flex flex-col shadow-sm border border-outline-variant/20">
                        <h3 className="text-xl font-bold text-surface-on mb-4 flex items-center gap-2">
-                           <Activity className="text-surface-on" size={24} />
+                           <BarChart3 className="text-surface-on" size={24} />
                            Training Volume
                        </h3>
                        <div className="flex-1 min-h-[200px]">
@@ -331,14 +332,14 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                 return (
                     <div className="bg-surface-container rounded-[24px] p-6 h-full flex flex-col shadow-sm border border-outline-variant/20 relative">
                         <h3 className="text-xl font-bold text-surface-on mb-2 flex items-center gap-2">
-                            <Heart className="text-surface-on" size={24} />
+                            <PieChart className="text-surface-on" size={24} />
                             Intensity Dist.
                         </h3>
                         <div className="flex-1 min-h-[200px] flex items-center justify-center relative">
                             {hrZoneData.length > 0 ? (
                                 <>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
+                                        <RePieChart>
                                             <Pie
                                                 data={hrZoneData}
                                                 innerRadius={65}
@@ -355,7 +356,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                                                 formatter={(val: number) => [`${Math.round(val)} mins`, 'Time in Zone']}
                                                 contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
                                             />
-                                        </PieChart>
+                                        </RePieChart>
                                     </ResponsiveContainer>
                                     {/* Center Overlay */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -375,7 +376,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                 return (
                     <div className="bg-surface-container rounded-[24px] p-6 h-full shadow-sm border border-outline-variant/20">
                          <h3 className="text-xl font-bold text-surface-on mb-6 flex items-center gap-2">
-                            <Trophy className="text-surface-on" size={24} />
+                            <Medal className="text-surface-on" size={24} />
                             Personal Bests
                         </h3>
                         <div className="flex flex-col gap-3">
@@ -420,7 +421,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                             : 'bg-surface-container-high text-surface-on hover:bg-surface-container-highest'}
                     `}
                 >
-                    {isEditingLayout ? <Check size={16} /> : <Edit3 size={16} />}
+                    {isEditingLayout ? <Check size={16} /> : <Settings2 size={16} />}
                     <span>{isEditingLayout ? 'Done' : 'Customize'}</span>
                 </button>
             </div>

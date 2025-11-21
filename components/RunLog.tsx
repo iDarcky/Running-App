@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, StravaToken, GoogleToken } from '../types';
 import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
-import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Watch, Edit2, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging } from 'lucide-react';
+import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Pencil, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging, Timer } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
 import { Modal, Input } from './UIComponents';
@@ -428,7 +428,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                             <div className="text-xl font-bold text-surface-on leading-none">{formatDuration(run.duration)}</div>
                                         </div>
                                         <div>
-                                            <div className="text-[10px] font-bold uppercase text-surface-on-variant mb-1 flex items-center justify-end gap-1"><Zap size={12} /> Pace</div>
+                                            <div className="text-[10px] font-bold uppercase text-surface-on-variant mb-1 flex items-center justify-end gap-1"><Timer size={12} /> Pace</div>
                                             <div className="text-xl font-bold text-surface-on leading-none">
                                                 {Math.floor(run.duration / run.distance)}:
                                                 {Math.round(((run.duration / run.distance) % 1) * 60).toString().padStart(2, '0')}
@@ -482,7 +482,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                                  onClick={(e) => { e.stopPropagation(); handleEditClick(run); }}
                                                  className="px-5 py-2.5 rounded-full bg-surface-container-highest hover:bg-surface-container-high font-bold text-sm flex items-center gap-2 transition-colors"
                                              >
-                                                 <Edit2 size={16} /> Edit
+                                                 <Pencil size={16} /> Edit
                                              </button>
                                              <button 
                                                  onClick={(e) => { e.stopPropagation(); onDeleteRun(run.id); }}
@@ -533,75 +533,90 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                         label="Client ID"
                         value={stravaClientId}
                         onChange={(e: any) => setStravaClientId(e.target.value)}
-                        placeholder="12345"
                     />
                     <Input 
                         label="Client Secret"
                         type="password"
                         value={stravaClientSecret}
                         onChange={(e: any) => setStravaClientSecret(e.target.value)}
-                        placeholder="••••••••"
                     />
-                    {stravaError && <div className="text-error text-sm bg-error-container p-3 rounded-lg flex gap-2 items-center"><AlertTriangle size={16} /> {stravaError}</div>}
                     
+                    <div className="bg-surface-container-high p-4 rounded-xl text-xs text-surface-on-variant">
+                        <p className="font-bold mb-2">Callback Domain Setup:</p>
+                        <p className="mb-1">Add this domain to your Strava API Application settings:</p>
+                        <code className="block bg-black/10 dark:bg-white/10 p-2 rounded mb-2">{detectedHostname}</code>
+                    </div>
+
+                    <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl text-xs text-red-600 dark:text-red-300 flex gap-2">
+                        <AlertTriangle size={16} className="shrink-0" />
+                        <p>Ensure your Strava App has "Authorization Callback Domain" set correctly, otherwise you will get a "Invalid Redirect URI" error.</p>
+                    </div>
+
+                    {stravaError && (
+                        <div className="text-red-500 text-sm font-bold text-center">{stravaError}</div>
+                    )}
+
                     <button 
-                        onClick={initiateStravaAuth} 
-                        className="w-full py-4 bg-[#FC4C02] text-white font-bold rounded-full shadow-lg hover:bg-[#E34402] transition-colors flex items-center justify-center gap-2"
+                        onClick={initiateStravaAuth}
+                        className="w-full bg-[#FC4C02] text-white py-4 rounded-full font-bold shadow-lg hover:bg-[#E34402] transition-colors"
                     >
-                        Authenticate <ExternalLink size={18} />
+                        Connect & Sync
                     </button>
                     
-                    <div className="text-xs text-center text-surface-on-variant/70">
-                        Ensure "localhost" is in your Strava App's Authorization Callback Domain.
+                    <div className="text-center">
+                         <a href="https://www.strava.com/settings/api" target="_blank" rel="noreferrer" className="text-xs text-surface-on-variant hover:underline flex items-center justify-center gap-1">
+                            Get API Credentials <ExternalLink size={10} />
+                         </a>
                     </div>
                 </div>
            </div>
       </Modal>
 
-      {/* Google Modal */}
+      {/* Google Fit Modal */}
       <Modal
         isOpen={isGoogleModalOpen}
         onClose={() => setIsGoogleModalOpen(false)}
         title="Connect Google Fit"
       >
           <div className="p-4 space-y-6">
-              <div className="text-center">
-                    <div className="bg-surface-container-highest w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg border border-outline-variant/20">
+                <div className="text-center">
+                    <div className="bg-surface-container-highest w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-outline-variant">
                         <Activity size={32} className="text-surface-on" />
                     </div>
-                    <p className="text-surface-on-variant text-sm">Sync your running history from Google.</p>
+                    <p className="text-surface-on-variant text-sm">Enter your Google Cloud OAuth credentials.</p>
                 </div>
-                
+
                 <div className="space-y-4">
                     <Input 
                         label="Client ID"
                         value={googleClientId}
                         onChange={(e: any) => setGoogleClientId(e.target.value)}
-                        placeholder="...apps.googleusercontent.com"
                     />
                     <Input 
                         label="Client Secret"
                         type="password"
                         value={googleClientSecret}
                         onChange={(e: any) => setGoogleClientSecret(e.target.value)}
-                        placeholder="••••••••"
                     />
-                    {googleError && <div className="text-error text-sm bg-error-container p-3 rounded-lg flex gap-2 items-center"><AlertTriangle size={16} /> {googleError}</div>}
-                    
-                    <button 
-                        onClick={initiateGoogleAuth} 
-                        className="w-full py-4 bg-surface-on text-surface-inverse-on font-bold rounded-full shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                    >
-                        Authenticate <ExternalLink size={18} />
-                    </button>
 
-                    <div className="bg-surface-container-high p-3 rounded-xl">
-                        <p className="text-xs text-surface-on-variant/70 text-center">
-                            Note: Google Fit integration requires a Google Cloud Project with the Fitness API enabled and your origin added to Authorized JavaScript origins.
-                        </p>
+                    <div className="bg-surface-container-high p-4 rounded-xl text-xs text-surface-on-variant">
+                        <p className="font-bold mb-2">OAuth Config:</p>
+                        <p className="mb-1">Add this URI to "Authorized redirect URIs" in Google Cloud Console:</p>
+                        <code className="block bg-black/10 dark:bg-white/10 p-2 rounded mb-2">{detectedOrigin}</code>
                     </div>
+
+                    {googleError && (
+                        <div className="text-red-500 text-sm font-bold text-center">{googleError}</div>
+                    )}
+
+                    <button 
+                        onClick={initiateGoogleAuth}
+                        className="w-full bg-surface-container-highest text-surface-on border border-outline-variant py-4 rounded-full font-bold hover:bg-surface-container-high transition-colors"
+                    >
+                        Connect Google Fit
+                    </button>
                 </div>
-           </div>
+          </div>
       </Modal>
     </div>
   );
