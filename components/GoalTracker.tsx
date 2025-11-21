@@ -76,7 +76,7 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ runs, goals, onAddGoal, onDel
         </h3>
         <button 
           onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-container text-primary-on-container hover:bg-primary/20 transition-colors text-sm font-medium"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black hover:opacity-80 transition-opacity text-sm font-bold"
         >
           <Plus size={16} /> {isAdding ? 'Cancel' : 'Set Goal'}
         </button>
@@ -127,12 +127,14 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ runs, goals, onAddGoal, onDel
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {goalsWithProgress.map(goal => (
+        {goalsWithProgress.map(goal => {
+          const isComplete = goal.progress >= 100;
+          return (
           <div key={goal.id} className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 relative group hover:shadow-md transition-all">
              <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${goal.progress >= 100 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-secondary-container text-secondary-on-container'}`}>
-                        {goal.progress >= 100 ? <Trophy size={18} /> : <Flag size={18} />}
+                    <div className={`p-2 rounded-full ${isComplete ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-surface-container-highest text-surface-on-variant'}`}>
+                        {isComplete ? <Trophy size={18} /> : <Flag size={18} />}
                     </div>
                     <div>
                         <p className="text-surface-on-variant text-xs uppercase tracking-wider font-bold">{goal.period} {goal.type}</p>
@@ -152,15 +154,15 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ runs, goals, onAddGoal, onDel
              
              <div className="relative w-full h-2.5 bg-surface-container-highest rounded-full overflow-hidden">
                <div 
-                  className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out ${goal.progress >= 100 ? 'bg-green-500' : 'bg-primary'}`}
+                  className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out ${isComplete ? 'bg-black dark:bg-white' : 'bg-primary'}`}
                   style={{ width: `${goal.progress}%` }}
                ></div>
              </div>
              <div className="flex justify-end mt-1">
-                <span className={`text-xs font-bold ${goal.progress >= 100 ? 'text-green-600 dark:text-green-400' : 'text-primary'}`}>{Math.round(goal.progress)}%</span>
+                <span className={`text-xs font-bold ${isComplete ? 'text-black dark:text-white' : 'text-primary'}`}>{Math.round(goal.progress)}%</span>
              </div>
           </div>
-        ))}
+        )})}
         {goals.length === 0 && !isAdding && (
           <div className="col-span-full flex flex-col items-center justify-center py-8 text-surface-on-variant opacity-60 border-2 border-dashed border-outline-variant/30 rounded-2xl">
             <Target size={32} className="mb-2 opacity-50" />

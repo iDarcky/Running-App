@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Run, RunType } from '../types';
 import { Input } from './UIComponents';
-import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft } from 'lucide-react';
+import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map, Trophy, BatteryCharging } from 'lucide-react';
 
 interface RunFormProps {
     initialData?: Partial<Run>;
@@ -34,6 +34,18 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing }) =
         e.preventDefault();
         onSubmit(formData);
     };
+
+    const getRunTypeIcon = (type: RunType) => {
+        switch (type) {
+          case RunType.EASY: return <Feather size={20} />;
+          case RunType.TEMPO: return <Flame size={20} />;
+          case RunType.INTERVAL: return <Zap size={20} />;
+          case RunType.LONG: return <Map size={20} />;
+          case RunType.RACE: return <Trophy size={20} />;
+          case RunType.RECOVERY: return <BatteryCharging size={20} />;
+          default: return <Activity size={20} />;
+        }
+      };
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
@@ -79,12 +91,13 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing }) =
                                 key={t}
                                 type="button"
                                 onClick={() => setFormData({...formData, type: t})}
-                                className={`py-3 rounded-xl text-sm font-medium border transition-all ${
+                                className={`py-3 px-2 rounded-xl text-xs font-medium border transition-all flex flex-col items-center gap-2 ${
                                     formData.type === t 
                                     ? 'bg-primary-container text-primary-on-container border-primary shadow-sm' 
                                     : 'bg-surface-container-high text-surface-on-variant border-transparent hover:bg-surface-container-highest'
                                 }`}
                             >
+                                {getRunTypeIcon(t)}
                                 {t}
                             </button>
                         ))}

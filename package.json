@@ -1,5 +1,5 @@
 {
-  "name": "strideai-coach",
+  "name": "redline",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "@google/genai": "^1.30.0",
-    "recharts": "^3.4.1",
-    "lucide-react": "^0.554.0",
+    "recharts": "2.10.0",
+    "lucide-react": "0.263.1",
     "vite": "^7.2.4",
     "@vitejs/plugin-react": "^5.1.1"
   },

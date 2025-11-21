@@ -31,14 +31,14 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
         <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in p-4">
             <div className="w-full max-w-md bg-surface-container rounded-[32px] p-8 shadow-xl relative overflow-hidden border border-outline-variant/20">
                 <div className="text-center mb-8 relative z-10">
-                    <div className="bg-primary-container w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <Activity size={40} className="text-primary-on-container" />
+                    <div className="bg-black w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <Activity size={40} className="text-white" />
                     </div>
                     <h2 className="text-3xl font-bold text-surface-on tracking-tight">
-                        {authMode === 'login' ? 'Welcome Back' : 'Join StrideAI'}
+                        {authMode === 'login' ? 'Welcome to RedLine' : 'Join RedLine'}
                     </h2>
                     <p className="text-surface-on-variant mt-2">
-                        {authMode === 'login' ? 'Sign in to continue' : 'Create your profile'}
+                        {authMode === 'login' ? 'Sign in to access your training' : 'Create your athlete profile'}
                     </p>
                 </div>
 
@@ -83,7 +83,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                     <button 
                         type="button"
                         onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                        className="text-primary font-medium text-sm hover:text-primary/80 transition-colors"
+                        className="text-primary font-bold text-sm hover:underline transition-colors"
                     >
                         {authMode === 'login' ? "Don't have an account? Sign Up" : "Already a member? Log In"}
                     </button>
@@ -145,142 +145,127 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
       });
   };
 
-  // Login View
   if (!isLoggedIn) {
-    return <AuthScreen onLogin={handleLoginSuccess} />;
+      return <AuthScreen onLogin={handleLoginSuccess} />;
   }
 
   return (
-    <div className="animate-fade-in max-w-4xl mx-auto space-y-6">
-      {/* Header Card */}
-      <div className="bg-surface-container rounded-[32px] p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
-            <div className="w-24 h-24 bg-tertiary-container text-tertiary-on-container rounded-full flex items-center justify-center text-4xl font-bold shadow-inner">
-                {formData.name.charAt(0).toUpperCase()}
-            </div>
+    <div className="max-w-4xl mx-auto animate-fade-in pb-20">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
-                <h2 className="text-3xl font-bold text-surface-on tracking-tight">{formData.name}</h2>
-                <p className="text-surface-on-variant text-lg">Athlete in Training</p>
+                <h2 className="text-3xl font-bold text-surface-on tracking-tight">Profile</h2>
+                <p className="text-surface-on-variant text-sm">Manage your personal metrics</p>
+            </div>
+            <div className="flex gap-3">
+                <button 
+                    onClick={toggleTheme}
+                    className="p-3 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-surface-on transition-colors"
+                    title="Toggle Theme"
+                >
+                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                </button>
+                <button 
+                    onClick={handleLogout}
+                    className="px-6 py-3 rounded-full bg-surface-container-high hover:bg-error-container hover:text-error-on-container transition-colors text-sm font-bold flex items-center gap-2"
+                >
+                    <LogOut size={16} /> Sign Out
+                </button>
             </div>
         </div>
-        
-        <div className="flex gap-3">
-            <button 
-                onClick={toggleTheme}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-surface-container-high text-surface-on hover:bg-surface-container-highest transition-colors border border-outline-variant/20"
-            >
-                {theme === 'dark' ? <Moon size={20} className="fill-current" /> : <Sun size={20} className="fill-current" />}
-                <span className="font-medium hidden sm:inline">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
-            </button>
-            <button 
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-error-container text-error-on-container hover:bg-error-container/80 transition-colors"
-            >
-                <LogOut size={20} /> <span className="font-medium hidden sm:inline">Sign Out</span>
-            </button>
-        </div>
-      </div>
 
-      {/* Settings Form */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-surface-container rounded-[32px] p-8 shadow-sm">
-            <div className="flex items-center gap-3 mb-8">
-                <div className="bg-primary/10 p-2 rounded-full text-primary">
-                    <User size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-surface-on">Personal Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Avatar Card */}
+            <div className="bg-surface-container rounded-[32px] p-8 flex flex-col items-center text-center border border-outline-variant/20 shadow-sm">
+                 <div className="w-32 h-32 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center justify-center text-5xl font-bold mb-6 shadow-lg">
+                     {profile.name.charAt(0).toUpperCase()}
+                 </div>
+                 <h3 className="text-2xl font-bold text-surface-on">{profile.name}</h3>
+                 <p className="text-surface-on-variant mt-1">RedLine Athlete</p>
+                 
+                 <div className="mt-8 w-full space-y-2">
+                     <div className="bg-surface-container-low p-3 rounded-xl flex justify-between items-center">
+                         <span className="text-sm text-surface-on-variant font-medium">Status</span>
+                         <span className="text-sm font-bold text-primary">Active</span>
+                     </div>
+                     <div className="bg-surface-container-low p-3 rounded-xl flex justify-between items-center">
+                         <span className="text-sm text-surface-on-variant font-medium">Member Since</span>
+                         <span className="text-sm font-bold text-surface-on">{new Date().getFullYear()}</span>
+                     </div>
+                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input label="Full Name" icon={Smile} value={formData.name} onChange={(e: any) => handleChange('name', e.target.value)} />
-                <Input label="Age" icon={Calendar} type="number" value={formData.age || ''} onChange={(e: any) => handleChange('age', parseInt(e.target.value))} />
-                <Input label="Height (cm)" icon={Ruler} type="number" value={formData.height || ''} onChange={(e: any) => handleChange('height', parseInt(e.target.value))} />
-                <Input label="Weight (kg)" icon={Scale} type="number" value={formData.weight || ''} onChange={(e: any) => handleChange('weight', parseInt(e.target.value))} />
-                
-                <div className="relative group">
-                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <User className="text-surface-on-variant" size={20} />
-                    </div>
-                    <select 
-                        value={formData.sex}
-                        onChange={e => handleChange('sex', e.target.value)}
-                        className="block w-full pl-12 pr-4 pt-6 pb-2 bg-surface-container-highest rounded-t-xl border-b border-outline-variant text-surface-on appearance-none focus:border-primary focus:outline-none"
-                    >
-                        <option value="">Select...</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
-                    <label className="absolute left-12 top-1 text-xs text-surface-on-variant pointer-events-none">Biological Sex</label>
-                </div>
-
-                <Input label="Current Shoe Model" icon={Footprints} value={formData.shoeModel} onChange={(e: any) => handleChange('shoeModel', e.target.value)} />
-
-                <div className="md:col-span-2 mt-4">
-                    <button 
-                        type="submit" 
-                        className={`w-full flex items-center justify-center gap-2 py-4 rounded-full font-bold text-lg transition-all ${
-                            saved 
-                            ? 'bg-green-600 text-white shadow-none' 
-                            : 'bg-primary text-primary-on shadow-lg shadow-primary/25 hover:shadow-xl hover:scale-[1.01]'
-                        }`}
-                    >
-                        {saved ? (
-                            <>
-                                <CheckCircle size={20} /> Saved Successfully
-                            </>
-                        ) : (
-                            <>
-                                <Save size={20} /> Save Changes
-                            </>
-                        )}
-                    </button>
-                </div>
-            </form>
-          </div>
-
-          {/* Danger Zone / Stats */}
-          <div className="space-y-6">
-               <div className="bg-surface-container rounded-[32px] p-8 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="bg-secondary/10 p-2 rounded-full text-secondary">
-                            <Activity size={24} />
+            {/* Edit Form */}
+            <div className="md:col-span-2 bg-surface-container rounded-[32px] p-8 border border-outline-variant/20 shadow-sm">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Input 
+                            label="Age" 
+                            type="number" 
+                            value={formData.age || ''} 
+                            onChange={(e: any) => handleChange('age', parseInt(e.target.value))} 
+                            icon={Calendar}
+                        />
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <Smile className="text-surface-on-variant" size={20} />
+                            </div>
+                            <select 
+                                value={formData.sex}
+                                onChange={(e) => handleChange('sex', e.target.value)}
+                                className="block w-full pl-12 pr-4 pt-6 pb-2 bg-surface-container-highest rounded-t-xl border-b border-outline-variant text-surface-on appearance-none focus:border-primary focus:outline-none cursor-pointer"
+                            >
+                                <option value="">Select Sex</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <label className="absolute left-12 top-1 text-xs text-surface-on-variant pointer-events-none">Sex</label>
                         </div>
-                        <h3 className="text-xl font-bold text-surface-on">App Stats</h3>
+                        <Input 
+                            label="Height (cm)" 
+                            type="number" 
+                            value={formData.height || ''} 
+                            onChange={(e: any) => handleChange('height', parseInt(e.target.value))} 
+                            icon={Ruler}
+                        />
+                        <Input 
+                            label="Weight (kg)" 
+                            type="number" 
+                            value={formData.weight || ''} 
+                            onChange={(e: any) => handleChange('weight', parseInt(e.target.value))} 
+                            icon={Scale}
+                        />
                     </div>
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center p-4 bg-surface-container-high rounded-2xl">
-                            <span className="text-surface-on-variant font-medium">Height</span>
-                            <span className="text-surface-on font-bold">{profile.height > 0 ? `${profile.height} cm` : '--'}</span>
-                        </div>
-                         <div className="flex justify-between items-center p-4 bg-surface-container-high rounded-2xl">
-                            <span className="text-surface-on-variant font-medium">BMI</span>
-                            <span className="text-surface-on font-bold">
-                                {profile.height > 0 && profile.weight > 0 
-                                ? (profile.weight / ((profile.height/100) ** 2)).toFixed(1) 
-                                : '--'}
-                            </span>
-                        </div>
-                    </div>
-               </div>
+                    
+                    <Input 
+                        label="Current Shoe Model" 
+                        type="text" 
+                        value={formData.shoeModel || ''} 
+                        onChange={(e: any) => handleChange('shoeModel', e.target.value)} 
+                        icon={Footprints}
+                        placeholder="e.g. Adidas Adizero Evo SL"
+                    />
 
-               <div className="bg-error-container/30 rounded-[32px] p-8 border border-error-container">
-                    <div className="flex items-center gap-3 mb-4 text-error">
-                        <AlertTriangle size={24} />
-                        <h3 className="text-xl font-bold">Danger Zone</h3>
+                    <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10">
+                         <button 
+                            type="button"
+                            onClick={onReset}
+                            className="text-error hover:bg-error-container hover:text-error-on-container px-4 py-2 rounded-full transition-colors text-sm font-bold flex items-center gap-2"
+                        >
+                            <Trash2 size={16} /> Reset Data
+                        </button>
+
+                        <button 
+                            type="submit"
+                            className="bg-primary text-primary-on px-8 py-3 rounded-full font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform flex items-center gap-2"
+                        >
+                            {saved ? <CheckCircle size={20} /> : <Save size={20} />}
+                            {saved ? 'Saved!' : 'Save Profile'}
+                        </button>
                     </div>
-                    <p className="text-sm text-surface-on-variant mb-6">
-                        Resetting will permanently delete all your runs, goals, and profile data. This cannot be undone.
-                    </p>
-                    <button 
-                        onClick={onReset}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-error text-error-on font-bold hover:bg-error/90 transition-colors"
-                    >
-                        <Trash2 size={18} /> Reset All Data
-                    </button>
-               </div>
-          </div>
-      </div>
+                </form>
+            </div>
+        </div>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Run, InsightResponse, UserProfile, Race } from '../types';
 
@@ -148,7 +147,7 @@ export const chatWithRunCoach = async (history: {role: 'user'|'model', text: str
     const profileStr = profile ? `User Profile: Name: ${profile.name || 'Runner'}, Age ${profile.age}, ${profile.sex}, ${profile.weight}kg, ${profile.height}cm.` : '';
 
     const systemInstruction = `
-      You are "Stride", an AI running coach. 
+      You are "RedLine", an AI running coach. 
       You have access to the user's recent running data including advanced metrics like cadence and stride length: ${JSON.stringify(sortedRuns)}.
       ${profileStr}
       Refer to specific runs (dates, distances, paces, cadence) to support your answers.

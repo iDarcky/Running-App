@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, Info } from 'lucide-react';
 
 export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
     <div className={`bg-surface-container rounded-[24px] p-6 shadow-sm border border-outline-variant/20 transition-all hover:shadow-md ${className}`}>
@@ -8,21 +8,25 @@ export const Card: React.FC<{ children: React.ReactNode; className?: string }> =
     </div>
 );
 
-export const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; colorClass?: string }> = ({ title, value, icon, subtext, colorClass = 'bg-primary-container text-primary-on-container' }) => (
-  <Card className="h-full flex flex-col justify-between relative overflow-hidden">
-    <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-2 -translate-y-2">
-        {React.cloneElement(icon as any, { size: 64 })}
-    </div>
+export const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; colorClass?: string; tooltip?: string }> = ({ title, value, icon, subtext, colorClass = 'bg-primary-container text-primary-on-container', tooltip }) => (
+  <Card className="h-full flex flex-col justify-between">
     <div>
-      <div className="flex items-center justify-between mb-4 relative z-10">
-        <h3 className="text-surface-on-variant text-sm font-medium uppercase tracking-wider truncate pr-2">{title}</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+            <h3 className="text-surface-on-variant text-sm font-medium uppercase tracking-wider truncate">{title}</h3>
+            {tooltip && (
+                <div className="group relative flex items-center" title={tooltip}>
+                    <Info size={14} className="text-surface-on-variant/50 hover:text-primary cursor-help transition-colors" />
+                </div>
+            )}
+        </div>
         <div className={`p-3 rounded-full ${colorClass} shadow-sm`}>
-          {icon}
+          {React.cloneElement(icon as any, { size: 24 })}
         </div>
       </div>
-      <span className="text-4xl font-bold text-surface-on tracking-tight relative z-10">{value}</span>
+      <span className="text-4xl font-bold text-surface-on tracking-tight">{value}</span>
     </div>
-    {subtext && <span className="text-surface-on-variant text-xs mt-2 block font-medium relative z-10">{subtext}</span>}
+    {subtext && <span className="text-surface-on-variant text-xs mt-2 block font-medium">{subtext}</span>}
   </Card>
 );
 

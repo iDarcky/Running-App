@@ -266,27 +266,40 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  // RedLine Style: Clean white surface, color-coded border
   const getRunStyle = (type: RunType) => {
+    const base = 'bg-surface-container border-l-[6px] transition-all hover:translate-x-1';
     switch (type) {
-      case RunType.EASY: return 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-200 border border-emerald-500/20';
-      case RunType.TEMPO: return 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200 border border-amber-500/20';
-      case RunType.INTERVAL: return 'bg-rose-100 text-rose-900 dark:bg-rose-900/30 dark:text-rose-200 border border-rose-500/20';
-      case RunType.LONG: return 'bg-sky-100 text-sky-900 dark:bg-sky-900/30 dark:text-sky-200 border border-sky-500/20';
-      case RunType.RECOVERY: return 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-200 border border-indigo-500/20';
-      case RunType.RACE: return 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-200 border border-purple-500/20';
-      default: return 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-300 border border-slate-500/20';
+      case RunType.EASY: return `${base} border-gray-400`;
+      case RunType.TEMPO: return `${base} border-red-500`;
+      case RunType.INTERVAL: return `${base} border-red-700`;
+      case RunType.LONG: return `${base} border-black dark:border-white`;
+      case RunType.RACE: return `${base} border-red-600`;
+      case RunType.RECOVERY: return `${base} border-gray-300`;
+      default: return `${base} border-gray-500`;
     }
   };
 
-  const getRunTypeIcon = (type: RunType) => {
+  const getRunTypeColorText = (type: RunType) => {
     switch (type) {
-      case RunType.EASY: return <Feather size={14} className="shrink-0" />;
-      case RunType.TEMPO: return <Flame size={14} className="shrink-0" />;
-      case RunType.INTERVAL: return <Zap size={14} className="shrink-0" />;
-      case RunType.LONG: return <Map size={14} className="shrink-0" />;
-      case RunType.RACE: return <Trophy size={14} className="shrink-0" />;
-      case RunType.RECOVERY: return <BatteryCharging size={14} className="shrink-0" />;
-      default: return <Activity size={14} className="shrink-0" />;
+        case RunType.EASY: return 'text-gray-500';
+        case RunType.TEMPO: return 'text-red-600';
+        case RunType.INTERVAL: return 'text-red-800';
+        case RunType.LONG: return 'text-black dark:text-white';
+        case RunType.RACE: return 'text-red-600';
+        default: return 'text-gray-500';
+    }
+  };
+
+  const getRunTypeIcon = (type: RunType, size: number = 14) => {
+    switch (type) {
+      case RunType.EASY: return <Feather size={size} className="shrink-0" />;
+      case RunType.TEMPO: return <Flame size={size} className="shrink-0" />;
+      case RunType.INTERVAL: return <Zap size={size} className="shrink-0" />;
+      case RunType.LONG: return <Map size={size} className="shrink-0" />;
+      case RunType.RACE: return <Trophy size={size} className="shrink-0" />;
+      case RunType.RECOVERY: return <BatteryCharging size={size} className="shrink-0" />;
+      default: return <Activity size={size} className="shrink-0" />;
     }
   };
 
@@ -295,7 +308,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
           <div className="flex flex-col items-center justify-center min-h-[50vh] animate-fade-in">
              <div className={`p-8 rounded-3xl ${authStatus === 'error' ? 'bg-error-container text-error-on-container' : 'bg-primary-container text-primary-on-container'} shadow-lg text-center max-w-sm mx-4`}>
                   {authStatus === 'exchanging' && <Loader2 className="animate-spin mx-auto mb-4" size={48} />}
-                  {authStatus === 'connected' && <CheckCircle className="mx-auto mb-4 text-green-600" size={48} />}
+                  {authStatus === 'connected' && <CheckCircle className="mx-auto mb-4 text-white" size={48} />}
                   {authStatus === 'error' && <AlertTriangle className="mx-auto mb-4" size={48} />}
                   
                   <h3 className="text-2xl font-bold mb-2">{authStatus === 'exchanging' ? 'Connecting...' : authStatus === 'connected' ? 'Connected!' : 'Connection Failed'}</h3>
@@ -315,7 +328,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
          <div className="flex flex-wrap gap-2">
             <button 
               onClick={() => { setEditingId(null); setIsFormOpen(true); }}
-              className="flex items-center gap-2 bg-primary text-primary-on px-5 py-2.5 rounded-full shadow-lg hover:scale-105 transition-transform font-medium"
+              className="flex items-center gap-2 bg-primary text-primary-on px-5 py-2.5 rounded-full shadow-lg shadow-primary/20 hover:scale-105 transition-transform font-medium"
             >
               <Plus size={20} /> Log Run
             </button>
@@ -344,9 +357,9 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
              <button
                 key={type}
                 onClick={() => setFilterType(type as any)}
-                className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors border flex items-center gap-2 ${
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border flex items-center gap-2 ${
                     filterType === type 
-                    ? 'bg-secondary-container text-secondary-on-container border-secondary-container' 
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg' 
                     : 'bg-surface text-surface-on-variant border-outline-variant/50 hover:bg-surface-container-high'
                 }`}
              >
@@ -377,7 +390,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
       </div>
 
       {/* Run List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filteredRuns.length === 0 ? (
              <div className="text-center py-20 text-surface-on-variant opacity-60">
                  <Footprints size={48} className="mx-auto mb-4 opacity-50" />
@@ -390,42 +403,42 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                     <div 
                         key={run.id} 
                         onClick={() => toggleExpand(run.id)}
-                        className={`rounded-[24px] transition-all duration-300 cursor-pointer overflow-hidden group ${getRunStyle(run.type)} ${isExpanded ? 'shadow-md ring-1 ring-black/5 dark:ring-white/10' : 'hover:shadow-md hover:scale-[1.01]'}`}
+                        className={`rounded-2xl cursor-pointer overflow-hidden group ${getRunStyle(run.type)} ${isExpanded ? 'shadow-md' : 'shadow-sm'}`}
                     >
                         {/* Summary Section */}
                         <div className="p-5">
                             <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                     <div className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/5 flex items-center gap-1.5">
+                                <div className="flex items-center gap-3">
+                                     <div className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${getRunTypeColorText(run.type)}`}>
                                         {getRunTypeIcon(run.type)}
                                         <span>{run.type}</span>
                                      </div>
-                                     <div className="text-sm font-medium opacity-80 flex items-center gap-1">
-                                        <Calendar size={12} />
+                                     <div className="text-sm font-medium text-surface-on-variant flex items-center gap-1 border-l border-outline-variant/30 pl-3">
+                                        <Calendar size={14} />
                                         {new Date(run.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                                      </div>
                                 </div>
-                                <div className={`p-1 rounded-full transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-black/5 dark:bg-white/10' : 'opacity-50 group-hover:opacity-100'}`}>
+                                <div className={`p-1 rounded-full transition-transform duration-300 text-surface-on-variant ${isExpanded ? 'rotate-180' : ''}`}>
                                     <ChevronDown size={18} />
                                 </div>
                             </div>
 
                             <div className="flex items-end justify-between gap-4">
                                 <div>
-                                    <div className="flex items-baseline gap-1">
+                                    <div className="flex items-baseline gap-1 text-surface-on">
                                         <span className="text-4xl font-bold tracking-tighter leading-none">{run.distance}</span>
                                         <span className="text-sm font-bold opacity-60">km</span>
                                     </div>
                                 </div>
                                 
-                                <div className="flex gap-4 text-right">
+                                <div className="flex gap-6 text-right">
                                     <div>
-                                        <div className="text-[10px] font-bold uppercase opacity-60 mb-0.5 flex items-center justify-end gap-1"><Clock size={10} /> Time</div>
-                                        <div className="text-xl font-semibold leading-none">{formatDuration(run.duration)}</div>
+                                        <div className="text-[10px] font-bold uppercase text-surface-on-variant mb-0.5 flex items-center justify-end gap-1"><Clock size={10} /> Time</div>
+                                        <div className="text-xl font-semibold leading-none text-surface-on">{formatDuration(run.duration)}</div>
                                     </div>
                                     <div>
-                                        <div className="text-[10px] font-bold uppercase opacity-60 mb-0.5 flex items-center justify-end gap-1"><Zap size={10} /> Pace</div>
-                                        <div className="text-xl font-semibold leading-none">
+                                        <div className="text-[10px] font-bold uppercase text-surface-on-variant mb-0.5 flex items-center justify-end gap-1"><Zap size={10} /> Pace</div>
+                                        <div className="text-xl font-semibold leading-none text-surface-on">
                                             {Math.floor(run.duration / run.distance)}:
                                             {Math.round(((run.duration / run.distance) % 1) * 60).toString().padStart(2, '0')}
                                         </div>
@@ -438,35 +451,35 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                         <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                             <div className="overflow-hidden">
                                 <div className="px-5 pb-5 pt-0">
-                                    <div className="h-px w-full bg-black/5 dark:bg-white/5 mb-4"></div>
+                                    <div className="h-px w-full bg-outline-variant/10 mb-4"></div>
                                     
                                     {/* Detailed Grid */}
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                                        <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
-                                            <Heart size={18} className="mb-1 opacity-70" />
-                                            <div className="text-xs font-bold opacity-60">Avg HR</div>
+                                        <div className="bg-surface-container-high rounded-xl p-3 flex flex-col items-center justify-center">
+                                            <Heart size={18} className="mb-1 opacity-50" />
+                                            <div className="text-xs font-bold opacity-50">Avg HR</div>
                                             <div className="text-lg font-bold">{run.avgHr} <span className="text-[10px] font-normal opacity-60">bpm</span></div>
                                         </div>
-                                        <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
-                                            <Footprints size={18} className="mb-1 opacity-70" />
-                                            <div className="text-xs font-bold opacity-60">Cadence</div>
+                                        <div className="bg-surface-container-high rounded-xl p-3 flex flex-col items-center justify-center">
+                                            <Footprints size={18} className="mb-1 opacity-50" />
+                                            <div className="text-xs font-bold opacity-50">Cadence</div>
                                             <div className="text-lg font-bold">{run.cadence || '--'} <span className="text-[10px] font-normal opacity-60">spm</span></div>
                                         </div>
-                                        <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
-                                            <Gauge size={18} className="mb-1 opacity-70" />
-                                            <div className="text-xs font-bold opacity-60">Effort</div>
+                                        <div className="bg-surface-container-high rounded-xl p-3 flex flex-col items-center justify-center">
+                                            <Gauge size={18} className="mb-1 opacity-50" />
+                                            <div className="text-xs font-bold opacity-50">Effort</div>
                                             <div className="text-lg font-bold">{run.rpe || '--'} <span className="text-[10px] font-normal opacity-60">/ 10</span></div>
                                         </div>
-                                         <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
-                                            {run.source === 'Strava' ? <Activity size={18} className="mb-1 opacity-70" /> : run.source === 'Google Fit' ? <Activity size={18} className="mb-1 opacity-70" /> : <Watch size={18} className="mb-1 opacity-70" />}
-                                            <div className="text-xs font-bold opacity-60">Source</div>
+                                         <div className="bg-surface-container-high rounded-xl p-3 flex flex-col items-center justify-center">
+                                            {run.source === 'Strava' ? <Zap size={18} className="mb-1 text-[#FC4C02]" fill="currentColor" /> : run.source === 'Google Fit' ? <Activity size={18} className="mb-1 opacity-50" /> : <Watch size={18} className="mb-1 opacity-50" />}
+                                            <div className="text-xs font-bold opacity-50">Source</div>
                                             <div className="text-sm font-bold truncate w-full text-center">{run.source || 'Manual'}</div>
                                         </div>
                                     </div>
 
                                     {/* Notes */}
                                     {run.notes && (
-                                        <div className="bg-black/5 dark:bg-white/5 rounded-xl p-4 mb-4 relative">
+                                        <div className="bg-surface-container-high rounded-xl p-4 mb-4 relative">
                                             <div className="absolute top-3 left-3 opacity-20"><Info size={16} /></div>
                                             <p className="text-sm italic opacity-80 pl-6">"{run.notes}"</p>
                                         </div>
@@ -476,13 +489,13 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                     <div className="flex justify-end gap-3">
                                          <button 
                                             onClick={(e) => { e.stopPropagation(); handleEditClick(run); }}
-                                            className="px-4 py-2 rounded-full bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/30 font-bold text-sm flex items-center gap-2 transition-colors"
+                                            className="px-4 py-2 rounded-full bg-surface-container-highest hover:bg-surface-container-high font-bold text-sm flex items-center gap-2 transition-colors shadow-sm"
                                         >
                                             <Edit2 size={16} /> Edit
                                         </button>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); onDeleteRun(run.id); }}
-                                            className="px-4 py-2 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-700 dark:text-red-300 font-bold text-sm flex items-center gap-2 transition-colors border border-red-500/10"
+                                            className="px-4 py-2 rounded-full bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 font-bold text-sm flex items-center gap-2 transition-colors"
                                         >
                                             <Trash2 size={16} /> Delete
                                         </button>

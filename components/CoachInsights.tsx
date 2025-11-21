@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Run, InsightResponse, UserProfile } from '../types';
 import { analyzeRunningData, chatWithRunCoach } from '../services/geminiService';
@@ -250,7 +249,7 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
                 }`}>
                   {msg.role === 'model' && (
                     <div className="flex items-center gap-2 mb-2 opacity-60 text-xs uppercase tracking-wider font-bold">
-                      <Sparkles size={12} /> Stride Coach
+                      <Sparkles size={12} /> RedLine Coach
                     </div>
                   )}
                   <p className="whitespace-pre-wrap text-sm leading-relaxed font-medium">{msg.text}</p>

@@ -1,15 +1,14 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { Run, Goal, UserProfile, RunType } from '../types';
-import GoalTracker from './GoalTracker';
-import { Card, StatCard } from './UIComponents';
+import { StatCard } from './UIComponents';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell, ReferenceArea
+  BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
 import { 
-  Activity, Clock, Footprints, Ruler, Heart, Trophy, Medal, Timer, 
-  Filter, Settings, Eye, EyeOff, RotateCcw, Plus, Layout, ChevronLeft, ChevronRight, Minimize2, Maximize2
+  Activity, Timer, Footprints, Heart, Trophy, Medal, 
+  Info, TrendingUp, Calendar
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -21,94 +20,20 @@ interface DashboardProps {
   onNavigate: (tab: 'dashboard' | 'log' | 'coach' | 'profile') => void;
 }
 
-interface WidgetConfig {
-  id: string;
-  visible: boolean;
-  colSpan: number; // 1 to 4
-  title: string;
-}
-
-const DEFAULT_LAYOUT: WidgetConfig[] = [
-  { id: 'goals', visible: true, colSpan: 4, title: 'Goals' },
-  { id: 'stat_dist', visible: true, colSpan: 1, title: 'Distance Stat' },
-  { id: 'stat_pace', visible: true, colSpan: 1, title: 'Pace Stat' },
-  { id: 'stat_cadence', visible: true, colSpan: 1, title: 'Cadence Stat' },
-  { id: 'stat_hr', visible: true, colSpan: 1, title: 'Heart Rate Stat' },
-  { id: 'records', visible: true, colSpan: 4, title: 'Personal Records' },
-  { id: 'chart_dist', visible: true, colSpan: 4, title: 'Distance History' },
-  { id: 'chart_hr', visible: true, colSpan: 2, title: 'HR Zones' },
-  { id: 'chart_pace', visible: true, colSpan: 2, title: 'Pace vs HR' },
-  { id: 'chart_form', visible: true, colSpan: 4, title: 'Form Analysis' },
-];
-
-const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, onDeleteGoal, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ runs, profile }) => {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year' | 'all'>('all');
-  const [isEditing, setIsEditing] = useState(false);
-  const [layout, setLayout] = useState<WidgetConfig[]>(DEFAULT_LAYOUT);
 
-  // Load layout
-  useEffect(() => {
-    const savedLayout = localStorage.getItem('stride_dashboard_layout');
-    if (savedLayout) {
-      try {
-        const parsed = JSON.parse(savedLayout);
-        const merged = [...parsed];
-        // Ensure new widgets are added if they didn't exist in saved layout
-        DEFAULT_LAYOUT.forEach(def => {
-            if (!merged.find(m => m.id === def.id)) merged.push(def);
-        });
-        setLayout(merged);
-      } catch (e) { console.error("Failed to parse layout", e); }
-    }
-  }, []);
-
-  const saveLayout = (newLayout: WidgetConfig[]) => {
-    setLayout(newLayout);
-    localStorage.setItem('stride_dashboard_layout', JSON.stringify(newLayout));
-  };
-
-  const toggleWidgetVisibility = (id: string) => {
-    const newLayout = layout.map(w => w.id === id ? { ...w, visible: !w.visible } : w);
-    saveLayout(newLayout);
-  };
-
-  const toggleWidgetSize = (id: string, increase: boolean) => {
-    const newLayout = layout.map(w => {
-      if (w.id === id) {
-        let newSpan = w.colSpan + (increase ? 1 : -1);
-        if (newSpan < 1) newSpan = 1;
-        if (newSpan > 4) newSpan = 4;
-        return { ...w, colSpan: newSpan };
-      }
-      return w;
-    });
-    saveLayout(newLayout);
-  };
-
-  const moveWidget = (index: number, direction: 'prev' | 'next') => {
-    const newLayout = [...layout];
-    if (direction === 'prev' && index > 0) {
-      [newLayout[index], newLayout[index - 1]] = [newLayout[index - 1], newLayout[index]];
-    } else if (direction === 'next' && index < newLayout.length - 1) {
-      [newLayout[index], newLayout[index + 1]] = [newLayout[index + 1], newLayout[index]];
-    }
-    saveLayout(newLayout);
-  };
-
-  const resetLayout = () => {
-    if (window.confirm("Reset dashboard to default layout?")) saveLayout(DEFAULT_LAYOUT);
-  };
-
-  // Refined Palette for Run Types - Matches RunLog
+  // RedLine Palette - Adizero Style
+  // Primary: #D32F2F (Red), Secondary: #000000 (Black), Neutral: #9CA3AF (Gray)
   const getRunTypeColor = (type: string) => {
     switch (type) {
-      case RunType.EASY: return '#10B981'; // Emerald 500
-      case RunType.TEMPO: return '#F59E0B'; // Amber 500
-      case RunType.INTERVAL: return '#F43F5E'; // Rose 500
-      case RunType.LONG: return '#0EA5E9'; // Sky 500
-      case RunType.RECOVERY: return '#6366F1'; // Indigo 500
-      case RunType.RACE: return '#A855F7'; // Purple 500
-      default: return '#94A3B8'; // Slate 400
+      case RunType.EASY: return '#9CA3AF'; // Gray
+      case RunType.TEMPO: return '#D32F2F'; // Red
+      case RunType.INTERVAL: return '#7F1D1D'; // Dark Red
+      case RunType.LONG: return '#000000'; // Black
+      case RunType.RECOVERY: return '#D1D5DB'; // Light Gray
+      case RunType.RACE: return '#DC2626'; // Bright Red
+      default: return '#6B7280';
     }
   };
 
@@ -124,10 +49,10 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
   }, [runs, timeRange]);
   
   const stats = useMemo(() => {
-    if (filteredRuns.length === 0) return { totalDistance: 0, avgPace: 0, totalRuns: 0, avgHr: 0, avgCadence: 0 };
+    if (filteredRuns.length === 0) return { totalDistance: 0, avgPace: 0, totalRuns: 0, avgHr: 0, avgCadence: 0, avgPaceStr: "0:00" };
     const totalDistance = filteredRuns.reduce((acc, run) => acc + run.distance, 0);
     const totalDuration = filteredRuns.reduce((acc, run) => acc + run.duration, 0);
-    const avgPaceDec = totalDuration / (totalDistance || 1); 
+    const avgPaceDec = totalDistance > 0 ? totalDuration / totalDistance : 0; 
     const paceMin = Math.floor(avgPaceDec);
     const paceSec = Math.round((avgPaceDec - paceMin) * 60);
     const totalRuns = filteredRuns.length;
@@ -154,7 +79,6 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
             pace: parseFloat((run.duration / run.distance).toFixed(2)),
             hr: run.avgHr,
             cadence: run.cadence || null,
-            strideLength: run.strideLength || null,
             type: run.type
       }));
   }, [filteredRuns]);
@@ -162,23 +86,23 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
   const hrZoneData = useMemo(() => {
     const age = profile?.age && profile.age > 0 ? profile.age : 30;
     const maxHr = 220 - age;
+    // Monochromatic Gradient with Red Peak for intensity
     const zones = [
-        { name: 'Z1', min: 0, max: maxHr * 0.6, color: '#94A3B8', minutes: 0 }, // Slate
-        { name: 'Z2', min: maxHr * 0.6, max: maxHr * 0.7, color: '#10B981', minutes: 0 }, // Emerald (Easy)
-        { name: 'Z3', min: maxHr * 0.7, max: maxHr * 0.8, color: '#0EA5E9', minutes: 0 }, // Sky (Aerobic)
-        { name: 'Z4', min: maxHr * 0.8, max: maxHr * 0.9, color: '#F59E0B', minutes: 0 }, // Amber (Threshold)
-        { name: 'Z5', min: maxHr * 0.9, max: 300, color: '#F43F5E', minutes: 0 }, // Rose (Anaerobic)
+        { name: 'Z1', min: 0, max: maxHr * 0.6, color: '#F3F4F6', minutes: 0 }, // Gray 100
+        { name: 'Z2', min: maxHr * 0.6, max: maxHr * 0.7, color: '#9CA3AF', minutes: 0 }, // Gray 400
+        { name: 'Z3', min: maxHr * 0.7, max: maxHr * 0.8, color: '#4B5563', minutes: 0 }, // Gray 600
+        { name: 'Z4', min: maxHr * 0.8, max: maxHr * 0.9, color: '#EF4444', minutes: 0 }, // Red 500
+        { name: 'Z5', min: maxHr * 0.9, max: 300, color: '#991B1B', minutes: 0 }, // Red 800
     ];
     filteredRuns.forEach(run => {
         const zone = zones.find(z => run.avgHr >= z.min && run.avgHr < z.max);
         if (zone) zone.minutes += run.duration;
     });
-    return zones.map(z => ({ ...z, value: z.minutes, range: `${Math.round(z.min)}-${Math.round(z.max)}` }));
+    return zones.filter(z => z.minutes > 0).map(z => ({ ...z, value: z.minutes }));
   }, [filteredRuns, profile]);
 
   const records = useMemo(() => {
     const milestones = [
-      { label: '1km', distance: 1, icon: <Timer size={18} /> },
       { label: '5km', distance: 5, icon: <Medal size={18} /> },
       { label: '10km', distance: 10, icon: <Medal size={18} /> },
       { label: 'Half', distance: 21.0975, icon: <Trophy size={18} /> },
@@ -188,270 +112,211 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     return milestones.map(milestone => {
       const eligibleRuns = filteredRuns.filter(r => r.distance >= milestone.distance);
       if (eligibleRuns.length === 0) return { ...milestone, best: null };
+      
       const bestRun = eligibleRuns.reduce((best, current) => {
+        // Calculate pace for the specific distance segment roughly by using average pace
         const currentPace = current.duration / current.distance;
         const bestPace = best.duration / best.distance;
         return currentPace < bestPace ? current : best;
       });
-      const pace = bestRun.duration / bestRun.distance;
-      return {
-        ...milestone,
-        best: { time: pace * milestone.distance, date: bestRun.date }
-      };
+
+      const totalMinutes = (bestRun.duration / bestRun.distance) * milestone.distance;
+      const h = Math.floor(totalMinutes / 60);
+      const m = Math.floor(totalMinutes % 60);
+      const s = Math.round((totalMinutes * 60) % 60);
+      const timeStr = h > 0 
+        ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+        : `${m}:${s.toString().padStart(2, '0')}`;
+
+      return { ...milestone, best: timeStr, date: bestRun.date };
     });
   }, [filteredRuns]);
 
-  const formatDuration = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = Math.floor(minutes % 60);
-    const s = Math.round((minutes * 60) % 60);
-    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
-  if (runs.length === 0) {
-    return (
-      <div className="animate-fade-in flex flex-col items-center justify-center py-20 text-center space-y-8">
-        <div className="bg-primary-container p-8 rounded-3xl shadow-lg">
-           <Activity size={80} className="text-primary-on-container" />
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-surface-container p-3 border border-outline-variant/20 shadow-lg rounded-xl text-xs">
+          <p className="font-bold text-surface-on mb-1">{label}</p>
+          {payload.map((p: any, index: number) => (
+            <div key={index} className="flex items-center gap-2 mb-0.5">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }}></div>
+                <span className="text-surface-on-variant capitalize">{p.name}:</span>
+                <span className="font-bold text-surface-on">
+                    {p.name === 'pace' ? `${Math.floor(p.value)}:${Math.round((p.value % 1) * 60).toString().padStart(2,'0')} /km` : p.value}
+                </span>
+            </div>
+          ))}
         </div>
-        <div>
-            <h1 className="text-5xl font-bold text-surface-on tracking-tight mb-4">Welcome</h1>
-            <p className="text-surface-on-variant max-w-md text-xl">
-            Your intelligent running companion waits. Start logging to unlock insights.
-            </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto px-6">
-             <button onClick={() => onNavigate('log')} className="px-8 py-4 bg-primary text-primary-on rounded-full font-bold shadow-lg hover:scale-105 transition-transform">Log First Run</button>
-             <button onClick={() => onNavigate('profile')} className="px-8 py-4 bg-secondary-container text-secondary-on-container rounded-full font-bold hover:bg-secondary-container/80 transition-colors">Setup Profile</button>
-        </div>
-      </div>
-    );
-  }
-
-  const renderWidgetContent = (id: string) => {
-    switch(id) {
-        case 'goals':
-            return <GoalTracker runs={runs} goals={goals} onAddGoal={onAddGoal} onDeleteGoal={onDeleteGoal} />;
-        case 'stat_dist':
-            return <StatCard title="Distance" value={`${stats.totalDistance} km`} icon={<Activity />} colorClass="bg-primary-container text-primary-on-container" />;
-        case 'stat_pace':
-            return <StatCard title="Avg Pace" value={`${stats.avgPaceStr} /km`} icon={<Clock />} colorClass="bg-secondary-container text-secondary-on-container" />;
-        case 'stat_cadence':
-            return <StatCard title="Cadence" value={stats.avgCadence ? `${stats.avgCadence}` : '--'} icon={<Footprints />} colorClass="bg-tertiary-container text-tertiary-on-container" subtext="Steps per min" />;
-        case 'stat_hr':
-            return <StatCard title="Avg HR" value={`${stats.avgHr} bpm`} icon={<Heart />} colorClass="bg-error-container text-error-on-container" />;
-        case 'records':
-            return (
-                <Card className="h-full">
-                    <h3 className="text-xl font-bold text-surface-on mb-6 flex items-center gap-2">
-                        <Trophy className="text-tertiary" size={24} />
-                        Personal Records
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {records.map((record, idx) => (
-                            <div key={idx} className="bg-surface-container-highest rounded-2xl p-4 flex flex-col group border border-transparent hover:border-primary/20 transition-all">
-                                <div className="text-surface-on-variant text-xs font-bold uppercase mb-2 flex items-center gap-1">
-                                    {React.cloneElement(record.icon as any, { size: 14 })} {record.label}
-                                </div>
-                                {record.best ? (
-                                    <div>
-                                        <div className="text-primary font-bold text-2xl">{formatDuration(record.best.time)}</div>
-                                        <div className="text-surface-on-variant text-[10px] mt-1 opacity-80">
-                                            {new Date(record.best.date).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })}
-                                        </div>
-                                    </div>
-                                ) : <div className="text-surface-on-variant/50 text-sm italic mt-1">--:--</div>}
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            );
-
-        case 'chart_dist':
-            return (
-                <Card className="h-full min-h-[400px]">
-                    <h3 className="text-xl font-bold text-surface-on mb-6">Distance History</h3>
-                    <div className="h-80 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--md-sys-color-outline-variant)" vertical={false} />
-                            <XAxis dataKey="date" stroke="var(--md-sys-color-on-surface-variant)" tick={{fontSize: 11}} tickLine={false} axisLine={false} />
-                            <YAxis stroke="var(--md-sys-color-on-surface-variant)" tick={{fontSize: 11}} tickLine={false} axisLine={false} />
-                            <Tooltip 
-                                contentStyle={{ backgroundColor: 'var(--md-sys-color-surface-container-high)', border: 'none', borderRadius: '16px', color: 'var(--md-sys-color-on-surface)' }}
-                                cursor={{fill: 'var(--md-sys-color-surface-container-highest)'}}
-                            />
-                            <Bar dataKey="distance" radius={[8, 8, 0, 0]}>
-                                {chartData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={getRunTypeColor(entry.type)} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Card>
-            );
-
-        case 'chart_hr':
-             return (
-                <Card className="h-full min-h-[350px]">
-                    <h3 className="text-xl font-bold text-surface-on mb-6 flex items-center gap-2">
-                        <Heart size={24} className="text-error" /> Heart Rate Zones
-                    </h3>
-                    <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={hrZoneData} layout="vertical" margin={{ left: 0, right: 30 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--md-sys-color-outline-variant)" horizontal={false} />
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="name" type="category" stroke="var(--md-sys-color-on-surface-variant)" tick={{fontSize: 12, fontWeight: 'bold'}} width={30} tickLine={false} axisLine={false} />
-                                <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ backgroundColor: 'var(--md-sys-color-surface-container-high)', border: 'none', borderRadius: '12px', color: 'var(--md-sys-color-on-surface)' }} />
-                                <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={32}>
-                                    {hrZoneData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Card>
-             );
-        
-        case 'chart_pace':
-             return (
-                <Card className="h-full min-h-[350px]">
-                    <h3 className="text-xl font-bold text-surface-on mb-6">Pace vs Intensity</h3>
-                    <div className="h-64 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--md-sys-color-outline-variant)" vertical={false} />
-                                <XAxis dataKey="date" stroke="var(--md-sys-color-on-surface-variant)" tick={{fontSize: 11}} tickLine={false} axisLine={false} />
-                                <YAxis yAxisId="left" stroke="var(--md-sys-color-primary)" hide domain={['dataMin - 1', 'dataMax + 1']} />
-                                <YAxis yAxisId="right" orientation="right" stroke="var(--md-sys-color-error)" hide domain={['dataMin - 10', 'dataMax + 10']} />
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--md-sys-color-surface-container-high)', border: 'none', borderRadius: '12px', color: 'var(--md-sys-color-on-surface)' }} />
-                                <Line yAxisId="left" type="monotone" dataKey="pace" stroke="var(--md-sys-color-primary)" strokeWidth={3} dot={{r:3, fill:'var(--md-sys-color-primary)'}} />
-                                <Line yAxisId="right" type="monotone" dataKey="hr" stroke="var(--md-sys-color-error)" strokeWidth={3} dot={{r:3, fill:'var(--md-sys-color-error)'}} />
-                            </LineChart>
-                            </ResponsiveContainer>
-                    </div>
-                </Card>
-             );
-
-        case 'chart_form':
-             return (
-                <Card className="h-full min-h-[400px]">
-                    <h3 className="text-xl font-bold text-surface-on mb-6 flex items-center gap-2">
-                        <Ruler size={24} className="text-secondary" /> Form Analysis
-                    </h3>
-                    <div className="h-72 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--md-sys-color-outline-variant)" vertical={false} />
-                                <XAxis dataKey="date" stroke="var(--md-sys-color-on-surface-variant)" tick={{fontSize: 11}} tickLine={false} axisLine={false} />
-                                <YAxis yAxisId="left" stroke="var(--md-sys-color-secondary)" tick={{fontSize: 11}} domain={[140, 210]} axisLine={false} tickLine={false} />
-                                <YAxis yAxisId="right" orientation="right" stroke="var(--md-sys-color-tertiary)" tick={{fontSize: 11}} domain={[0, 2.0]} axisLine={false} tickLine={false} />
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--md-sys-color-surface-container-high)', border: 'none', borderRadius: '12px', color: 'var(--md-sys-color-on-surface)' }} />
-                                <ReferenceArea yAxisId="left" y1={170} y2={185} fill="var(--md-sys-color-secondary-container)" fillOpacity={0.3} />
-                                <Line yAxisId="left" type="monotone" dataKey="cadence" stroke="var(--md-sys-color-secondary)" strokeWidth={3} dot={{r:4}} name="Cadence" connectNulls />
-                                <Line yAxisId="right" type="monotone" dataKey="strideLength" stroke="var(--md-sys-color-tertiary)" strokeWidth={3} dot={{r:4}} name="Stride" connectNulls />
-                            </LineChart>
-                            </ResponsiveContainer>
-                    </div>
-                </Card>
-             );
-        default: return null;
+      );
     }
+    return null;
   };
 
   return (
-    <div className="space-y-8 animate-fade-in pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
-         <div>
-            <h1 className="text-4xl font-bold text-surface-on tracking-tighter">
-            Hello, <span className="text-primary">{profile?.name || 'Runner'}</span>
-            </h1>
-            <p className="text-surface-on-variant text-lg mt-1">Your Expressive Dashboard</p>
-         </div>
-
-         <div className="flex items-center gap-3">
-            <button 
-                onClick={() => setIsEditing(!isEditing)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all ${isEditing ? 'bg-primary text-primary-on border-primary shadow-md' : 'bg-surface-container-high text-surface-on-variant border-transparent hover:bg-surface-container-highest'}`}
-            >
-                <Settings size={20} className={isEditing ? 'animate-spin-slow' : ''} />
-                <span className="font-medium text-sm">{isEditing ? 'Done' : 'Customize'}</span>
-            </button>
-
-            <div className="flex items-center gap-2 bg-surface-container-high p-1.5 rounded-full border border-outline-variant/20">
-                <div className="pl-3 pr-2 text-surface-on-variant">
-                    <Filter size={18} />
-                </div>
-                <select 
-                    value={timeRange}
-                    onChange={(e) => setTimeRange(e.target.value as any)}
-                    className="bg-transparent text-surface-on text-sm font-bold p-1 pr-4 outline-none cursor-pointer appearance-none hover:text-primary"
+    <div className="animate-fade-in space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h2 className="text-3xl font-bold text-surface-on tracking-tight">Dashboard</h2>
+            <p className="text-surface-on-variant text-sm">Your training at a glance</p>
+        </div>
+        
+        <div className="bg-surface-container-high p-1 rounded-full flex border border-outline-variant/20">
+            {['week', 'month', 'year', 'all'].map((t) => (
+                <button
+                    key={t}
+                    onClick={() => setTimeRange(t as any)}
+                    className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition-all ${timeRange === t ? 'bg-surface-on text-surface-inverse-on shadow-md' : 'text-surface-on-variant hover:bg-surface-container-highest'}`}
                 >
-                    <option value="all" className="bg-surface-container">All Time</option>
-                    <option value="year" className="bg-surface-container">Last Year</option>
-                    <option value="month" className="bg-surface-container">Last 30 Days</option>
-                    <option value="week" className="bg-surface-container">Last 7 Days</option>
-                </select>
-            </div>
-         </div>
+                    {t}
+                </button>
+            ))}
+        </div>
       </div>
 
-      {isEditing && (
-        <div className="bg-secondary-container/50 backdrop-blur-md p-4 rounded-2xl border border-secondary/20 mb-6 animate-slide-down flex flex-wrap items-center justify-between gap-4">
-             <div className="flex items-center gap-2">
-                 <Layout className="text-secondary" />
-                 <span className="font-bold text-secondary-on-container">Edit Layout</span>
-             </div>
-             <div className="flex flex-wrap gap-2">
-                 {layout.filter(w => !w.visible).map(w => (
-                     <button key={w.id} onClick={() => toggleWidgetVisibility(w.id)} className="flex items-center gap-1 px-3 py-1 bg-surface-container text-surface-on-variant rounded-full text-xs font-medium hover:bg-primary-container hover:text-primary-on-container border border-outline-variant/30 transition-colors">
-                         <Plus size={12} /> Show {w.title}
-                     </button>
-                 ))}
-                 <button onClick={resetLayout} className="flex items-center gap-1 px-3 py-1 bg-error-container text-error-on-container rounded-full text-xs font-medium hover:opacity-80 transition-opacity ml-2">
-                     <RotateCcw size={12} /> Reset Defaults
-                 </button>
-             </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard 
+            title="Distance" 
+            value={`${stats.totalDistance} km`} 
+            icon={<Activity />} 
+            colorClass="bg-surface-on text-surface-inverse-on" 
+        />
+        <StatCard 
+            title="Avg Pace" 
+            value={`${stats.avgPaceStr} /km`} 
+            icon={<Timer />} 
+            colorClass="bg-primary text-primary-on" 
+        />
+        <StatCard 
+            title="Runs" 
+            value={stats.totalRuns.toString()} 
+            icon={<Calendar />} 
+            colorClass="bg-surface-container-high text-surface-on" 
+        />
+        <StatCard 
+            title="Avg HR" 
+            value={`${stats.avgHr} bpm`} 
+            icon={<Heart />} 
+            colorClass="bg-error-container text-error-on-container" 
+        />
+      </div>
+
+      {/* Charts Row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Distance History */}
+        <div className="lg:col-span-2 bg-surface-container p-6 rounded-[24px] border border-outline-variant/20 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-surface-on flex items-center gap-2">
+                    <Activity size={18} className="text-surface-on-variant" />
+                    Training Volume
+                </h3>
+            </div>
+            <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#6B7280'}} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#6B7280'}} />
+                        <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(0,0,0,0.05)'}} />
+                        <Bar dataKey="distance" name="Distance" radius={[4, 4, 0, 0]} animationDuration={1000}>
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={getRunTypeColor(entry.type)} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
         </div>
-      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {layout.map((widget, index) => {
-              if (!widget.visible && !isEditing) return null;
+        {/* HR Zones */}
+        <div className="bg-surface-container p-6 rounded-[24px] border border-outline-variant/20 shadow-sm flex flex-col">
+             <h3 className="text-lg font-bold text-surface-on mb-6 flex items-center gap-2">
+                <Heart size={18} className="text-surface-on-variant" />
+                Intensity Dist.
+            </h3>
+            <div className="flex-1 min-h-[200px] relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={hrZoneData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                        >
+                            {hrZoneData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                            ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                </ResponsiveContainer>
+                {/* Center Text */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                        <span className="text-3xl font-bold text-surface-on">{stats.avgHr}</span>
+                        <div className="text-[10px] font-bold text-surface-on-variant uppercase">Avg BPM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
 
-              return (
-                  <div 
-                    key={widget.id} 
-                    className={`
-                        relative transition-all duration-300
-                        ${widget.colSpan === 4 ? 'md:col-span-2 lg:col-span-4' : widget.colSpan === 2 ? 'md:col-span-2 lg:col-span-2' : 'col-span-1'}
-                        ${isEditing ? 'ring-2 ring-offset-4 ring-offset-surface ring-primary/30 rounded-[26px] hover:ring-primary/60' : ''}
-                        ${!widget.visible ? 'opacity-50 grayscale' : ''}
-                    `}
-                  >
-                      {isEditing && (
-                          <div className="absolute -top-3 left-0 right-0 flex justify-center z-20 gap-1 pointer-events-none">
-                              <div className="bg-surface-on-surface-variant text-white bg-gray-800 rounded-full p-1 shadow-lg flex items-center gap-1 pointer-events-auto scale-90">
-                                  <button onClick={() => moveWidget(index, 'prev')} disabled={index === 0} className="p-1 hover:text-primary disabled:opacity-30"><ChevronLeft size={16} /></button>
-                                  <div className="w-px h-4 bg-gray-600"></div>
-                                  <button onClick={() => toggleWidgetSize(widget.id, false)} className="p-1 hover:text-primary" title="Shrink"><Minimize2 size={14} /></button>
-                                  <span className="text-[10px] font-mono">{widget.colSpan}x</span>
-                                  <button onClick={() => toggleWidgetSize(widget.id, true)} className="p-1 hover:text-primary" title="Expand"><Maximize2 size={14} /></button>
-                                  <div className="w-px h-4 bg-gray-600"></div>
-                                  <button onClick={() => toggleWidgetVisibility(widget.id)} className={`p-1 ${widget.visible ? 'hover:text-error' : 'text-primary hover:text-primary-on'}`} title={widget.visible ? 'Hide' : 'Show'}>
-                                      {widget.visible ? <EyeOff size={14} /> : <Eye size={14} />}
-                                  </button>
-                                  <div className="w-px h-4 bg-gray-600"></div>
-                                  <button onClick={() => moveWidget(index, 'next')} disabled={index === layout.length - 1} className="p-1 hover:text-primary disabled:opacity-30"><ChevronRight size={16} /></button>
-                              </div>
-                          </div>
-                      )}
-                      {renderWidgetContent(widget.id)}
-                  </div>
-              );
-          })}
+      {/* Charts Row 2 & PRs */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+         {/* Pace vs HR Trends */}
+         <div className="lg:col-span-2 bg-surface-container p-6 rounded-[24px] border border-outline-variant/20 shadow-sm">
+            <h3 className="text-lg font-bold text-surface-on mb-6 flex items-center gap-2">
+                <TrendingUp size={18} className="text-surface-on-variant" />
+                Pace vs Heart Rate
+            </h3>
+            <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#6B7280'}} dy={10} />
+                        <YAxis yAxisId="left" orientation="left" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#6B7280'}} domain={['auto', 'auto']} />
+                        <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#EF4444'}} domain={['auto', 'auto']} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Line yAxisId="left" type="monotone" dataKey="pace" stroke="#000000" strokeWidth={2} dot={false} name="pace" activeDot={{r: 6}} />
+                        <Line yAxisId="right" type="monotone" dataKey="hr" stroke="#EF4444" strokeWidth={2} dot={false} name="hr" />
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+         </div>
+
+         {/* Records */}
+         <div className="bg-surface-container p-6 rounded-[24px] border border-outline-variant/20 shadow-sm">
+             <h3 className="text-lg font-bold text-surface-on mb-6 flex items-center gap-2">
+                <Trophy size={18} className="text-surface-on-variant" />
+                Personal Bests
+            </h3>
+            <div className="space-y-4">
+                {records.map((record, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors group">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${record.best ? 'bg-primary text-primary-on' : 'bg-surface-container-highest text-surface-on-variant'}`}>
+                                {React.cloneElement(record.icon as any, { size: 16 })}
+                            </div>
+                            <div>
+                                <div className="text-xs font-bold text-surface-on-variant uppercase">{record.label}</div>
+                                <div className={`font-bold ${record.best ? 'text-surface-on' : 'text-surface-on-variant/50'}`}>
+                                    {record.best || '--:--'}
+                                </div>
+                            </div>
+                        </div>
+                        {record.date && (
+                             <div className="text-[10px] font-medium text-surface-on-variant opacity-0 group-hover:opacity-100 transition-opacity">
+                                 {new Date(record.date).toLocaleDateString(undefined, {month:'short', year:'2-digit'})}
+                             </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+         </div>
       </div>
     </div>
   );
