@@ -43,7 +43,7 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
       const data = await analyzeRunningData(runs, profile);
       setInsights(data);
     } catch (err) {
-      setError("Failed to connect to the AI Coach. Please check your API Key configuration.");
+      setError("Failed to connect to Stride. Please check your API Key configuration.");
     } finally {
       setLoading(false);
     }

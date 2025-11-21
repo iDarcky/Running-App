@@ -103,11 +103,15 @@ export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserPr
     
     My profile: ${profile ? JSON.stringify(profile) : 'N/A'}
     
-    Recent runs: ${JSON.stringify(runs.slice(0, 5))}
+    Recent runs: ${JSON.stringify(runs.slice(0, 10))}
 
-    Create a brief, high-level training strategy for the remaining time until the race. 
-    Include key workouts and a tapering strategy.
-    Format the response as clean Markdown.
+    Create a personalized training strategy for this race.
+    Analyze my recent volume and pace compared to the race distance and goal.
+    Provide a high-level weekly structure (e.g. "Focus on long runs for 2 weeks, then taper").
+    Include specific key workouts.
+    
+    Format the output in clean Markdown.
+    Keep it concise but actionable.
   `;
 
   try {

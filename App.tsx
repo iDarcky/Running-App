@@ -161,7 +161,7 @@ const App: React.FC = () => {
                 <nav className="flex-1 space-y-2">
                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Dashboard" onClick={setActiveTab} />
                     <NavButton tab="log" activeTab={activeTab} icon={List} label="Training Log" onClick={setActiveTab} />
-                    <NavButton tab="coach" activeTab={activeTab} icon={BrainCircuit} label="AI Coach" onClick={setActiveTab} />
+                    <NavButton tab="coach" activeTab={activeTab} icon={BrainCircuit} label="Coach" onClick={setActiveTab} />
                     <NavButton tab="race" activeTab={activeTab} icon={Flag} label="Race Prep" onClick={setActiveTab} />
                     <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} />
                 </nav>

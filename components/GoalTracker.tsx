@@ -68,7 +68,7 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ runs, goals, onAddGoal, onDel
   };
 
   return (
-    <div className="bg-surface-container rounded-[24px] p-6 shadow-sm border border-outline-variant/20 mb-6">
+    <div className="bg-surface-container rounded-[24px] p-6 shadow-sm border border-outline-variant/20 h-full">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold text-surface-on flex items-center gap-2">
           <Target className="text-primary" size={24} />
