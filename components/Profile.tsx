@@ -10,72 +10,8 @@ interface ProfileProps {
   toggleTheme: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, theme, toggleTheme }) => {
-  const [formData, setFormData] = useState<UserProfile>(profile);
-  const [saved, setSaved] = useState(false);
-  
-  // Auth State
-  const isLoggedIn = !!profile.name;
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [loginName, setLoginName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  useEffect(() => {
-    setFormData(profile);
-  }, [profile]);
-
-  const handleChange = (field: keyof UserProfile, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    setSaved(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSaveProfile(formData);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (authMode === 'signup' && !loginName.trim()) return;
-    const nameToUse = loginName.trim() || (authMode === 'login' ? "Runner" : "");
-    if (nameToUse) {
-        onSaveProfile({
-            ...profile,
-            name: nameToUse
-        });
-    }
-  };
-
-  const handleGuestLogin = () => {
-    onSaveProfile({
-        ...profile,
-        name: 'Guest Runner'
-    });
-  };
-
-  const handleLogout = () => {
-      onSaveProfile({
-          name: '',
-          height: 0,
-          weight: 0,
-          age: 0,
-          sex: '',
-          shoeModel: ''
-      });
-      setLoginName('');
-      setEmail('');
-      setPassword('');
-      setAuthMode('login');
-  };
-
-  // Material 3 Input Component
-  const M3Input = ({ label, icon: Icon, type = "text", value, onChange, placeholder, required = false }: any) => (
+// Material 3 Input Component - Memoized and defined outside
+const M3Input = React.memo(({ label, icon: Icon, type = "text", value, onChange, placeholder, required = false }: any) => (
     <div className="relative group">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Icon className="text-surface-on-variant" size={20} />
@@ -94,10 +30,23 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
         {/* Active Indicator */}
         <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-300 peer-focus:w-full"></div>
     </div>
-  );
+));
 
-  // Login View
-  if (!isLoggedIn) {
+// Auth Screen Component - Separated to isolate state and rendering
+const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
+    const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+    const [loginName, setLoginName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (authMode === 'signup' && !loginName.trim()) return;
+        
+        const nameToUse = loginName.trim() || (authMode === 'login' ? "Runner" : "Runner");
+        onLogin(nameToUse);
+    };
+
     return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in p-4">
             <div className="w-full max-w-md bg-surface-container rounded-[32px] p-8 shadow-xl relative overflow-hidden border border-outline-variant/20">
@@ -113,12 +62,30 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                     </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-4 relative z-10">
+                <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
                     {authMode === 'signup' && (
-                        <M3Input label="Name" icon={User} value={loginName} onChange={(e: any) => setLoginName(e.target.value)} required />
+                        <M3Input 
+                            label="Name" 
+                            icon={User} 
+                            value={loginName} 
+                            onChange={(e: any) => setLoginName(e.target.value)} 
+                            required 
+                        />
                     )}
-                    <M3Input label="Email" icon={Mail} type="email" value={email} onChange={(e: any) => setEmail(e.target.value)} />
-                    <M3Input label="Password" icon={Lock} type="password" value={password} onChange={(e: any) => setPassword(e.target.value)} />
+                    <M3Input 
+                        label="Email" 
+                        icon={Mail} 
+                        type="email" 
+                        value={email} 
+                        onChange={(e: any) => setEmail(e.target.value)} 
+                    />
+                    <M3Input 
+                        label="Password" 
+                        icon={Lock} 
+                        type="password" 
+                        value={password} 
+                        onChange={(e: any) => setPassword(e.target.value)} 
+                    />
 
                     <button 
                         type="submit" 
@@ -140,7 +107,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                     <div className="my-6 border-t border-outline-variant/30"></div>
 
                     <button 
-                        onClick={handleGuestLogin}
+                        onClick={() => onLogin('Guest Runner')}
                         className="text-surface-on-variant text-sm font-medium hover:text-surface-on transition-colors"
                     >
                         Continue as Guest
@@ -149,6 +116,53 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
             </div>
         </div>
     );
+};
+
+const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, theme, toggleTheme }) => {
+  const [formData, setFormData] = useState<UserProfile>(profile);
+  const [saved, setSaved] = useState(false);
+  const isLoggedIn = !!profile.name;
+
+  useEffect(() => {
+    setFormData(profile);
+  }, [profile]);
+
+  const handleChange = (field: keyof UserProfile, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setSaved(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSaveProfile(formData);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleLoginSuccess = (name: string) => {
+    onSaveProfile({
+        ...profile,
+        name: name
+    });
+  };
+
+  const handleLogout = () => {
+      onSaveProfile({
+          name: '',
+          height: 0,
+          weight: 0,
+          age: 0,
+          sex: '',
+          shoeModel: ''
+      });
+  };
+
+  // Login View
+  if (!isLoggedIn) {
+    return <AuthScreen onLogin={handleLoginSuccess} />;
   }
 
   return (

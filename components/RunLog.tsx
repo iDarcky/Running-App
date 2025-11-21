@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, StravaToken, GoogleToken } from '../types';
-import { Plus, Trash2, MapPin, Clock, Heart, Activity, Watch, Smartphone, Footprints, Filter, X, CheckCircle, Chrome, Zap, BatteryCharging, Trophy, Copy, AlertTriangle, Info, ExternalLink, Loader2, ArrowRight, Edit2 } from 'lucide-react';
+import { Plus, Trash2, MapPin, Clock, Heart, Activity, Watch, Smartphone, Footprints, Filter, X, CheckCircle, Chrome, Zap, BatteryCharging, Trophy, Copy, AlertTriangle, Info, ExternalLink, Loader2, ArrowRight, Edit2, ChevronDown, ChevronUp, Gauge, Calendar, Timer } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
 
@@ -17,6 +17,9 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
   const [isSyncing, setIsSyncing] = useState(false);
   const [filterType, setFilterType] = useState<RunType | 'All'>('All');
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Expandable card state
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   
   const [isStravaModalOpen, setIsStravaModalOpen] = useState(false);
   const [stravaClientId, setStravaClientId] = useState('');
@@ -257,6 +260,10 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
     resetForm();
   };
 
+  const toggleExpand = (id: string) => {
+      setExpandedId(prev => prev === id ? null : id);
+  };
+
   const filteredRuns = filterType === 'All' ? runs : runs.filter(r => r.type === filterType);
 
   const formatDuration = (minutes: number) => {
@@ -371,87 +378,114 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                  <p className="text-lg">No runs found matching this filter.</p>
              </div>
         ) : (
-            filteredRuns.map(run => (
-            <div key={run.id} className={`rounded-3xl p-6 transition-all hover:shadow-md ${getRunStyle(run.type)}`}>
-                <div className="flex flex-col md:flex-row justify-between gap-4">
-                    {/* Left Info */}
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider opacity-80 bg-black/5 dark:bg-white/10 px-2 py-1 rounded-md backdrop-blur-sm">
-                                {run.type}
-                            </span>
-                            <span className="text-sm opacity-75 font-medium flex items-center gap-1">
-                                {new Date(run.date).toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric' })}
-                            </span>
-                             {run.source && run.source !== 'Manual' && (
-                                <span className="text-[10px] flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm ml-auto md:ml-0">
-                                    {run.source === 'Strava' ? <Activity size={10} /> : <Zap size={10} />} {run.source}
-                                </span>
-                            )}
-                        </div>
-                        
-                        <div className="flex items-baseline gap-1 mb-1">
-                            <h3 className="text-3xl font-bold tracking-tight">{run.distance}</h3>
-                            <span className="text-sm font-medium opacity-80">km</span>
-                        </div>
-                        
-                        {run.notes && <p className="text-sm opacity-80 line-clamp-1 mt-1 max-w-md italic">{run.notes}</p>}
-                    </div>
+            filteredRuns.map(run => {
+                const isExpanded = expandedId === run.id;
+                return (
+                    <div 
+                        key={run.id} 
+                        onClick={() => toggleExpand(run.id)}
+                        className={`rounded-[24px] transition-all duration-300 cursor-pointer overflow-hidden group ${getRunStyle(run.type)} ${isExpanded ? 'shadow-md ring-1 ring-black/5 dark:ring-white/10' : 'hover:shadow-md hover:scale-[1.01]'}`}
+                    >
+                        {/* Summary Section */}
+                        <div className="p-5">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-2">
+                                     <div className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/5">
+                                        {run.type}
+                                     </div>
+                                     <div className="text-sm font-medium opacity-80 flex items-center gap-1">
+                                        <Calendar size={12} />
+                                        {new Date(run.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                     </div>
+                                </div>
+                                <div className={`p-1 rounded-full transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-black/5 dark:bg-white/10' : 'opacity-50 group-hover:opacity-100'}`}>
+                                    <ChevronDown size={18} />
+                                </div>
+                            </div>
 
-                    {/* Metrics Grid */}
-                    <div className="grid grid-cols-3 gap-x-6 gap-y-2 text-center md:text-left">
-                         <div>
-                             <div className="text-[10px] uppercase font-bold opacity-60">Pace</div>
-                             <div className="font-semibold text-lg">
-                                {Math.floor(run.duration / run.distance)}:
-                                {Math.round(((run.duration / run.distance) % 1) * 60).toString().padStart(2, '0')}
-                                <span className="text-xs font-normal opacity-70">/km</span>
-                             </div>
-                         </div>
-                         <div>
-                             <div className="text-[10px] uppercase font-bold opacity-60">Time</div>
-                             <div className="font-semibold text-lg">{formatDuration(run.duration)}</div>
-                         </div>
-                         <div>
-                             <div className="text-[10px] uppercase font-bold opacity-60">HR</div>
-                             <div className="font-semibold text-lg flex items-center gap-1 justify-center md:justify-start">
-                                 <Heart size={14} className="opacity-70" /> {run.avgHr}
-                             </div>
-                         </div>
-                         {(run.cadence || 0) > 0 && (
-                            <div>
-                                <div className="text-[10px] uppercase font-bold opacity-60">Cadence</div>
-                                <div className="font-semibold text-lg">{run.cadence}</div>
+                            <div className="flex items-end justify-between gap-4">
+                                <div>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-4xl font-bold tracking-tighter leading-none">{run.distance}</span>
+                                        <span className="text-sm font-bold opacity-60">km</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-4 text-right">
+                                    <div>
+                                        <div className="text-[10px] font-bold uppercase opacity-60 mb-0.5 flex items-center justify-end gap-1"><Clock size={10} /> Time</div>
+                                        <div className="text-xl font-semibold leading-none">{formatDuration(run.duration)}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] font-bold uppercase opacity-60 mb-0.5 flex items-center justify-end gap-1"><Zap size={10} /> Pace</div>
+                                        <div className="text-xl font-semibold leading-none">
+                                            {Math.floor(run.duration / run.distance)}:
+                                            {Math.round(((run.duration / run.distance) % 1) * 60).toString().padStart(2, '0')}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                         )}
-                         {(run.rpe || 0) > 0 && (
-                            <div>
-                                <div className="text-[10px] uppercase font-bold opacity-60">Effort</div>
-                                <div className="font-semibold text-lg">{run.rpe}<span className="text-xs opacity-60">/10</span></div>
+                        </div>
+
+                        {/* Expanded Details */}
+                        <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                            <div className="overflow-hidden">
+                                <div className="px-5 pb-5 pt-0">
+                                    <div className="h-px w-full bg-black/5 dark:bg-white/5 mb-4"></div>
+                                    
+                                    {/* Detailed Grid */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                        <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+                                            <Heart size={18} className="mb-1 opacity-70" />
+                                            <div className="text-xs font-bold opacity-60">Avg HR</div>
+                                            <div className="text-lg font-bold">{run.avgHr} <span className="text-[10px] font-normal opacity-60">bpm</span></div>
+                                        </div>
+                                        <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+                                            <Footprints size={18} className="mb-1 opacity-70" />
+                                            <div className="text-xs font-bold opacity-60">Cadence</div>
+                                            <div className="text-lg font-bold">{run.cadence || '--'} <span className="text-[10px] font-normal opacity-60">spm</span></div>
+                                        </div>
+                                        <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+                                            <Gauge size={18} className="mb-1 opacity-70" />
+                                            <div className="text-xs font-bold opacity-60">Effort</div>
+                                            <div className="text-lg font-bold">{run.rpe || '--'} <span className="text-[10px] font-normal opacity-60">/ 10</span></div>
+                                        </div>
+                                         <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+                                            {run.source === 'Strava' ? <Activity size={18} className="mb-1 opacity-70" /> : run.source === 'Google Fit' ? <Activity size={18} className="mb-1 opacity-70" /> : <Watch size={18} className="mb-1 opacity-70" />}
+                                            <div className="text-xs font-bold opacity-60">Source</div>
+                                            <div className="text-sm font-bold truncate w-full text-center">{run.source || 'Manual'}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Notes */}
+                                    {run.notes && (
+                                        <div className="bg-black/5 dark:bg-white/5 rounded-xl p-4 mb-4 relative">
+                                            <div className="absolute top-3 left-3 opacity-20"><Info size={16} /></div>
+                                            <p className="text-sm italic opacity-80 pl-6">"{run.notes}"</p>
+                                        </div>
+                                    )}
+
+                                    {/* Actions */}
+                                    <div className="flex justify-end gap-3">
+                                         <button 
+                                            onClick={(e) => { e.stopPropagation(); handleEditClick(run); }}
+                                            className="px-4 py-2 rounded-full bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/30 font-bold text-sm flex items-center gap-2 transition-colors"
+                                        >
+                                            <Edit2 size={16} /> Edit
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onDeleteRun(run.id); }}
+                                            className="px-4 py-2 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-700 dark:text-red-300 font-bold text-sm flex items-center gap-2 transition-colors border border-red-500/10"
+                                        >
+                                            <Trash2 size={16} /> Delete
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                         )}
+                        </div>
                     </div>
-                    
-                    {/* Actions */}
-                    <div className="flex md:flex-col justify-end gap-2">
-                        <button 
-                            onClick={() => handleEditClick(run)}
-                            className="p-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-colors"
-                            aria-label="Edit"
-                        >
-                            <Edit2 size={18} />
-                        </button>
-                        <button 
-                            onClick={() => onDeleteRun(run.id)}
-                            className="p-2 rounded-full bg-white/20 hover:bg-red-500/40 hover:text-red-100 backdrop-blur-sm transition-colors"
-                            aria-label="Delete"
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                    </div>
-                </div>
-            </div>
-            ))
+                );
+            })
         )}
       </div>
 
