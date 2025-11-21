@@ -8,7 +8,7 @@ import {
 import { 
   Activity, Clock, TrendingUp, Footprints, Ruler, Heart, Trophy, Medal, Timer, 
   Filter, Settings, Eye, EyeOff, ArrowUp, ArrowDown, Maximize2, 
-  Minimize2, RotateCcw, Plus
+  Minimize2, RotateCcw, Plus, Layout, ChevronLeft, ChevronRight, Move
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -76,6 +76,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
       try {
         const parsed = JSON.parse(savedLayout);
         const merged = [...parsed];
+        // Ensure new widgets are added if they didn't exist in saved layout
         DEFAULT_LAYOUT.forEach(def => {
             if (!merged.find(m => m.id === def.id)) merged.push(def);
         });
@@ -107,11 +108,11 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     saveLayout(newLayout);
   };
 
-  const moveWidget = (index: number, direction: 'up' | 'down') => {
+  const moveWidget = (index: number, direction: 'prev' | 'next') => {
     const newLayout = [...layout];
-    if (direction === 'up' && index > 0) {
+    if (direction === 'prev' && index > 0) {
       [newLayout[index], newLayout[index - 1]] = [newLayout[index - 1], newLayout[index]];
-    } else if (direction === 'down' && index < newLayout.length - 1) {
+    } else if (direction === 'next' && index < newLayout.length - 1) {
       [newLayout[index], newLayout[index + 1]] = [newLayout[index + 1], newLayout[index]];
     }
     saveLayout(newLayout);
@@ -121,15 +122,16 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     if (window.confirm("Reset dashboard to default layout?")) saveLayout(DEFAULT_LAYOUT);
   };
 
+  // Refined Palette for Run Types - Matches RunLog
   const getRunTypeColor = (type: string) => {
     switch (type) {
-      case RunType.EASY: return '#6750A4'; // Primary
-      case RunType.TEMPO: return '#EAB308'; // Yellow
-      case RunType.INTERVAL: return '#B3261E'; // Error/Red
-      case RunType.LONG: return '#7D5260'; // Tertiary
-      case RunType.RECOVERY: return '#625B71'; // Secondary
-      case RunType.RACE: return '#F59E0B'; // Orange
-      default: return '#79747E';
+      case RunType.EASY: return '#10B981'; // Emerald 500
+      case RunType.TEMPO: return '#F59E0B'; // Amber 500
+      case RunType.INTERVAL: return '#F43F5E'; // Rose 500
+      case RunType.LONG: return '#0EA5E9'; // Sky 500
+      case RunType.RECOVERY: return '#6366F1'; // Indigo 500
+      case RunType.RACE: return '#A855F7'; // Purple 500
+      default: return '#94A3B8'; // Slate 400
     }
   };
 
@@ -184,11 +186,11 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     const age = profile?.age && profile.age > 0 ? profile.age : 30;
     const maxHr = 220 - age;
     const zones = [
-        { name: 'Z1', min: 0, max: maxHr * 0.6, color: '#79747E', minutes: 0 }, 
-        { name: 'Z2', min: maxHr * 0.6, max: maxHr * 0.7, color: '#6750A4', minutes: 0 }, 
-        { name: 'Z3', min: maxHr * 0.7, max: maxHr * 0.8, color: '#625B71', minutes: 0 }, 
-        { name: 'Z4', min: maxHr * 0.8, max: maxHr * 0.9, color: '#7D5260', minutes: 0 }, 
-        { name: 'Z5', min: maxHr * 0.9, max: 300, color: '#B3261E', minutes: 0 }, 
+        { name: 'Z1', min: 0, max: maxHr * 0.6, color: '#94A3B8', minutes: 0 }, // Slate
+        { name: 'Z2', min: maxHr * 0.6, max: maxHr * 0.7, color: '#10B981', minutes: 0 }, // Emerald (Easy)
+        { name: 'Z3', min: maxHr * 0.7, max: maxHr * 0.8, color: '#0EA5E9', minutes: 0 }, // Sky (Aerobic)
+        { name: 'Z4', min: maxHr * 0.8, max: maxHr * 0.9, color: '#F59E0B', minutes: 0 }, // Amber (Threshold)
+        { name: 'Z5', min: maxHr * 0.9, max: 300, color: '#F43F5E', minutes: 0 }, // Rose (Anaerobic)
     ];
     filteredRuns.forEach(run => {
         const zone = zones.find(z => run.avgHr >= z.min && run.avgHr < z.max);
@@ -395,7 +397,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
          <div className="flex items-center gap-3">
             <button 
                 onClick={() => setIsEditing(!isEditing)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all ${isEditing ? 'bg-primary text-primary-on border-primary' : 'bg-surface-container-high text-surface-on-variant border-transparent hover:bg-surface-container-highest'}`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all ${isEditing ? 'bg-primary text-primary-on border-primary shadow-md' : 'bg-surface-container-high text-surface-on-variant border-transparent hover:bg-surface-container-highest'}`}
             >
                 <Settings size={20} className={isEditing ? 'animate-spin-slow' : ''} />
                 <span className="font-medium text-sm">{isEditing ? 'Done' : 'Customize'}</span>
@@ -420,53 +422,59 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
       </div>
 
       {isEditing && (
-        <div className="bg-secondary-container text-secondary-on-container rounded-3xl p-6 animate-slide-down mb-6 flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-                <h3 className="font-bold flex items-center gap-2 text-lg"><Settings size={20} /> Dashboard Configuration</h3>
-                <button onClick={resetLayout} className="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors"><RotateCcw size={12} /> RESET DEFAULT</button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {layout.filter(w => !w.visible).map(widget => (
-                    <button key={widget.id} onClick={() => toggleWidgetVisibility(widget.id)} className="flex items-center gap-2 bg-surface text-surface-on px-4 py-2 rounded-xl shadow-sm hover:bg-primary-container hover:text-primary-on-container transition-all text-sm font-medium">
-                        <Plus size={16} /> {widget.title}
-                    </button>
-                ))}
-                {layout.every(w => w.visible) && <span className="opacity-70 text-sm italic">All widgets are visible.</span>}
-            </div>
+        <div className="bg-secondary-container/50 backdrop-blur-md p-4 rounded-2xl border border-secondary/20 mb-6 animate-slide-down flex flex-wrap items-center justify-between gap-4">
+             <div className="flex items-center gap-2">
+                 <Layout className="text-secondary" />
+                 <span className="font-bold text-secondary-on-container">Edit Layout</span>
+             </div>
+             <div className="flex flex-wrap gap-2">
+                 {layout.filter(w => !w.visible).map(w => (
+                     <button key={w.id} onClick={() => toggleWidgetVisibility(w.id)} className="flex items-center gap-1 px-3 py-1 bg-surface-container text-surface-on-variant rounded-full text-xs font-medium hover:bg-primary-container hover:text-primary-on-container border border-outline-variant/30 transition-colors">
+                         <Plus size={12} /> Show {w.title}
+                     </button>
+                 ))}
+                 <button onClick={resetLayout} className="flex items-center gap-1 px-3 py-1 bg-error-container text-error-on-container rounded-full text-xs font-medium hover:opacity-80 transition-opacity ml-2">
+                     <RotateCcw size={12} /> Reset Defaults
+                 </button>
+             </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {layout.filter(w => w.visible || isEditing).map((widget, index) => {
-            if (!widget.visible && !isEditing) return null;
-            let colClass = 'col-span-1';
-            if (widget.colSpan === 4) colClass += ' lg:col-span-4';
-            else if (widget.colSpan === 3) colClass += ' lg:col-span-3';
-            else if (widget.colSpan === 2) colClass += ' lg:col-span-2';
-            else colClass += ' lg:col-span-1';
-            if (widget.colSpan >= 2) colClass += ' md:col-span-2';
-            else colClass += ' md:col-span-1';
+          {layout.map((widget, index) => {
+              if (!widget.visible && !isEditing) return null;
 
-            return (
-                <div key={widget.id} className={`relative transition-all duration-300 ${colClass} ${!widget.visible ? 'opacity-40 grayscale scale-95' : ''} ${isEditing ? 'ring-2 ring-primary/50 rounded-[26px] p-1' : ''}`}>
-                    {isEditing && (
-                        <div className="absolute -top-4 left-0 right-0 flex justify-center z-20">
-                            <div className="bg-surface-inverse text-surface-inverse-on shadow-xl rounded-full flex items-center p-1 px-3 gap-1 scale-90 hover:scale-100 transition-transform bg-slate-800 text-white">
-                                <button onClick={() => moveWidget(index, 'up')} disabled={index === 0} className="p-1.5 hover:bg-white/20 rounded-full disabled:opacity-30"><ArrowUp size={14} className="-rotate-90 lg:rotate-0" /></button>
-                                <button onClick={() => toggleWidgetSize(widget.id, false)} className="p-1.5 hover:bg-white/20 rounded-full disabled:opacity-30" disabled={widget.colSpan <= 1}><Minimize2 size={14} /></button>
-                                <span className="text-[10px] font-mono font-bold px-1">{widget.colSpan}x</span>
-                                <button onClick={() => toggleWidgetSize(widget.id, true)} className="p-1.5 hover:bg-white/20 rounded-full disabled:opacity-30" disabled={widget.colSpan >= 4}><Maximize2 size={14} /></button>
-                                <button onClick={() => toggleWidgetVisibility(widget.id)} className={`p-1.5 rounded-full hover:bg-white/20 ${!widget.visible ? 'text-primary-container' : ''}`}>{widget.visible ? <Eye size={14} /> : <EyeOff size={14} />}</button>
-                                <button onClick={() => moveWidget(index, 'down')} disabled={index === layout.length - 1} className="p-1.5 hover:bg-white/20 rounded-full disabled:opacity-30"><ArrowDown size={14} className="-rotate-90 lg:rotate-0" /></button>
-                            </div>
-                        </div>
-                    )}
-                    <div className={isEditing && !widget.visible ? 'pointer-events-none blur-sm' : ''}>
-                        {renderWidgetContent(widget.id)}
-                    </div>
-                </div>
-            );
-        })}
+              return (
+                  <div 
+                    key={widget.id} 
+                    className={`
+                        relative transition-all duration-300
+                        ${widget.colSpan === 4 ? 'md:col-span-2 lg:col-span-4' : widget.colSpan === 2 ? 'md:col-span-2 lg:col-span-2' : 'col-span-1'}
+                        ${isEditing ? 'ring-2 ring-offset-4 ring-offset-surface ring-primary/30 rounded-[26px] hover:ring-primary/60' : ''}
+                        ${!widget.visible ? 'opacity-50 grayscale' : ''}
+                    `}
+                  >
+                      {isEditing && (
+                          <div className="absolute -top-3 left-0 right-0 flex justify-center z-20 gap-1 pointer-events-none">
+                              <div className="bg-surface-on-surface-variant text-white bg-gray-800 rounded-full p-1 shadow-lg flex items-center gap-1 pointer-events-auto scale-90">
+                                  <button onClick={() => moveWidget(index, 'prev')} disabled={index === 0} className="p-1 hover:text-primary disabled:opacity-30"><ChevronLeft size={16} /></button>
+                                  <div className="w-px h-4 bg-gray-600"></div>
+                                  <button onClick={() => toggleWidgetSize(widget.id, false)} className="p-1 hover:text-primary" title="Shrink"><Minimize2 size={14} /></button>
+                                  <span className="text-[10px] font-mono">{widget.colSpan}x</span>
+                                  <button onClick={() => toggleWidgetSize(widget.id, true)} className="p-1 hover:text-primary" title="Expand"><Maximize2 size={14} /></button>
+                                  <div className="w-px h-4 bg-gray-600"></div>
+                                  <button onClick={() => toggleWidgetVisibility(widget.id)} className={`p-1 ${widget.visible ? 'hover:text-error' : 'text-primary hover:text-primary-on'}`} title={widget.visible ? 'Hide' : 'Show'}>
+                                      {widget.visible ? <EyeOff size={14} /> : <Eye size={14} />}
+                                  </button>
+                                  <div className="w-px h-4 bg-gray-600"></div>
+                                  <button onClick={() => moveWidget(index, 'next')} disabled={index === layout.length - 1} className="p-1 hover:text-primary disabled:opacity-30"><ChevronRight size={16} /></button>
+                              </div>
+                          </div>
+                      )}
+                      {renderWidgetContent(widget.id)}
+                  </div>
+              );
+          })}
       </div>
     </div>
   );
