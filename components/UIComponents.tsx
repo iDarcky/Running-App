@@ -9,22 +9,22 @@ export const Card: React.FC<{ children: React.ReactNode; className?: string }> =
 );
 
 export const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; colorClass?: string; tooltip?: string }> = ({ title, value, icon, subtext, colorClass = 'bg-primary-container text-primary-on-container', tooltip }) => (
-  <Card className="h-full flex flex-col justify-between">
+  <Card className="h-full flex flex-col justify-between min-h-[120px]">
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-            <h3 className="text-surface-on-variant text-sm font-medium uppercase tracking-wider truncate">{title}</h3>
+            <h3 className="text-surface-on-variant text-xs md:text-sm font-bold uppercase tracking-wider truncate">{title}</h3>
             {tooltip && (
                 <div className="group relative flex items-center" title={tooltip}>
                     <Info size={14} className="text-surface-on-variant/50 hover:text-primary cursor-help transition-colors" />
                 </div>
             )}
         </div>
-        <div className={`p-3 rounded-full ${colorClass} shadow-sm`}>
-          {React.cloneElement(icon as any, { size: 24 })}
+        <div className={`p-2 md:p-3 rounded-full ${colorClass} shadow-sm`}>
+          {React.cloneElement(icon as any, { size: 20 })}
         </div>
       </div>
-      <span className="text-4xl font-bold text-surface-on tracking-tight">{value}</span>
+      <span className="text-2xl md:text-4xl font-bold text-surface-on tracking-tight">{value}</span>
     </div>
     {subtext && <span className="text-surface-on-variant text-xs mt-2 block font-medium">{subtext}</span>}
   </Card>
@@ -72,15 +72,15 @@ export const Select: React.FC<any> = ({ label, icon: Icon, value, onChange, opti
 export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-surface-container w-full md:max-w-2xl h-[90vh] md:h-auto rounded-t-[32px] md:rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-outline-variant/20 flex justify-between items-center shrink-0">
+        <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface-container w-full md:max-w-2xl h-[90vh] md:h-auto rounded-t-[32px] md:rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border-t border-white/10 md:border-none">
+            <div className="px-6 py-5 border-b border-outline-variant/20 flex justify-between items-center shrink-0">
                <h3 className="text-xl font-bold text-surface-on">{title}</h3>
                <button onClick={onClose} className="p-2 hover:bg-surface-container-highest rounded-full text-surface-on-variant transition-colors">
                  <X size={24} />
                </button>
             </div>
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto pb-safe">
                 {children}
             </div>
           </div>

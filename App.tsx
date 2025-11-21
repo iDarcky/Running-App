@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Run, Goal, UserProfile, RunType, Race } from './types';
+import { Run, Goal, UserProfile, Race } from './types';
 import { SAMPLE_RUNS, SAMPLE_GOALS } from './constants';
 import Dashboard from './components/Dashboard';
 import RunLog from './components/RunLog';
@@ -15,18 +16,26 @@ const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false 
         <button 
             onClick={() => onClick(tab)}
             className={`
-                flex items-center gap-2 transition-all duration-300 group
+                flex items-center justify-center gap-2 transition-all duration-300 group relative
                 ${mobile 
-                    ? `flex-col text-[10px] font-medium p-2 rounded-xl ${isActive ? 'text-primary' : 'text-surface-on-variant'}` 
+                    ? `flex-col h-full w-full rounded-2xl ${isActive ? 'text-primary' : 'text-surface-on-variant/60 hover:text-surface-on-variant'}` 
                     : `w-full px-4 py-3 rounded-full mb-2 ${isActive ? 'bg-primary text-primary-on shadow-lg shadow-primary/25 font-bold' : 'text-surface-on-variant hover:bg-surface-container-highest hover:text-surface-on'}`
                 }
             `}
         >
             <div className={`transition-transform duration-300 ${isActive && !mobile ? 'scale-110' : ''} ${mobile && isActive ? '-translate-y-1' : ''}`}>
-                <Icon size={mobile ? 24 : 20} className={isActive ? 'fill-current' : ''} />
+                <Icon size={mobile ? 24 : 20} className={isActive ? 'fill-current' : ''} strokeWidth={mobile && isActive ? 2.5 : 2} />
             </div>
-            <span>{label}</span>
+            
+            {!mobile && <span>{label}</span>}
+            {mobile && (
+                <span className={`text-[10px] font-bold transition-all duration-300 absolute bottom-1 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                    {label}
+                </span>
+            )}
+            
             {!mobile && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>}
+            {mobile && isActive && <div className="absolute -top-2 w-1 h-1 rounded-full bg-primary"></div>}
         </button>
     );
 };
@@ -181,8 +190,9 @@ const App: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pb-24 md:pb-8 w-full overflow-x-hidden">
-                <div className="max-w-6xl mx-auto">
+            {/* Updated padding: pt-6 px-4 for mobile, pb-32 to avoid nav overlap */}
+            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-6 pb-32 md:pb-8 w-full overflow-x-hidden">
+                <div className="max-w-[1100px] mx-auto">
                     {activeTab === 'dashboard' && (
                         <Dashboard 
                             runs={runs} 
@@ -227,8 +237,8 @@ const App: React.FC = () => {
                 </div>
             </main>
 
-            {/* Bottom Nav (Mobile) */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/10 p-2 z-50 flex justify-between items-center safe-area-pb px-4">
+            {/* Floating Bottom Nav (Mobile) */}
+            <nav className="md:hidden fixed bottom-6 left-4 right-4 bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 z-50 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 safe-area-pb">
                  <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
                  <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
                  <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
