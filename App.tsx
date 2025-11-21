@@ -106,6 +106,14 @@ const App: React.FC = () => {
       saveGoals(goals.filter(g => g.id !== id));
   }
 
+  // Factory Reset: Clears all local data
+  const handleResetApp = () => {
+      if (window.confirm("WARNING: This will delete ALL your data (runs, goals, profile, API connections) from this device. This action cannot be undone. Are you sure?")) {
+          localStorage.clear();
+          window.location.href = '/'; // Force reload to clean state
+      }
+  };
+
   const NavButton = ({ tab, icon: Icon, label, mobile = false }: { tab: typeof activeTab, icon: any, label: string, mobile?: boolean }) => (
     <button 
         onClick={() => setActiveTab(tab)}
@@ -181,7 +189,11 @@ const App: React.FC = () => {
             <CoachInsights runs={runs} profile={profile} />
         )}
         {activeTab === 'profile' && (
-            <Profile profile={profile} onSaveProfile={saveProfile} />
+            <Profile 
+                profile={profile} 
+                onSaveProfile={saveProfile} 
+                onReset={handleResetApp} 
+            />
         )}
       </main>
 

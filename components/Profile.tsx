@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
-import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail } from 'lucide-react';
+import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail, AlertTriangle, Trash2 } from 'lucide-react';
 
 interface ProfileProps {
   profile: UserProfile;
   onSaveProfile: (profile: UserProfile) => void;
+  onReset: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile }) => {
+const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset }) => {
   const [formData, setFormData] = useState<UserProfile>(profile);
   const [saved, setSaved] = useState(false);
   
@@ -303,6 +304,23 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile }) => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 lg:p-8 shadow-xl mt-8">
+          <h3 className="text-rose-400 font-bold text-lg mb-4 flex items-center gap-2">
+              <AlertTriangle size={20} /> Danger Zone
+          </h3>
+          <p className="text-slate-400 text-sm mb-4">
+              Resetting the application will permanently delete all your local data, including runs, goals, profile settings, and API connections. Use this to start fresh or clear your data from a public device.
+          </p>
+          <button 
+              type="button"
+              onClick={onReset}
+              className="w-full md:w-auto px-6 py-3 bg-rose-900/30 border border-rose-500/30 hover:bg-rose-900/50 text-rose-300 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+          >
+              <Trash2 size={18} /> Factory Reset App
+          </button>
       </div>
     </div>
   );
