@@ -1,14 +1,15 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { Run, Goal, UserProfile, RunType } from '../types';
 import GoalTracker from './GoalTracker';
+import { Card, StatCard } from './UIComponents';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, ReferenceArea
 } from 'recharts';
 import { 
-  Activity, Clock, TrendingUp, Footprints, Ruler, Heart, Trophy, Medal, Timer, 
-  Filter, Settings, Eye, EyeOff, ArrowUp, ArrowDown, Maximize2, 
-  Minimize2, RotateCcw, Plus, Layout, ChevronLeft, ChevronRight, Move
+  Activity, Clock, Footprints, Ruler, Heart, Trophy, Medal, Timer, 
+  Filter, Settings, Eye, EyeOff, RotateCcw, Plus, Layout, ChevronLeft, ChevronRight, Minimize2, Maximize2
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -39,30 +40,6 @@ const DEFAULT_LAYOUT: WidgetConfig[] = [
   { id: 'chart_pace', visible: true, colSpan: 2, title: 'Pace vs HR' },
   { id: 'chart_form', visible: true, colSpan: 4, title: 'Form Analysis' },
 ];
-
-const M3Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <div className={`bg-surface-container rounded-[24px] p-6 shadow-sm border border-outline-variant/20 transition-all hover:shadow-md ${className}`}>
-        {children}
-    </div>
-);
-
-const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; colorClass?: string }> = ({ title, value, icon, subtext, colorClass = 'bg-primary-container text-primary-on-container' }) => (
-  <M3Card className="h-full flex flex-col justify-between relative overflow-hidden">
-    <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-2 -translate-y-2">
-        {React.cloneElement(icon as any, { size: 64 })}
-    </div>
-    <div>
-      <div className="flex items-center justify-between mb-4 relative z-10">
-        <h3 className="text-surface-on-variant text-sm font-medium uppercase tracking-wider truncate pr-2">{title}</h3>
-        <div className={`p-3 rounded-full ${colorClass} shadow-sm`}>
-          {icon}
-        </div>
-      </div>
-      <span className="text-4xl font-bold text-surface-on tracking-tight relative z-10">{value}</span>
-    </div>
-    {subtext && <span className="text-surface-on-variant text-xs mt-2 block font-medium relative z-10">{subtext}</span>}
-  </M3Card>
-);
 
 const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, onDeleteGoal, onNavigate }) => {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year' | 'all'>('all');
@@ -266,7 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
             return <StatCard title="Avg HR" value={`${stats.avgHr} bpm`} icon={<Heart />} colorClass="bg-error-container text-error-on-container" />;
         case 'records':
             return (
-                <M3Card className="h-full">
+                <Card className="h-full">
                     <h3 className="text-xl font-bold text-surface-on mb-6 flex items-center gap-2">
                         <Trophy className="text-tertiary" size={24} />
                         Personal Records
@@ -288,12 +265,12 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                             </div>
                         ))}
                     </div>
-                </M3Card>
+                </Card>
             );
 
         case 'chart_dist':
             return (
-                <M3Card className="h-full min-h-[400px]">
+                <Card className="h-full min-h-[400px]">
                     <h3 className="text-xl font-bold text-surface-on mb-6">Distance History</h3>
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -313,12 +290,12 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                         </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </M3Card>
+                </Card>
             );
 
         case 'chart_hr':
              return (
-                <M3Card className="h-full min-h-[350px]">
+                <Card className="h-full min-h-[350px]">
                     <h3 className="text-xl font-bold text-surface-on mb-6 flex items-center gap-2">
                         <Heart size={24} className="text-error" /> Heart Rate Zones
                     </h3>
@@ -335,12 +312,12 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </M3Card>
+                </Card>
              );
         
         case 'chart_pace':
              return (
-                <M3Card className="h-full min-h-[350px]">
+                <Card className="h-full min-h-[350px]">
                     <h3 className="text-xl font-bold text-surface-on mb-6">Pace vs Intensity</h3>
                     <div className="h-64 w-full">
                             <ResponsiveContainer width="100%" height="100%">
@@ -355,12 +332,12 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                             </LineChart>
                             </ResponsiveContainer>
                     </div>
-                </M3Card>
+                </Card>
              );
 
         case 'chart_form':
              return (
-                <M3Card className="h-full min-h-[400px]">
+                <Card className="h-full min-h-[400px]">
                     <h3 className="text-xl font-bold text-surface-on mb-6 flex items-center gap-2">
                         <Ruler size={24} className="text-secondary" /> Form Analysis
                     </h3>
@@ -378,7 +355,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                             </LineChart>
                             </ResponsiveContainer>
                     </div>
-                </M3Card>
+                </Card>
              );
         default: return null;
     }

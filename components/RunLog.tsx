@@ -1,8 +1,11 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, StravaToken, GoogleToken } from '../types';
-import { Plus, Trash2, MapPin, Clock, Heart, Activity, Watch, Smartphone, Footprints, Filter, X, CheckCircle, Chrome, Zap, BatteryCharging, Trophy, Copy, AlertTriangle, Info, ExternalLink, Loader2, ArrowRight, Edit2, ChevronDown, ChevronUp, Gauge, Calendar, Timer } from 'lucide-react';
+import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Watch, Edit2, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
+import { Modal, Input } from './UIComponents';
+import RunForm from './RunForm';
 
 interface RunLogProps {
   runs: Run[];
@@ -221,43 +224,32 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
       }
   };
 
-  const [newRun, setNewRun] = useState<Partial<Run>>({ date: new Date().toISOString().split('T')[0], type: RunType.EASY, distance: 5, duration: 30, avgHr: 140, rpe: 5, cadence: 165, strideLength: 1.0, source: 'Manual', notes: '' });
-
   const handleEditClick = (run: Run) => {
     setEditingId(run.id);
-    setNewRun({ ...run, date: run.date.split('T')[0] });
     setIsFormOpen(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const resetForm = () => {
-    setEditingId(null);
-    setIsFormOpen(false);
-    setNewRun({ date: new Date().toISOString().split('T')[0], type: RunType.EASY, distance: 5, duration: 30, avgHr: 140, rpe: 5, cadence: 165, strideLength: 1.0, source: 'Manual', notes: '' });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = (data: Partial<Run>) => {
     if (editingId) {
-        // @ts-ignore
-        onUpdateRun({ ...newRun, id: editingId } as Run);
+        onUpdateRun({ ...data, id: editingId } as Run);
     } else {
         const run: Run = {
             id: Date.now().toString(),
-            date: newRun.date!,
-            type: newRun.type as RunType,
-            distance: Number(newRun.distance),
-            duration: Number(newRun.duration),
-            avgHr: Number(newRun.avgHr),
-            rpe: Number(newRun.rpe),
-            cadence: newRun.cadence ? Number(newRun.cadence) : undefined,
-            strideLength: newRun.strideLength ? Number(newRun.strideLength) : undefined,
+            date: data.date!,
+            type: data.type as RunType,
+            distance: Number(data.distance),
+            duration: Number(data.duration),
+            avgHr: Number(data.avgHr),
+            rpe: Number(data.rpe),
+            cadence: data.cadence ? Number(data.cadence) : undefined,
+            strideLength: data.strideLength ? Number(data.strideLength) : undefined,
             source: 'Manual',
-            notes: newRun.notes || ''
+            notes: data.notes || ''
         };
         onAddRun(run);
     }
-    resetForm();
+    setEditingId(null);
+    setIsFormOpen(false);
   };
 
   const toggleExpand = (id: string) => {
@@ -274,7 +266,6 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  // REFINED COLORS - STRICTLY MATCHING DASHBOARD
   const getRunStyle = (type: RunType) => {
     switch (type) {
       case RunType.EASY: return 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-200 border border-emerald-500/20';
@@ -284,6 +275,18 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
       case RunType.RECOVERY: return 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-200 border border-indigo-500/20';
       case RunType.RACE: return 'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-200 border border-purple-500/20';
       default: return 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-300 border border-slate-500/20';
+    }
+  };
+
+  const getRunTypeIcon = (type: RunType) => {
+    switch (type) {
+      case RunType.EASY: return <Feather size={14} className="shrink-0" />;
+      case RunType.TEMPO: return <Flame size={14} className="shrink-0" />;
+      case RunType.INTERVAL: return <Zap size={14} className="shrink-0" />;
+      case RunType.LONG: return <Map size={14} className="shrink-0" />;
+      case RunType.RACE: return <Trophy size={14} className="shrink-0" />;
+      case RunType.RECOVERY: return <BatteryCharging size={14} className="shrink-0" />;
+      default: return <Activity size={14} className="shrink-0" />;
     }
   };
 
@@ -302,6 +305,8 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
       );
   }
 
+  const editingRun = editingId ? runs.find(r => r.id === editingId) : undefined;
+
   return (
     <div className="animate-fade-in pb-20">
       {/* Header Actions */}
@@ -309,7 +314,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
          <h2 className="text-4xl font-bold text-surface-on tracking-tight">Training Log</h2>
          <div className="flex flex-wrap gap-2">
             <button 
-              onClick={() => setIsFormOpen(true)}
+              onClick={() => { setEditingId(null); setIsFormOpen(true); }}
               className="flex items-center gap-2 bg-primary text-primary-on px-5 py-2.5 rounded-full shadow-lg hover:scale-105 transition-transform font-medium"
             >
               <Plus size={20} /> Log Run
@@ -339,12 +344,13 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
              <button
                 key={type}
                 onClick={() => setFilterType(type as any)}
-                className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-colors border flex items-center gap-2 ${
                     filterType === type 
                     ? 'bg-secondary-container text-secondary-on-container border-secondary-container' 
                     : 'bg-surface text-surface-on-variant border-outline-variant/50 hover:bg-surface-container-high'
                 }`}
              >
+                {type !== 'All' && getRunTypeIcon(type as RunType)}
                 {type}
              </button>
         ))}
@@ -352,19 +358,19 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-surface-container p-4 rounded-2xl">
+          <div className="bg-surface-container p-4 rounded-2xl border border-outline-variant/20">
               <div className="text-surface-on-variant text-xs font-bold uppercase tracking-wider mb-1">Count</div>
               <div className="text-2xl font-bold text-surface-on">{filteredRuns.length}</div>
           </div>
-          <div className="bg-surface-container p-4 rounded-2xl">
+          <div className="bg-surface-container p-4 rounded-2xl border border-outline-variant/20">
               <div className="text-surface-on-variant text-xs font-bold uppercase tracking-wider mb-1">Distance</div>
               <div className="text-2xl font-bold text-surface-on">{filteredRuns.reduce((acc, r) => acc + r.distance, 0).toFixed(1)} <span className="text-sm font-normal opacity-70">km</span></div>
           </div>
-          <div className="bg-surface-container p-4 rounded-2xl">
+          <div className="bg-surface-container p-4 rounded-2xl border border-outline-variant/20">
               <div className="text-surface-on-variant text-xs font-bold uppercase tracking-wider mb-1">Time</div>
               <div className="text-2xl font-bold text-surface-on">{Math.round(filteredRuns.reduce((acc, r) => acc + r.duration, 0) / 60)} <span className="text-sm font-normal opacity-70">hrs</span></div>
           </div>
-          <div className="bg-surface-container p-4 rounded-2xl">
+          <div className="bg-surface-container p-4 rounded-2xl border border-outline-variant/20">
               <div className="text-surface-on-variant text-xs font-bold uppercase tracking-wider mb-1">Avg HR</div>
               <div className="text-2xl font-bold text-surface-on">{Math.round(filteredRuns.reduce((acc, r) => acc + r.avgHr, 0) / (filteredRuns.length || 1))} <span className="text-sm font-normal opacity-70">bpm</span></div>
           </div>
@@ -390,8 +396,9 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                         <div className="p-5">
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-2">
-                                     <div className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/5">
-                                        {run.type}
+                                     <div className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/5 flex items-center gap-1.5">
+                                        {getRunTypeIcon(run.type)}
+                                        <span>{run.type}</span>
                                      </div>
                                      <div className="text-sm font-medium opacity-80 flex items-center gap-1">
                                         <Calendar size={12} />
@@ -489,236 +496,108 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
         )}
       </div>
 
-      {/* Add/Edit Modal - Full Screen on Mobile, Modal on Desktop */}
-      {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-surface-container w-full md:max-w-2xl h-[90vh] md:h-auto rounded-t-[32px] md:rounded-[32px] shadow-2xl overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-outline-variant/20 flex justify-between items-center">
-               <h3 className="text-xl font-bold text-surface-on">{editingId ? 'Edit Run' : 'Log Run'}</h3>
-               <button onClick={resetForm} className="p-2 hover:bg-surface-container-highest rounded-full text-surface-on-variant transition-colors">
-                 <X size={24} />
-               </button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Main Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                        <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-1">Date</label>
-                        <input 
-                            type="date" 
-                            required
-                            className="w-full bg-surface-container-high border-b-2 border-outline-variant/50 focus:border-primary rounded-t-lg px-4 py-3 text-surface-on outline-none transition-colors"
-                            value={newRun.date}
-                            onChange={(e) => setNewRun({...newRun, date: e.target.value})}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-1">Distance (km)</label>
-                        <input 
-                            type="number" step="0.01" required
-                            className="w-full bg-surface-container-high border-b-2 border-outline-variant/50 focus:border-primary rounded-t-lg px-4 py-3 text-surface-on outline-none text-xl font-bold"
-                            value={newRun.distance}
-                            onChange={(e) => setNewRun({...newRun, distance: parseFloat(e.target.value)})}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-1">Time (min)</label>
-                        <input 
-                            type="number" required
-                            className="w-full bg-surface-container-high border-b-2 border-outline-variant/50 focus:border-primary rounded-t-lg px-4 py-3 text-surface-on outline-none text-xl font-bold"
-                            value={newRun.duration}
-                            onChange={(e) => setNewRun({...newRun, duration: parseFloat(e.target.value)})}
-                        />
-                    </div>
-                </div>
-
-                {/* Type Selection */}
-                <div>
-                    <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-2">Run Type</label>
-                    <div className="grid grid-cols-3 gap-2">
-                        {Object.values(RunType).map(t => (
-                            <button
-                                key={t}
-                                type="button"
-                                onClick={() => setNewRun({...newRun, type: t})}
-                                className={`py-3 rounded-xl text-sm font-medium border transition-all ${
-                                    newRun.type === t 
-                                    ? 'bg-primary-container text-primary-on-container border-primary shadow-sm' 
-                                    : 'bg-surface-container-high text-surface-on-variant border-transparent hover:bg-surface-container-highest'
-                                }`}
-                            >
-                                {t}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Advanced Stats */}
-                <div className="grid grid-cols-3 gap-4">
-                     <div>
-                        <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-1">Avg HR</label>
-                        <input 
-                            type="number"
-                            className="w-full bg-surface-container-high border-b-2 border-outline-variant/50 focus:border-primary rounded-t-lg px-4 py-2 text-surface-on outline-none"
-                            value={newRun.avgHr}
-                            onChange={(e) => setNewRun({...newRun, avgHr: parseFloat(e.target.value)})}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-1">Cadence</label>
-                        <input 
-                            type="number"
-                            className="w-full bg-surface-container-high border-b-2 border-outline-variant/50 focus:border-primary rounded-t-lg px-4 py-2 text-surface-on outline-none"
-                            value={newRun.cadence || ''}
-                            onChange={(e) => setNewRun({...newRun, cadence: parseFloat(e.target.value)})}
-                            placeholder="spm"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-1">RPE (1-10)</label>
-                        <input 
-                            type="number" max="10"
-                            className="w-full bg-surface-container-high border-b-2 border-outline-variant/50 focus:border-primary rounded-t-lg px-4 py-2 text-surface-on outline-none"
-                            value={newRun.rpe}
-                            onChange={(e) => setNewRun({...newRun, rpe: parseFloat(e.target.value)})}
-                        />
-                    </div>
-                </div>
-
-                <div>
-                     <label className="block text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-1">Notes</label>
-                     <textarea 
-                        className="w-full bg-surface-container-high border-b-2 border-outline-variant/50 focus:border-primary rounded-t-lg px-4 py-3 text-surface-on outline-none resize-none h-24"
-                        value={newRun.notes}
-                        onChange={(e) => setNewRun({...newRun, notes: e.target.value})}
-                        placeholder="How did it feel?"
-                     />
-                </div>
-            </form>
-            
-            <div className="p-6 border-t border-outline-variant/20 bg-surface-container-low">
-                <button 
-                    onClick={handleSubmit}
-                    className="w-full py-4 bg-primary text-primary-on rounded-full font-bold text-lg shadow-lg shadow-primary/25 hover:shadow-xl hover:scale-[1.01] transition-all"
-                >
-                    {editingId ? 'Update Run' : 'Save Run'}
-                </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Run Form Modal */}
+      <Modal 
+        isOpen={isFormOpen} 
+        onClose={() => { setIsFormOpen(false); setEditingId(null); }}
+        title={editingId ? 'Edit Run' : 'Log Run'}
+      >
+          <RunForm 
+            initialData={editingRun} 
+            onSubmit={handleFormSubmit}
+            isEditing={!!editingId}
+          />
+      </Modal>
 
       {/* Strava Modal */}
-      {isStravaModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-              <div className="bg-surface-container max-w-md w-full rounded-[32px] p-8 shadow-2xl relative">
-                  <button onClick={() => setIsStravaModalOpen(false)} className="absolute top-4 right-4 p-2 hover:bg-surface-container-high rounded-full"><X size={20} /></button>
-                  <div className="text-center mb-6">
-                       <div className="bg-[#FC4C02] w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/30">
-                           <Zap size={32} className="text-white" fill="currentColor" />
-                       </div>
-                       <h3 className="text-2xl font-bold text-surface-on">Connect Strava</h3>
-                       <p className="text-surface-on-variant text-sm mt-2">Enter your API credentials to sync.</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                      <div>
-                          <label className="text-xs font-bold text-surface-on-variant ml-2">Client ID</label>
-                          <input 
-                            type="text" 
-                            value={stravaClientId} 
-                            onChange={(e) => setStravaClientId(e.target.value)} 
-                            className="w-full bg-surface-container-high p-4 rounded-xl outline-none focus:ring-2 ring-primary"
-                            placeholder="12345"
-                          />
-                      </div>
-                      <div>
-                          <label className="text-xs font-bold text-surface-on-variant ml-2">Client Secret</label>
-                          <input 
-                            type="password" 
-                            value={stravaClientSecret} 
-                            onChange={(e) => setStravaClientSecret(e.target.value)} 
-                            className="w-full bg-surface-container-high p-4 rounded-xl outline-none focus:ring-2 ring-primary"
-                            placeholder="••••••••"
-                          />
-                      </div>
-                      {stravaError && <div className="text-error text-sm bg-error-container p-3 rounded-lg flex gap-2 items-center"><AlertTriangle size={16} /> {stravaError}</div>}
-                      
-                      <div className="pt-2">
-                        <button 
-                            onClick={initiateStravaAuth} 
-                            className="w-full py-4 bg-[#FC4C02] text-white font-bold rounded-full shadow-lg hover:bg-[#E34402] transition-colors flex items-center justify-center gap-2"
-                        >
-                            Authenticate <ExternalLink size={18} />
-                        </button>
-                      </div>
-                      
-                      <div className="text-xs text-center text-surface-on-variant/70 mt-4">
-                          Ensure "localhost" is in your Strava App's Authorization Callback Domain.
-                      </div>
-                  </div>
-              </div>
-          </div>
-      )}
+      <Modal
+        isOpen={isStravaModalOpen}
+        onClose={() => setIsStravaModalOpen(false)}
+        title="Connect Strava"
+      >
+           <div className="p-4 space-y-6">
+                <div className="text-center">
+                    <div className="bg-[#FC4C02] w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/30">
+                        <Zap size={32} className="text-white" fill="currentColor" />
+                    </div>
+                    <p className="text-surface-on-variant text-sm">Enter your API credentials to sync.</p>
+                </div>
+                
+                <div className="space-y-4">
+                    <Input 
+                        label="Client ID"
+                        value={stravaClientId}
+                        onChange={(e: any) => setStravaClientId(e.target.value)}
+                        placeholder="12345"
+                    />
+                    <Input 
+                        label="Client Secret"
+                        type="password"
+                        value={stravaClientSecret}
+                        onChange={(e: any) => setStravaClientSecret(e.target.value)}
+                        placeholder="••••••••"
+                    />
+                    {stravaError && <div className="text-error text-sm bg-error-container p-3 rounded-lg flex gap-2 items-center"><AlertTriangle size={16} /> {stravaError}</div>}
+                    
+                    <button 
+                        onClick={initiateStravaAuth} 
+                        className="w-full py-4 bg-[#FC4C02] text-white font-bold rounded-full shadow-lg hover:bg-[#E34402] transition-colors flex items-center justify-center gap-2"
+                    >
+                        Authenticate <ExternalLink size={18} />
+                    </button>
+                    
+                    <div className="text-xs text-center text-surface-on-variant/70">
+                        Ensure "localhost" is in your Strava App's Authorization Callback Domain.
+                    </div>
+                </div>
+           </div>
+      </Modal>
 
       {/* Google Modal */}
-      {isGoogleModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-              <div className="bg-surface-container max-w-md w-full rounded-[32px] p-8 shadow-2xl relative">
-                  <button onClick={() => setIsGoogleModalOpen(false)} className="absolute top-4 right-4 p-2 hover:bg-surface-container-high rounded-full"><X size={20} /></button>
-                  <div className="text-center mb-6">
-                       <div className="bg-surface-container-highest w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg border border-outline-variant/20">
-                           <Activity size={32} className="text-surface-on" />
-                       </div>
-                       <h3 className="text-2xl font-bold text-surface-on">Connect Google Fit</h3>
-                       <p className="text-surface-on-variant text-sm mt-2">Sync your running history from Google.</p>
-                  </div>
-                  
-                   <div className="space-y-4">
-                      <div>
-                          <label className="text-xs font-bold text-surface-on-variant ml-2">Client ID</label>
-                          <input 
-                            type="text" 
-                            value={googleClientId} 
-                            onChange={(e) => setGoogleClientId(e.target.value)} 
-                            className="w-full bg-surface-container-high p-4 rounded-xl outline-none focus:ring-2 ring-primary"
-                            placeholder="...apps.googleusercontent.com"
-                          />
-                      </div>
-                      <div>
-                          <label className="text-xs font-bold text-surface-on-variant ml-2">Client Secret</label>
-                          <input 
-                            type="password" 
-                            value={googleClientSecret} 
-                            onChange={(e) => setGoogleClientSecret(e.target.value)} 
-                            className="w-full bg-surface-container-high p-4 rounded-xl outline-none focus:ring-2 ring-primary"
-                            placeholder="••••••••"
-                          />
-                      </div>
-                      {googleError && <div className="text-error text-sm bg-error-container p-3 rounded-lg flex gap-2 items-center"><AlertTriangle size={16} /> {googleError}</div>}
-                      
-                      <div className="pt-2">
-                        <button 
-                            onClick={initiateGoogleAuth} 
-                            className="w-full py-4 bg-surface-on text-surface-inverse-on font-bold rounded-full shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                        >
-                            Authenticate <ExternalLink size={18} />
-                        </button>
-                      </div>
+      <Modal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        title="Connect Google Fit"
+      >
+          <div className="p-4 space-y-6">
+              <div className="text-center">
+                    <div className="bg-surface-container-highest w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg border border-outline-variant/20">
+                        <Activity size={32} className="text-surface-on" />
+                    </div>
+                    <p className="text-surface-on-variant text-sm">Sync your running history from Google.</p>
+                </div>
+                
+                <div className="space-y-4">
+                    <Input 
+                        label="Client ID"
+                        value={googleClientId}
+                        onChange={(e: any) => setGoogleClientId(e.target.value)}
+                        placeholder="...apps.googleusercontent.com"
+                    />
+                    <Input 
+                        label="Client Secret"
+                        type="password"
+                        value={googleClientSecret}
+                        onChange={(e: any) => setGoogleClientSecret(e.target.value)}
+                        placeholder="••••••••"
+                    />
+                    {googleError && <div className="text-error text-sm bg-error-container p-3 rounded-lg flex gap-2 items-center"><AlertTriangle size={16} /> {googleError}</div>}
+                    
+                    <button 
+                        onClick={initiateGoogleAuth} 
+                        className="w-full py-4 bg-surface-on text-surface-inverse-on font-bold rounded-full shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                    >
+                        Authenticate <ExternalLink size={18} />
+                    </button>
 
-                       <div className="bg-surface-container-high p-3 rounded-xl mt-4">
-                         <p className="text-[10px] text-surface-on-variant flex items-start gap-2">
-                            <Info size={14} className="shrink-0 mt-0.5" />
-                            <span>
-                                Add <strong>{detectedOrigin}</strong> to "Authorized Javascript Origins" and <strong>{detectedOrigin}</strong> to "Authorized Redirect URIs" in Google Cloud Console.
-                            </span>
-                         </p>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      )}
+                    <div className="bg-surface-container-high p-3 rounded-xl">
+                        <p className="text-xs text-surface-on-variant/70 text-center">
+                            Note: Google Fit integration requires a Google Cloud Project with the Fitness API enabled and your origin added to Authorized JavaScript origins.
+                        </p>
+                    </div>
+                </div>
+           </div>
+      </Modal>
     </div>
   );
 };

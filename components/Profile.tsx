@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
+import { Input } from './UIComponents';
 import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail, AlertTriangle, Trash2, Moon, Sun } from 'lucide-react';
 
 interface ProfileProps {
@@ -9,28 +11,6 @@ interface ProfileProps {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
 }
-
-// Material 3 Input Component - Definition kept simple
-const M3Input = ({ label, icon: Icon, type = "text", value, onChange, placeholder, required = false }: any) => (
-    <div className="relative group">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Icon className="text-surface-on-variant" size={20} />
-        </div>
-        <input
-            type={type}
-            value={value}
-            onChange={onChange}
-            required={required}
-            placeholder=" "
-            className="block w-full pl-12 pr-4 pt-6 pb-2 bg-surface-container-highest rounded-t-xl border-b border-outline-variant text-surface-on placeholder-transparent focus:border-primary focus:ring-0 focus:outline-none transition-colors peer"
-        />
-        <label className="absolute left-12 top-4 text-surface-on-variant text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-1 peer-focus:text-xs peer-focus:text-primary pointer-events-none">
-            {label}
-        </label>
-        {/* Active Indicator */}
-        <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-300 peer-focus:w-full"></div>
-    </div>
-);
 
 // Auth Screen Component - Separated to isolate state and rendering
 const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
@@ -64,7 +44,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
                     {authMode === 'signup' && (
-                        <M3Input 
+                        <Input 
                             key="name-input"
                             label="Name" 
                             icon={User} 
@@ -73,7 +53,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                             required 
                         />
                     )}
-                    <M3Input 
+                    <Input 
                         key="email-input"
                         label="Email" 
                         icon={Mail} 
@@ -81,7 +61,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                         value={email} 
                         onChange={(e: any) => setEmail(e.target.value)} 
                     />
-                    <M3Input 
+                    <Input 
                         key="password-input"
                         label="Password" 
                         icon={Lock} 
@@ -212,10 +192,10 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <M3Input label="Full Name" icon={Smile} value={formData.name} onChange={(e: any) => handleChange('name', e.target.value)} />
-                <M3Input label="Age" icon={Calendar} type="number" value={formData.age || ''} onChange={(e: any) => handleChange('age', parseInt(e.target.value))} />
-                <M3Input label="Height (cm)" icon={Ruler} type="number" value={formData.height || ''} onChange={(e: any) => handleChange('height', parseInt(e.target.value))} />
-                <M3Input label="Weight (kg)" icon={Scale} type="number" value={formData.weight || ''} onChange={(e: any) => handleChange('weight', parseInt(e.target.value))} />
+                <Input label="Full Name" icon={Smile} value={formData.name} onChange={(e: any) => handleChange('name', e.target.value)} />
+                <Input label="Age" icon={Calendar} type="number" value={formData.age || ''} onChange={(e: any) => handleChange('age', parseInt(e.target.value))} />
+                <Input label="Height (cm)" icon={Ruler} type="number" value={formData.height || ''} onChange={(e: any) => handleChange('height', parseInt(e.target.value))} />
+                <Input label="Weight (kg)" icon={Scale} type="number" value={formData.weight || ''} onChange={(e: any) => handleChange('weight', parseInt(e.target.value))} />
                 
                 <div className="relative group">
                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -234,7 +214,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                     <label className="absolute left-12 top-1 text-xs text-surface-on-variant pointer-events-none">Biological Sex</label>
                 </div>
 
-                <M3Input label="Current Shoe Model" icon={Footprints} value={formData.shoeModel} onChange={(e: any) => handleChange('shoeModel', e.target.value)} />
+                <Input label="Current Shoe Model" icon={Footprints} value={formData.shoeModel} onChange={(e: any) => handleChange('shoeModel', e.target.value)} />
 
                 <div className="md:col-span-2 mt-4">
                     <button 
@@ -245,31 +225,60 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                             : 'bg-primary text-primary-on shadow-lg shadow-primary/25 hover:shadow-xl hover:scale-[1.01]'
                         }`}
                     >
-                        {saved ? <CheckCircle size={24} /> : <Save size={24} />}
-                        {saved ? 'Saved Successfully' : 'Save Changes'}
+                        {saved ? (
+                            <>
+                                <CheckCircle size={20} /> Saved Successfully
+                            </>
+                        ) : (
+                            <>
+                                <Save size={20} /> Save Changes
+                            </>
+                        )}
                     </button>
                 </div>
             </form>
           </div>
 
-          {/* Danger Zone */}
-          <div className="bg-error-container/20 border border-error-container rounded-[32px] p-8 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-error mb-4">
-                    <AlertTriangle size={24} />
-                    <h3 className="text-xl font-bold">Danger Zone</h3>
-                </div>
-                <p className="text-surface-on-variant text-sm mb-8 leading-relaxed">
-                    Resetting the application will permanently delete all your local data, including runs, goals, profile settings, and API connections. This action cannot be undone.
-                </p>
-              </div>
-              <button 
-                  type="button"
-                  onClick={onReset}
-                  className="w-full py-4 bg-error text-error-on rounded-full font-bold shadow-lg shadow-error/20 hover:shadow-xl transition-all flex items-center justify-center gap-2"
-              >
-                  <Trash2 size={20} /> Factory Reset
-              </button>
+          {/* Danger Zone / Stats */}
+          <div className="space-y-6">
+               <div className="bg-surface-container rounded-[32px] p-8 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-secondary/10 p-2 rounded-full text-secondary">
+                            <Activity size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-surface-on">App Stats</h3>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center p-4 bg-surface-container-high rounded-2xl">
+                            <span className="text-surface-on-variant font-medium">Height</span>
+                            <span className="text-surface-on font-bold">{profile.height > 0 ? `${profile.height} cm` : '--'}</span>
+                        </div>
+                         <div className="flex justify-between items-center p-4 bg-surface-container-high rounded-2xl">
+                            <span className="text-surface-on-variant font-medium">BMI</span>
+                            <span className="text-surface-on font-bold">
+                                {profile.height > 0 && profile.weight > 0 
+                                ? (profile.weight / ((profile.height/100) ** 2)).toFixed(1) 
+                                : '--'}
+                            </span>
+                        </div>
+                    </div>
+               </div>
+
+               <div className="bg-error-container/30 rounded-[32px] p-8 border border-error-container">
+                    <div className="flex items-center gap-3 mb-4 text-error">
+                        <AlertTriangle size={24} />
+                        <h3 className="text-xl font-bold">Danger Zone</h3>
+                    </div>
+                    <p className="text-sm text-surface-on-variant mb-6">
+                        Resetting will permanently delete all your runs, goals, and profile data. This cannot be undone.
+                    </p>
+                    <button 
+                        onClick={onReset}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-error text-error-on font-bold hover:bg-error/90 transition-colors"
+                    >
+                        <Trash2 size={18} /> Reset All Data
+                    </button>
+               </div>
           </div>
       </div>
     </div>
