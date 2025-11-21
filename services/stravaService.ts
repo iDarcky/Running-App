@@ -7,11 +7,10 @@ const STRAVA_OAUTH_BASE = 'https://www.strava.com/oauth';
 // --- OAuth Helpers ---
 
 export const getStravaAuthUrl = (clientId: string): string => {
-  const redirectUri = window.location.origin; // Redirect back to the same page
+  const redirectUri = window.location.origin; 
   // Explicitly request both activity:read and activity:read_all to ensure we cover all bases
   const scope = 'read,activity:read,activity:read_all,profile:read_all'; 
   // Add state=strava to distinguish from other providers
-  // IMPORTANT: redirect_uri must be encoded
   return `${STRAVA_OAUTH_BASE}/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=force&scope=${scope}&state=strava`;
 };
 
@@ -21,7 +20,7 @@ export const exchangeStravaToken = async (clientId: string, clientSecret: string
       method: 'POST',
       headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json' // Ensure we get JSON back
+          'Accept': 'application/json' 
       },
       body: JSON.stringify({
         client_id: clientId,
@@ -86,21 +85,6 @@ export const refreshStravaToken = async (clientId: string, clientSecret: string,
 };
 
 // --- API Calls ---
-
-/**
- * Validates a token structure or basic API access
- */
-export const validateStravaToken = async (accessToken: string): Promise<boolean> => {
-  if (!accessToken) return false;
-  try {
-    const response = await fetch(`${STRAVA_API_BASE}/athlete`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    return response.ok;
-  } catch (e) {
-    return false;
-  }
-};
 
 export const getStravaActivities = async (
     currentTokens: StravaToken, 
@@ -181,7 +165,7 @@ export const getStravaActivities = async (
 };
 
 export const mapStravaToRun = (activity: any): Run => {
-    // Map workout type: 0=default, 1=race, 2=long run, 3=intervals
+    // Map workout type: 0=run, 1=race, 2=long run, 3=intervals
     let type = RunType.EASY;
     
     // Check properties safely
@@ -195,7 +179,10 @@ export const mapStravaToRun = (activity: any): Run => {
         if (activity.suffer_score && activity.suffer_score > 50) type = RunType.TEMPO;
     }
 
-    // Cadence handling: Strava returns steps per minute. 
+    // Cadence handling: Strava returns 'steps per minute' 
+    // For running, Strava usually reports total steps per minute (e.g. 170)
+    // However, some devices only report one foot (e.g. 85). 
+    // Heuristic: if < 110, it's likely single leg.
     let cadence = activity.average_cadence || 0;
     if (cadence > 0 && cadence < 110) {
         cadence = cadence * 2;
@@ -203,15 +190,17 @@ export const mapStravaToRun = (activity: any): Run => {
 
     return {
         id: `strava_${activity.id}`,
+        // Prefer local start date which matches the user's timezone
         date: activity.start_date_local ? activity.start_date_local.split('T')[0] : new Date().toISOString().split('T')[0],
         distance: activity.distance ? Number((activity.distance / 1000).toFixed(2)) : 0, // meters to km
+        // Use moving_time for training log, elapsed_time only if race
         duration: activity.moving_time ? Math.round(activity.moving_time / 60) : 0, // seconds to minutes
         type: type,
         avgHr: Math.round(activity.average_heartrate || 0),
         rpe: 0, // RPE is not standard in activity list response
         cadence: Math.round(cadence),
-        strideLength: 0, // Not typically available in standard list
+        strideLength: 0, 
         source: 'Strava',
-        notes: activity.name || 'Strava Activity' // Use activity title as notes
+        notes: activity.name || 'Strava Activity'
     };
 };

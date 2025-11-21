@@ -15,6 +15,7 @@ interface DashboardProps {
   profile?: UserProfile;
   onAddGoal: (goal: Goal) => void;
   onDeleteGoal: (id: string) => void;
+  onNavigate: (tab: 'dashboard' | 'log' | 'coach' | 'profile') => void;
 }
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string }> = ({ title, value, icon, subtext }) => (
@@ -32,7 +33,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
   </div>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, onDeleteGoal }) => {
+const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, onDeleteGoal, onNavigate }) => {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year' | 'all'>('all');
 
   const getRunTypeColor = (type: string) => {
@@ -198,10 +199,21 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
         </div>
         <h1 className="text-4xl font-bold text-white">Welcome to StrideAI</h1>
         <p className="text-slate-400 max-w-md text-lg">
-          Your personal AI running coach. Connect your accounts or log a run manually to get started with insights, trends, and goals.
+          Your personal AI running coach. Please connect or log a run manually to get started with insights, trends, and goals.
         </p>
-        <div className="text-brand-400 font-medium text-sm">
-          Go to the "Logs" tab to import or add data.
+        <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto px-6">
+             <button 
+                onClick={() => onNavigate('log')}
+                className="px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-brand-500/20"
+             >
+                Go to Logs
+             </button>
+             <button 
+                onClick={() => onNavigate('profile')}
+                className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors border border-slate-600"
+             >
+                Setup Profile
+             </button>
         </div>
       </div>
     );

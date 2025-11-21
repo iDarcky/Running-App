@@ -39,7 +39,7 @@ const App: React.FC = () => {
       setProfile(JSON.parse(savedProfile));
     }
 
-    // Check for Strava OAuth Code to redirect to log tab
+    // Check for OAuth Code (Strava/Google) in URL to redirect to log tab immediately
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('code')) {
         setActiveTab('log');
@@ -77,7 +77,21 @@ const App: React.FC = () => {
   }
 
   const handleAddRun = (run: Run) => {
-    saveRuns([run, ...runs]);
+    const newRuns = [run, ...runs];
+    // Sort descending
+    newRuns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    saveRuns(newRuns);
+  };
+
+  const handleAddRuns = (newRunsData: Run[]) => {
+    const currentIds = new Set(runs.map(r => r.id));
+    const uniqueNewRuns = newRunsData.filter(r => !currentIds.has(r.id));
+    
+    if (uniqueNewRuns.length > 0) {
+        const updatedRuns = [...uniqueNewRuns, ...runs];
+        updatedRuns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        saveRuns(updatedRuns);
+    }
   };
 
   const handleDeleteRun = (id: string) => {
@@ -152,12 +166,14 @@ const App: React.FC = () => {
                 profile={profile}
                 onAddGoal={handleAddGoal} 
                 onDeleteGoal={handleDeleteGoal} 
+                onNavigate={setActiveTab}
             />
         )}
         {activeTab === 'log' && (
             <RunLog 
                 runs={runs} 
-                onAddRun={handleAddRun} 
+                onAddRun={handleAddRun}
+                onAddRuns={handleAddRuns}
                 onDeleteRun={handleDeleteRun} 
             />
         )}
