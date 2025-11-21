@@ -13,6 +13,64 @@ interface RacePrepProps {
     onUpdateRace: (race: Race) => void;
 }
 
+const MarkdownRenderer = ({ content }: { content: string }) => {
+  if (!content) return null;
+  
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  
+  lines.forEach((line, index) => {
+    const key = `line-${index}`;
+    
+    // Main Section Headers (##)
+    if (line.startsWith('## ')) {
+      elements.push(
+        <h2 key={key} className="text-xl font-bold text-surface-on mt-6 mb-3 pb-2 border-b border-outline-variant/20 flex items-center gap-2">
+            {line.replace('## ', '')}
+        </h2>
+      );
+      return;
+    }
+
+    // Sub Headers (###)
+    if (line.startsWith('### ')) {
+      elements.push(<h3 key={key} className="text-lg font-bold text-primary mt-4 mb-2">{line.replace('### ', '')}</h3>);
+      return;
+    }
+    
+    // Bullet Points
+    if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+       const cleanLine = line.trim().replace(/^[-*]\s/, '');
+       const parts = cleanLine.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+           if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} className="text-surface-on font-bold">{part.slice(2, -2)}</strong>;
+           return part;
+       });
+       elements.push(
+         <div key={key} className="flex items-start gap-2 mb-2 ml-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0"></div>
+            <div className="text-surface-on-variant text-sm leading-relaxed">{parts}</div>
+         </div>
+       );
+       return;
+    }
+    
+    // Empty lines
+    if (line.trim() === '') {
+        elements.push(<div key={key} className="h-2"></div>);
+        return;
+    }
+    
+    // Standard Paragraphs
+    const parts = line.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+       if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} className="text-surface-on font-bold">{part.slice(2, -2)}</strong>;
+       return part;
+    });
+    elements.push(<p key={key} className="text-surface-on-variant mb-2 text-sm leading-relaxed">{parts}</p>);
+  });
+  
+  return <div className="animate-fade-in">{elements}</div>;
+};
+
 const RacePrep: React.FC<RacePrepProps> = ({ races, runs, profile, onAddRace, onDeleteRace, onUpdateRace }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -212,8 +270,8 @@ const RacePrep: React.FC<RacePrepProps> = ({ races, runs, profile, onAddRace, on
                                                         Regenerate
                                                     </button>
                                                  </div>
-                                                 <div className="prose prose-sm dark:prose-invert max-w-none text-surface-on-variant bg-surface-container p-6 rounded-2xl border border-outline-variant/10">
-                                                     <pre className="whitespace-pre-wrap font-sans">{race.aiPlan}</pre>
+                                                 <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant/10 shadow-sm">
+                                                     <MarkdownRenderer content={race.aiPlan} />
                                                  </div>
                                              </div>
                                          )}

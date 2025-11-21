@@ -107,10 +107,15 @@ export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserPr
 
     Create a personalized training strategy for this race.
     Analyze my recent volume and pace compared to the race distance and goal.
+    
+    Structure the response clearly using these specific markdown features:
+    - Use "## " for main sections (e.g. "Current Status", "The Plan", "Key Workouts").
+    - Use "### " for subsections or specific weeks.
+    - Use "- " for bullet points.
+    - Use "**bold**" for emphasis on key workouts or paces.
+    
     Provide a high-level weekly structure (e.g. "Focus on long runs for 2 weeks, then taper").
     Include specific key workouts.
-    
-    Format the output in clean Markdown.
     Keep it concise but actionable.
   `;
 
