@@ -190,7 +190,6 @@ const App: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            {/* Updated padding: pt-6 px-4 for mobile, pb-32 to avoid nav overlap */}
             <main className="flex-1 md:ml-64 p-4 md:p-8 pt-6 pb-32 md:pb-8 w-full overflow-x-hidden">
                 <div className="max-w-[1100px] mx-auto">
                     {activeTab === 'dashboard' && (
@@ -237,13 +236,15 @@ const App: React.FC = () => {
                 </div>
             </main>
 
-            {/* Floating Bottom Nav (Mobile) */}
-            <nav className="md:hidden fixed bottom-6 left-4 right-4 bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 z-50 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 safe-area-pb">
-                 <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
-                 <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
-                 <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
-                 <NavButton tab="race" activeTab={activeTab} icon={Flag} label="Race" onClick={setActiveTab} mobile />
-                 <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
+            {/* Floating Bottom Nav (Mobile) - Updated for Safe Area support */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe z-50 flex justify-center pointer-events-none">
+                 <div className="bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 w-full max-w-md pointer-events-auto">
+                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
+                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
+                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
+                     <NavButton tab="race" activeTab={activeTab} icon={Flag} label="Race" onClick={setActiveTab} mobile />
+                     <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
+                 </div>
             </nav>
         </div>
     </div>

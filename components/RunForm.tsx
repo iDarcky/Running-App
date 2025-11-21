@@ -135,7 +135,7 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing }) =
                         <AlignLeft className="text-surface-on-variant" size={20} />
                     </div>
                      <textarea 
-                        className="w-full bg-surface-container-highest border-b border-outline-variant focus:border-primary rounded-t-xl pl-12 pr-4 py-4 text-surface-on outline-none resize-none h-24 block"
+                        className="w-full bg-surface-container-highest border-b border-outline-variant focus:border-primary rounded-t-xl pl-12 pr-4 pt-8 pb-4 text-surface-on outline-none resize-none h-24 block"
                         value={formData.notes}
                         onChange={(e) => setFormData({...formData, notes: e.target.value})}
                         placeholder=" "

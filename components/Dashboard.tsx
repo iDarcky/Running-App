@@ -10,7 +10,7 @@ import {
   Activity, Timer, Heart, Trophy, Medal, 
   TrendingUp, Calendar, SlidersHorizontal, 
   Check, GripVertical, Maximize2, Minimize2, X,
-  Edit3, Plus
+  Edit3, Plus, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -105,6 +105,18 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, profile }) => {
   const handleDragEnd = () => {
       setDraggedItemIndex(null);
       saveLayout(layout);
+  };
+
+  // --- Mobile/Manual Move Logic ---
+  const moveWidget = (index: number, direction: 'prev' | 'next') => {
+      if (!isEditingLayout) return;
+      const newLayout = [...layout];
+      if (direction === 'prev' && index > 0) {
+          [newLayout[index], newLayout[index - 1]] = [newLayout[index - 1], newLayout[index]];
+      } else if (direction === 'next' && index < newLayout.length - 1) {
+          [newLayout[index], newLayout[index + 1]] = [newLayout[index + 1], newLayout[index]];
+      }
+      saveLayout(newLayout);
   };
 
   const toggleWidgetSize = (id: string) => {
@@ -461,22 +473,43 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, profile }) => {
              >
                  {/* Edit Mode Controls */}
                  {isEditingLayout && (
-                     <div className="absolute -top-3 -right-3 z-10 flex gap-2">
-                         <button 
-                             onClick={() => toggleWidgetSize(widget.id)}
-                             className="bg-surface-on text-surface-inverse-on p-2 rounded-full shadow-md hover:scale-110 transition-transform"
-                             title={widget.size === 'full' ? "Shrink" : "Expand"}
-                         >
-                             {widget.size === 'full' ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                         </button>
-                         <button 
-                             onClick={() => removeWidget(widget.id)}
-                             className="bg-red-500 text-white p-2 rounded-full shadow-md hover:scale-110 transition-transform"
-                             title="Remove Widget"
-                         >
-                             <X size={14} />
-                         </button>
-                     </div>
+                     <>
+                         {/* Resizing & Removing (Top Right) */}
+                         <div className="absolute -top-3 -right-3 z-10 flex gap-2">
+                             <button 
+                                 onClick={() => toggleWidgetSize(widget.id)}
+                                 className="bg-surface-on text-surface-inverse-on p-2 rounded-full shadow-md hover:scale-110 transition-transform"
+                                 title={widget.size === 'full' ? "Shrink" : "Expand"}
+                             >
+                                 {widget.size === 'full' ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                             </button>
+                             <button 
+                                 onClick={() => removeWidget(widget.id)}
+                                 className="bg-red-500 text-white p-2 rounded-full shadow-md hover:scale-110 transition-transform"
+                                 title="Remove Widget"
+                             >
+                                 <X size={14} />
+                             </button>
+                         </div>
+
+                         {/* Reordering (Top Left) - Mobile Friendly */}
+                         <div className="absolute -top-3 -left-3 z-10 flex gap-1">
+                            <button 
+                                onClick={() => moveWidget(index, 'prev')}
+                                disabled={index === 0}
+                                className="bg-surface-container-highest text-surface-on p-2 rounded-full shadow-md disabled:opacity-30 hover:bg-primary hover:text-primary-on transition-colors"
+                            >
+                                <ChevronLeft size={14} />
+                            </button>
+                            <button 
+                                onClick={() => moveWidget(index, 'next')}
+                                disabled={index === layout.length - 1}
+                                className="bg-surface-container-highest text-surface-on p-2 rounded-full shadow-md disabled:opacity-30 hover:bg-primary hover:text-primary-on transition-colors"
+                            >
+                                <ChevronRight size={14} />
+                            </button>
+                         </div>
+                     </>
                  )}
 
                  {isEditingLayout && (
