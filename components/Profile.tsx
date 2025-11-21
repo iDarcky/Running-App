@@ -10,8 +10,8 @@ interface ProfileProps {
   toggleTheme: () => void;
 }
 
-// Material 3 Input Component - Memoized and defined outside
-const M3Input = React.memo(({ label, icon: Icon, type = "text", value, onChange, placeholder, required = false }: any) => (
+// Material 3 Input Component - Definition kept simple
+const M3Input = ({ label, icon: Icon, type = "text", value, onChange, placeholder, required = false }: any) => (
     <div className="relative group">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Icon className="text-surface-on-variant" size={20} />
@@ -30,7 +30,7 @@ const M3Input = React.memo(({ label, icon: Icon, type = "text", value, onChange,
         {/* Active Indicator */}
         <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-300 peer-focus:w-full"></div>
     </div>
-));
+);
 
 // Auth Screen Component - Separated to isolate state and rendering
 const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
@@ -65,6 +65,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                 <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
                     {authMode === 'signup' && (
                         <M3Input 
+                            key="name-input"
                             label="Name" 
                             icon={User} 
                             value={loginName} 
@@ -73,6 +74,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                         />
                     )}
                     <M3Input 
+                        key="email-input"
                         label="Email" 
                         icon={Mail} 
                         type="email" 
@@ -80,6 +82,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                         onChange={(e: any) => setEmail(e.target.value)} 
                     />
                     <M3Input 
+                        key="password-input"
                         label="Password" 
                         icon={Lock} 
                         type="password" 
@@ -98,6 +101,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
 
                 <div className="mt-8 text-center relative z-10">
                     <button 
+                        type="button"
                         onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
                         className="text-primary font-medium text-sm hover:text-primary/80 transition-colors"
                     >
@@ -107,6 +111,7 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
                     <div className="my-6 border-t border-outline-variant/30"></div>
 
                     <button 
+                        type="button"
                         onClick={() => onLogin('Guest Runner')}
                         className="text-surface-on-variant text-sm font-medium hover:text-surface-on transition-colors"
                     >

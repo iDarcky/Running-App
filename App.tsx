@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Run, Goal, UserProfile } from './types';
+import { Run, Goal, UserProfile, RunType } from './types';
 import { SAMPLE_RUNS, SAMPLE_GOALS } from './constants';
 import Dashboard from './components/Dashboard';
 import RunLog from './components/RunLog';
@@ -15,3 +15,206 @@ const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false 
             onClick={() => onClick(tab)}
             className={`
                 flex items-center gap-2 transition-all duration-300 group
+                ${mobile 
+                    ? `flex-col text-[10px] font-medium p-2 rounded-xl ${isActive ? 'text-primary' : 'text-surface-on-variant'}` 
+                    : `w-full px-4 py-3 rounded-full mb-2 ${isActive ? 'bg-primary text-primary-on shadow-lg shadow-primary/25 font-bold' : 'text-surface-on-variant hover:bg-surface-container-highest hover:text-surface-on'}`
+                }
+            `}
+        >
+            <div className={`transition-transform duration-300 ${isActive && !mobile ? 'scale-110' : ''} ${mobile && isActive ? '-translate-y-1' : ''}`}>
+                <Icon size={mobile ? 24 : 20} className={isActive ? 'fill-current' : ''} />
+            </div>
+            <span>{label}</span>
+            {!mobile && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>}
+        </button>
+    );
+};
+
+const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'profile'>('dashboard');
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [profile, setProfile] = useState<UserProfile>({
+    name: '',
+    height: 0,
+    weight: 0,
+    age: 0,
+    sex: '',
+    shoeModel: ''
+  });
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Load Data
+  useEffect(() => {
+    const loadData = () => {
+      const savedRuns = localStorage.getItem('stride_runs');
+      const savedGoals = localStorage.getItem('stride_goals');
+      const savedProfile = localStorage.getItem('stride_profile');
+      const savedTheme = localStorage.getItem('stride_theme');
+
+      if (savedRuns) {
+          try {
+              const parsedRuns = JSON.parse(savedRuns);
+              setRuns(parsedRuns);
+          } catch(e) { console.error("Error parsing runs", e); setRuns(SAMPLE_RUNS); }
+      } else {
+          setRuns(SAMPLE_RUNS);
+      }
+
+      if (savedGoals) {
+          try { setGoals(JSON.parse(savedGoals)); } catch(e) { setGoals(SAMPLE_GOALS); }
+      } else {
+          setGoals(SAMPLE_GOALS);
+      }
+
+      if (savedProfile) {
+          try { setProfile(JSON.parse(savedProfile)); } catch(e) {}
+      }
+
+      if (savedTheme === 'dark') {
+          setTheme('dark');
+          document.documentElement.classList.add('dark');
+      }
+    };
+    loadData();
+  }, []);
+
+  // Save Data Helpers
+  const saveRuns = (newRuns: Run[]) => {
+      setRuns(newRuns);
+      localStorage.setItem('stride_runs', JSON.stringify(newRuns));
+  };
+
+  const saveGoals = (newGoals: Goal[]) => {
+      setGoals(newGoals);
+      localStorage.setItem('stride_goals', JSON.stringify(newGoals));
+  };
+
+  const saveProfile = (newProfile: UserProfile) => {
+      setProfile(newProfile);
+      localStorage.setItem('stride_profile', JSON.stringify(newProfile));
+  };
+
+  const toggleTheme = () => {
+      const newTheme = theme === 'light' ? 'dark' : 'light';
+      setTheme(newTheme);
+      localStorage.setItem('stride_theme', newTheme);
+      if (newTheme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+  };
+
+  // Handlers
+  const handleAddRun = (run: Run) => saveRuns([run, ...runs]);
+  const handleAddRuns = (newRuns: Run[]) => {
+      // Avoid duplicates by ID
+      const existingIds = new Set(runs.map(r => r.id));
+      const uniqueNewRuns = newRuns.filter(r => !existingIds.has(r.id));
+      saveRuns([...uniqueNewRuns, ...runs]);
+  };
+  const handleUpdateRun = (updatedRun: Run) => saveRuns(runs.map(r => r.id === updatedRun.id ? updatedRun : r));
+  const handleDeleteRun = (id: string) => saveRuns(runs.filter(r => r.id !== id));
+
+  const handleAddGoal = (goal: Goal) => saveGoals([...goals, goal]);
+  const handleDeleteGoal = (id: string) => saveGoals(goals.filter(g => g.id !== id));
+
+  const handleReset = () => {
+      if (window.confirm("Are you sure you want to reset all data? This cannot be undone.")) {
+          localStorage.clear();
+          setRuns(SAMPLE_RUNS);
+          setGoals(SAMPLE_GOALS);
+          setProfile({ name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '' });
+          setActiveTab('dashboard');
+          window.location.reload();
+      }
+  };
+
+  return (
+    <div className={`min-h-screen bg-surface transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
+        <div className="flex min-h-screen max-w-[1600px] mx-auto relative">
+            {/* Sidebar (Desktop) */}
+            <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-[max(0px,calc(50%-800px))] p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10">
+                <div className="flex items-center gap-3 px-4 mb-10">
+                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
+                        <Activity className="text-primary-on" size={24} />
+                    </div>
+                    <h1 className="text-2xl font-bold tracking-tighter text-surface-on">Stride<span className="text-primary">AI</span></h1>
+                </div>
+
+                <nav className="flex-1 space-y-2">
+                    <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Dashboard" onClick={setActiveTab} />
+                    <NavButton tab="log" activeTab={activeTab} icon={List} label="Training Log" onClick={setActiveTab} />
+                    <NavButton tab="coach" activeTab={activeTab} icon={BrainCircuit} label="AI Coach" onClick={setActiveTab} />
+                    <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} />
+                </nav>
+
+                <div className="p-4 bg-surface-container-high rounded-2xl mt-auto">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center text-tertiary-on-container font-bold text-xs">
+                             {profile.name ? profile.name.charAt(0).toUpperCase() : 'G'}
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-sm font-bold text-surface-on truncate">{profile.name || 'Guest Runner'}</p>
+                            <p className="text-[10px] text-surface-on-variant truncate">{runs.length} Runs Logged</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 md:ml-64 p-4 md:p-8 pb-24 md:pb-8 w-full overflow-x-hidden">
+                <div className="max-w-6xl mx-auto">
+                    {activeTab === 'dashboard' && (
+                        <Dashboard 
+                            runs={runs} 
+                            goals={goals} 
+                            profile={profile} 
+                            onAddGoal={handleAddGoal} 
+                            onDeleteGoal={handleDeleteGoal}
+                            onNavigate={setActiveTab}
+                        />
+                    )}
+                    {activeTab === 'log' && (
+                        <RunLog 
+                            runs={runs} 
+                            onAddRun={handleAddRun} 
+                            onAddRuns={handleAddRuns}
+                            onUpdateRun={handleUpdateRun} 
+                            onDeleteRun={handleDeleteRun} 
+                        />
+                    )}
+                    {activeTab === 'coach' && (
+                        <CoachInsights runs={runs} profile={profile} />
+                    )}
+                    {activeTab === 'profile' && (
+                        <Profile 
+                            profile={profile} 
+                            onSaveProfile={saveProfile} 
+                            onReset={handleReset} 
+                            theme={theme}
+                            toggleTheme={toggleTheme}
+                        />
+                    )}
+                </div>
+            </main>
+
+            {/* Bottom Nav (Mobile) */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/10 p-2 z-50 flex justify-around items-center safe-area-pb">
+                 <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
+                 <NavButton tab="log" activeTab={activeTab} icon={List} label="Log" onClick={setActiveTab} mobile />
+                 <div className="relative -top-6">
+                     <button 
+                        onClick={() => setActiveTab('log')}
+                        className="w-14 h-14 bg-primary text-primary-on rounded-full flex items-center justify-center shadow-xl shadow-primary/30 active:scale-95 transition-transform"
+                     >
+                        <Activity size={24} />
+                     </button>
+                 </div>
+                 <NavButton tab="coach" activeTab={activeTab} icon={BrainCircuit} label="Coach" onClick={setActiveTab} mobile />
+                 <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
+            </nav>
+        </div>
+    </div>
+  );
+};
+
+export default App;
