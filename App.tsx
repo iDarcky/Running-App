@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Run, Goal, UserProfile } from './types';
 import { SAMPLE_RUNS, SAMPLE_GOALS } from './constants';
@@ -20,48 +19,59 @@ const App: React.FC = () => {
     shoeModel: ''
   });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'profile'>('dashboard');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   
-  // Load runs, goals, and profile from local storage or init
+  // Initialize Theme
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('stride_theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      setTheme('light');
+    }
+  }, []);
+
+  // Apply Theme Class
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#141218');
+    } else {
+      root.classList.remove('dark');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#FEF7FF');
+    }
+    localStorage.setItem('stride_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  // Load runs, goals, and profile
   useEffect(() => {
     const savedRuns = localStorage.getItem('stride_runs');
     const savedGoals = localStorage.getItem('stride_goals');
     const savedProfile = localStorage.getItem('stride_profile');
     
-    if (savedRuns) {
-      setRuns(JSON.parse(savedRuns));
-    }
+    if (savedRuns) setRuns(JSON.parse(savedRuns));
+    if (savedGoals) setGoals(JSON.parse(savedGoals));
+    if (savedProfile) setProfile(JSON.parse(savedProfile));
 
-    if (savedGoals) {
-      setGoals(JSON.parse(savedGoals));
-    }
-
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
-    }
-
-    // Check for OAuth Code (Strava/Google) in URL to redirect to log tab immediately
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('code')) {
         setActiveTab('log');
     }
 
-    // Listen for updates from other tabs/popups
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'stride_runs' && e.newValue) {
-            setRuns(JSON.parse(e.newValue));
-        }
-        if (e.key === 'stride_goals' && e.newValue) {
-            setGoals(JSON.parse(e.newValue));
-        }
-        if (e.key === 'stride_profile' && e.newValue) {
-            setProfile(JSON.parse(e.newValue));
-        }
+        if (e.key === 'stride_runs' && e.newValue) setRuns(JSON.parse(e.newValue));
+        if (e.key === 'stride_goals' && e.newValue) setGoals(JSON.parse(e.newValue));
+        if (e.key === 'stride_profile' && e.newValue) setProfile(JSON.parse(e.newValue));
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Scroll to top when active tab changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab]);
@@ -82,25 +92,20 @@ const App: React.FC = () => {
   }
 
   const handleAddRun = (run: Run) => {
-    const newRuns = [run, ...runs];
-    // Sort descending
-    newRuns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const newRuns = [run, ...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     saveRuns(newRuns);
   };
 
   const handleUpdateRun = (updatedRun: Run) => {
-    const updatedRuns = runs.map(r => r.id === updatedRun.id ? updatedRun : r);
-    updatedRuns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const updatedRuns = runs.map(r => r.id === updatedRun.id ? updatedRun : r).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     saveRuns(updatedRuns);
   };
 
   const handleAddRuns = (newRunsData: Run[]) => {
     const currentIds = new Set(runs.map(r => r.id));
     const uniqueNewRuns = newRunsData.filter(r => !currentIds.has(r.id));
-    
     if (uniqueNewRuns.length > 0) {
-        const updatedRuns = [...uniqueNewRuns, ...runs];
-        updatedRuns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const updatedRuns = [...uniqueNewRuns, ...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         saveRuns(updatedRuns);
     }
   };
@@ -117,67 +122,81 @@ const App: React.FC = () => {
       saveGoals(goals.filter(g => g.id !== id));
   }
 
-  // Factory Reset: Clears all local data
   const handleResetApp = () => {
-      if (window.confirm("WARNING: This will delete ALL your data (runs, goals, profile, API connections) from this device. This action cannot be undone. Are you sure?")) {
+      if (window.confirm("WARNING: This will delete ALL your data. Are you sure?")) {
           localStorage.clear();
-          window.location.href = '/'; // Force reload to clean state
+          window.location.href = '/';
       }
   };
 
-  const NavButton = ({ tab, icon: Icon, label, mobile = false }: { tab: typeof activeTab, icon: any, label: string, mobile?: boolean }) => (
-    <button 
-        onClick={() => setActiveTab(tab)}
-        className={`
-            flex items-center gap-2 rounded-lg font-medium transition-all
-            ${mobile 
-                ? 'flex-col justify-center p-2 text-[10px]' 
-                : 'px-3 py-2 text-sm'
-            }
-            ${activeTab === tab 
-                ? 'text-brand-400 ' + (mobile ? '' : 'bg-brand-500/10') 
-                : 'text-slate-400 hover:text-white'
-            }
-        `}
-    >
-        <Icon size={mobile ? 22 : 18} className={activeTab === tab && mobile ? 'text-brand-400 drop-shadow-[0_0_8px_rgba(90,79,207,0.5)]' : ''} />
-        <span className={mobile ? '' : 'hidden sm:inline'}>{label}</span>
-    </button>
-  );
+  const NavButton = ({ tab, icon: Icon, label, mobile = false }: { tab: typeof activeTab, icon: any, label: string, mobile?: boolean }) => {
+    const isActive = activeTab === tab;
+    return (
+        <button 
+            onClick={() => setActiveTab(tab)}
+            className={`
+                flex items-center gap-2 transition-all duration-300 group
+                ${mobile 
+                    ? 'flex-col justify-center gap-1 w-full py-3' 
+                    : 'px-6 py-3 rounded-full'
+                }
+                ${isActive && !mobile ? 'bg-secondary-container text-secondary-on-container font-bold' : ''}
+                ${!isActive && !mobile ? 'text-surface-on-variant hover:bg-surface-container-high' : ''}
+            `}
+        >
+            <div className={`
+                flex items-center justify-center rounded-full transition-all
+                ${mobile ? (isActive ? 'bg-secondary-container text-secondary-on-container w-16 h-8' : 'text-surface-on-variant w-16 h-8') : ''}
+            `}>
+                 <Icon size={mobile ? 20 : 24} className={isActive && !mobile ? 'fill-current' : ''} />
+            </div>
+            <span className={`
+                text-sm font-medium
+                ${mobile ? (isActive ? 'text-surface-on font-bold' : 'text-surface-on-variant') : ''}
+            `}>{label}</span>
+        </button>
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-brand-500/30 pb-24 md:pb-0">
-      {/* Desktop Navigation Bar */}
-      <nav className="hidden md:block bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <div className="min-h-screen bg-surface text-surface-on font-sans pb-24 md:pb-0 transition-colors duration-300">
+      {/* Desktop Navigation Bar - Material 3 Top Bar style */}
+      <nav className="hidden md:block bg-surface-container-low sticky top-0 z-50 shadow-sm transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-3">
-              <div className="bg-brand-500 p-2 rounded-lg">
-                <Activity size={24} className="text-white" />
+              <div className="bg-primary-container text-primary-on-container p-2.5 rounded-xl">
+                <Activity size={24} className="fill-current" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-white to-brand-200 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold text-surface-on tracking-tight">
                 StrideAI
               </span>
             </div>
             
-            <div className="flex items-center gap-1 sm:gap-4">
+            <div className="flex items-center gap-2 bg-surface p-1 rounded-full shadow-sm border border-outline-variant/20">
                 <NavButton tab="dashboard" icon={LayoutDashboard} label="Dashboard" />
                 <NavButton tab="log" icon={List} label="Logs" />
-                <NavButton tab="coach" icon={BrainCircuit} label="AI Coach" />
+                <NavButton tab="coach" icon={BrainCircuit} label="Coach" />
                 <NavButton tab="profile" icon={User} label="Profile" />
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Header (Logo Only) */}
-      <div className="md:hidden bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40 px-4 h-14 flex items-center justify-center">
-         <span className="text-lg font-bold text-white flex items-center gap-2">
-            <Activity size={20} className="text-brand-500" /> StrideAI
+      {/* Mobile Header (Small Top Bar) */}
+      <div className="md:hidden bg-surface-container-low sticky top-0 z-40 px-4 h-16 flex items-center justify-between shadow-sm transition-colors duration-300">
+         <span className="text-xl font-bold text-surface-on flex items-center gap-3">
+            <div className="bg-primary-container text-primary-on-container p-1.5 rounded-lg">
+                <Activity size={20} className="fill-current" />
+            </div>
+            StrideAI
          </span>
+         <div className="w-8 h-8 rounded-full bg-tertiary-container text-tertiary-on-container flex items-center justify-center font-bold text-sm">
+             {profile.name ? profile.name.charAt(0).toUpperCase() : 'G'}
+         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
         {activeTab === 'dashboard' && (
             <Dashboard 
                 runs={runs} 
@@ -205,13 +224,15 @@ const App: React.FC = () => {
                 profile={profile} 
                 onSaveProfile={saveProfile} 
                 onReset={handleResetApp} 
+                theme={theme}
+                toggleTheme={toggleTheme}
             />
         )}
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 z-50 pb-safe">
-        <div className="flex justify-around items-center h-16">
+      {/* Mobile Bottom Navigation - Material 3 Style */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container z-50 pb-safe border-t border-outline-variant/20">
+        <div className="flex justify-around items-center h-20 px-2">
             <NavButton tab="dashboard" icon={LayoutDashboard} label="Dash" mobile />
             <NavButton tab="log" icon={List} label="Logs" mobile />
             <NavButton tab="coach" icon={BrainCircuit} label="Coach" mobile />
