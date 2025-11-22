@@ -50,7 +50,24 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
         }
     };
     
-    const activeShoes = profile?.shoes?.filter(s => !s.isRetired) || [];
+    const allShoes = profile?.shoes || [];
+    const activeShoes = allShoes.filter(s => !s.isRetired);
+    // Show active shoes OR the specific shoe assigned to this run (even if retired) so editing doesn't break
+    const availableShoes = allShoes.filter(s => !s.isRetired || s.id === formData.shoeId);
+    
+    // Default shoe logic
+    const defaultShoe = activeShoes.find(s => s.isDefault);
+
+    useEffect(() => {
+        // If adding a new run, and no shoe is selected yet
+        if (!isEditing && !formData.shoeId) {
+            if (defaultShoe) {
+                setFormData(prev => ({ ...prev, shoeId: defaultShoe.id }));
+            } else if (activeShoes.length === 1) {
+                 setFormData(prev => ({ ...prev, shoeId: activeShoes[0].id }));
+            }
+        }
+    }, [isEditing, formData.shoeId, activeShoes.length, defaultShoe]);
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
@@ -102,7 +119,7 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
                                     onClick={() => setFormData({...formData, type: t})}
                                     style={{
                                         borderColor: isSelected ? color : 'transparent',
-                                        backgroundColor: isSelected ? `${color}20` : undefined, // 20 is hex for ~12% opacity
+                                        backgroundColor: isSelected ? `${color}20` : undefined,
                                         color: isSelected ? color : undefined,
                                     }}
                                     className={`py-3 px-2 rounded-xl text-xs font-medium border transition-all flex flex-col items-center gap-2 ${
@@ -118,29 +135,30 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
                 </div>
                 
                 {/* Shoe Selection */}
-                {activeShoes.length > 0 && (
-                     <div className="relative w-full pt-2 group">
-                        <div className="absolute top-[26px] left-0 pl-4 flex items-center pointer-events-none">
-                           <Footprints className="text-surface-on-variant/70 group-focus-within:text-primary transition-colors" size={20} />
-                       </div>
-                       <select 
-                           value={formData.shoeId || ''}
-                           onChange={(e) => setFormData({...formData, shoeId: e.target.value})}
-                           className="block w-full pl-12 pr-10 pt-6 pb-2 bg-surface-container-highest rounded-xl border-b border-outline-variant/30 text-surface-on appearance-none focus:border-primary focus:outline-none cursor-pointer font-semibold transition-colors"
-                       >
-                           <option value="">None Selected</option>
-                           {activeShoes.map(shoe => (
-                               <option key={shoe.id} value={shoe.id}>{shoe.brand} {shoe.model}</option>
-                           ))}
-                       </select>
-                       <label className="absolute left-12 top-2 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-focus-within:text-primary">
-                           Gear
-                       </label>
-                       <div className="absolute top-[26px] right-4 pointer-events-none text-surface-on-variant group-focus-within:text-primary transition-colors">
-                           <ChevronDown size={16} />
-                       </div>
-                   </div>
-                )}
+                <div className="relative w-full pt-2 group">
+                    <div className="absolute top-[26px] left-0 pl-4 flex items-center pointer-events-none">
+                        <Footprints className="text-surface-on-variant/70 group-focus-within:text-primary transition-colors" size={20} />
+                    </div>
+                    <select 
+                        value={formData.shoeId || ''}
+                        onChange={(e) => setFormData({...formData, shoeId: e.target.value})}
+                        className="block w-full pl-12 pr-10 pt-6 pb-2 bg-surface-container-highest rounded-xl border-b border-outline-variant/30 text-surface-on appearance-none focus:border-primary focus:outline-none cursor-pointer font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={availableShoes.length === 0}
+                    >
+                        <option value="">{availableShoes.length === 0 ? "No active shoes (Add in Profile)" : "Select your kicks..."}</option>
+                        {availableShoes.map(shoe => (
+                            <option key={shoe.id} value={shoe.id}>
+                                {shoe.brand} {shoe.model} {shoe.isRetired ? '(Retired)' : ''} • {shoe.distance.toFixed(0)}km
+                                </option>
+                        ))}
+                    </select>
+                    <label className="absolute left-12 top-2 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-focus-within:text-primary">
+                        Gear Used
+                    </label>
+                    <div className="absolute top-[26px] right-4 pointer-events-none text-surface-on-variant group-focus-within:text-primary transition-colors">
+                        <ChevronDown size={16} />
+                    </div>
+                </div>
 
                 {/* Advanced Stats */}
                 <div className="grid grid-cols-3 gap-4">

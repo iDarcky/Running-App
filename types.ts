@@ -18,6 +18,7 @@ export interface Shoe {
   distance: number; // km accumulated
   maxDistance: number; // km limit (usually 800)
   isRetired: boolean;
+  isDefault?: boolean; // New: Primary shoe selection
   image?: string; // Optional URL
 }
 
@@ -80,6 +81,14 @@ export interface Race {
   aiPlan?: string;
 }
 
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  iconName: 'Zap' | 'Trophy' | 'Flame' | 'Mountain' | 'Sunrise' | 'Moon' | 'Award' | 'Footprints' | 'Map';
+  condition: (runs: Run[]) => boolean;
+}
+
 export interface StravaToken {
   access_token: string;
   refresh_token: string;
@@ -91,5 +100,5 @@ export interface GoogleToken {
   access_token: string;
   refresh_token?: string;
   expires_at: number; // Unix timestamp (ms)
-  scope: string;
+  scope?: string;
 }

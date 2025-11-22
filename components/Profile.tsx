@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserProfile, Shoe } from '../types';
+import { UserProfile, Shoe, Run } from '../types';
+import { ACHIEVEMENTS, SAMPLE_RUNS } from '../constants';
 import { Input } from './UIComponents';
-import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail, AlertTriangle, Trash2, Moon, Sun, Plus, Archive } from 'lucide-react';
+import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail, AlertTriangle, Trash2, Moon, Sun, Plus, Archive, Trophy, Map, Zap, Sunrise, Flame, Award, Star, Check } from 'lucide-react';
 import { RedLineLogo } from './Logo';
 
 interface ProfileProps {
@@ -12,6 +13,19 @@ interface ProfileProps {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
 }
+
+// Icon Mapper
+const getAchievementIcon = (name: string, size: number) => {
+    switch(name) {
+        case 'Footprints': return <Footprints size={size} />;
+        case 'Map': return <Map size={size} />;
+        case 'Zap': return <Zap size={size} />;
+        case 'Sunrise': return <Sunrise size={size} />;
+        case 'Flame': return <Flame size={size} />;
+        case 'Trophy': return <Trophy size={size} />;
+        default: return <Award size={size} />;
+    }
+};
 
 // Auth Screen Component - Separated to isolate state and rendering
 const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
@@ -122,6 +136,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
   const [saved, setSaved] = useState(false);
   const [isAddingShoe, setIsAddingShoe] = useState(false);
   const [newShoe, setNewShoe] = useState<Partial<Shoe>>({ brand: '', model: '', maxDistance: 800 });
+  const [allRuns, setAllRuns] = useState<Run[]>([]);
 
   const isLoggedIn = !!profile.name;
 
@@ -131,6 +146,14 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
         ...profile,
         shoes: profile.shoes || []
     });
+
+    // Load runs from storage to calc achievements
+    const savedRuns = localStorage.getItem('stride_runs');
+    if (savedRuns) {
+        try {
+            setAllRuns(JSON.parse(savedRuns));
+        } catch(e) { }
+    }
   }, [profile]);
 
   const handleChange = (field: keyof UserProfile, value: string | number) => {
@@ -154,13 +177,17 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
       e.preventDefault();
       if (!newShoe.brand || !newShoe.model) return;
       
+      // If it's the first shoe, make it default
+      const isFirst = !formData.shoes || formData.shoes.length === 0;
+
       const shoe: Shoe = {
           id: Date.now().toString(),
           brand: newShoe.brand,
           model: newShoe.model,
           distance: 0,
           maxDistance: newShoe.maxDistance || 800,
-          isRetired: false
+          isRetired: false,
+          isDefault: isFirst
       };
       
       const updatedShoes = [...(formData.shoes || []), shoe];
@@ -173,8 +200,17 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
 
   const handleRetireShoe = (id: string) => {
       const updatedShoes = formData.shoes.map(s => 
-          s.id === id ? { ...s, isRetired: !s.isRetired } : s
+          s.id === id ? { ...s, isRetired: !s.isRetired, isDefault: false } : s
       );
+      setFormData(prev => ({ ...prev, shoes: updatedShoes }));
+      onSaveProfile({ ...formData, shoes: updatedShoes });
+  };
+
+  const handleSetDefaultShoe = (id: string) => {
+      const updatedShoes = formData.shoes.map(s => ({
+          ...s,
+          isDefault: s.id === id
+      }));
       setFormData(prev => ({ ...prev, shoes: updatedShoes }));
       onSaveProfile({ ...formData, shoes: updatedShoes });
   };
@@ -253,6 +289,40 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                             <span className="text-sm text-surface-on-variant font-medium">Shoes Tracked</span>
                             <span className="text-sm font-bold text-surface-on">{formData.shoes?.length || 0}</span>
                         </div>
+                    </div>
+                </div>
+                
+                {/* Trophy Room */}
+                <div className="bg-surface-container rounded-[32px] p-8 border border-outline-variant/20 shadow-sm">
+                     <h3 className="text-lg font-bold text-surface-on mb-6 flex items-center gap-2">
+                        <Trophy size={20} className="text-[#FFD166]" /> Trophy Room
+                    </h3>
+                    <div className="grid grid-cols-3 gap-3">
+                        {ACHIEVEMENTS.map(achievement => {
+                            const isUnlocked = achievement.condition(allRuns);
+                            return (
+                                <div 
+                                    key={achievement.id} 
+                                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center p-2 transition-all group relative ${
+                                        isUnlocked 
+                                        ? 'bg-primary/10 text-primary' 
+                                        : 'bg-surface-container-highest opacity-40 grayscale'
+                                    }`}
+                                    title={achievement.description}
+                                >
+                                    <div className={`mb-1 ${isUnlocked ? 'text-primary' : 'text-surface-on-variant'}`}>
+                                        {isUnlocked ? getAchievementIcon(achievement.iconName, 24) : <Lock size={24} />}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-center leading-tight hidden md:block">
+                                        {achievement.title}
+                                    </span>
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-full mb-2 px-3 py-1 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                        {achievement.description}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -399,13 +469,30 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                         const progress = Math.min(100, (shoe.distance / shoe.maxDistance) * 100);
                         const isNearLimit = progress > 80;
                         const isOverLimit = progress >= 100;
+                        
+                        // Health Bar Color Logic
+                        let barColor = 'bg-[#06D6A0]'; // Green
+                        if (progress > 50) barColor = 'bg-[#FFD166]'; // Yellow
+                        if (progress > 80) barColor = 'bg-[#EF476F]'; // Red
 
                         return (
-                            <div key={shoe.id} className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 transition-all hover:border-outline-variant/30">
+                            <div key={shoe.id} className={`bg-surface-container-low p-5 rounded-2xl border transition-all ${shoe.isDefault ? 'border-primary shadow-md ring-1 ring-primary/20' : 'border-outline-variant/10 hover:border-outline-variant/30'}`}>
                                 <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h4 className="font-bold text-lg text-surface-on">{shoe.brand} <span className="font-normal opacity-90">{shoe.model}</span></h4>
-                                        <div className="text-xs font-bold uppercase text-surface-on-variant tracking-wider mt-1">Active</div>
+                                    <div className="flex items-start gap-3">
+                                        <button 
+                                            onClick={() => handleSetDefaultShoe(shoe.id)}
+                                            className={`mt-1 w-6 h-6 rounded-full flex items-center justify-center transition-all ${shoe.isDefault ? 'bg-primary text-primary-on' : 'bg-surface-container-highest text-surface-on-variant hover:bg-primary/20 hover:text-primary'}`}
+                                            title={shoe.isDefault ? "Primary Shoe" : "Set as Primary"}
+                                        >
+                                            {shoe.isDefault ? <Star size={14} fill="currentColor" /> : <Star size={14} />}
+                                        </button>
+                                        <div>
+                                            <h4 className="font-bold text-lg text-surface-on">{shoe.brand} <span className="font-normal opacity-90">{shoe.model}</span></h4>
+                                            <div className="flex gap-2 items-center mt-1">
+                                                <div className="text-xs font-bold uppercase text-surface-on-variant tracking-wider">Active</div>
+                                                {shoe.isDefault && <div className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-md">Primary</div>}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="flex gap-2">
                                         <button 
@@ -425,21 +512,32 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                                     </div>
                                 </div>
                                 
-                                <div className="space-y-2">
+                                <div className="space-y-2 pl-9">
                                     <div className="flex justify-between text-sm font-medium">
                                         <span className="text-surface-on">{shoe.distance.toFixed(1)} km</span>
-                                        <span className="text-surface-on-variant">Limit: {shoe.maxDistance} km</span>
+                                        <span className={`font-bold ${isOverLimit ? 'text-error' : 'text-surface-on-variant'}`}>
+                                            {Math.round(100 - progress)}% Health
+                                        </span>
                                     </div>
-                                    <div className="relative h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                                    {/* Visual Health Bar */}
+                                    <div className="relative h-4 bg-surface-container-highest rounded-full overflow-hidden border border-outline-variant/10">
                                         <div 
-                                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${isOverLimit ? 'bg-error' : isNearLimit ? 'bg-[#FFD166]' : 'bg-primary'}`}
+                                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${barColor}`}
                                             style={{ width: `${progress}%` }}
-                                        ></div>
+                                        >
+                                            <div className="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]" style={{backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)'}}></div>
+                                        </div>
+                                        {/* Ticks */}
+                                        <div className="absolute inset-0 flex justify-between px-[25%] opacity-20">
+                                            <div className="w-[1px] h-full bg-black/50"></div>
+                                            <div className="w-[1px] h-full bg-black/50"></div>
+                                            <div className="w-[1px] h-full bg-black/50"></div>
+                                        </div>
                                     </div>
                                     {isNearLimit && (
                                         <p className="text-xs font-bold text-[#FFD166] flex items-center gap-1 mt-1">
                                             <AlertTriangle size={12} /> 
-                                            {isOverLimit ? 'Max mileage reached. Time to retire?' : 'Approaching mileage limit.'}
+                                            {isOverLimit ? 'Max mileage reached. High injury risk!' : 'Approaching mileage limit.'}
                                         </p>
                                     )}
                                 </div>
@@ -452,10 +550,10 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                             <h4 className="text-sm font-bold text-surface-on-variant uppercase tracking-wider mb-4">Retired</h4>
                             <div className="space-y-3 opacity-60 hover:opacity-100 transition-opacity">
                                 {retiredShoes.map(shoe => (
-                                    <div key={shoe.id} className="flex justify-between items-center p-4 bg-surface-container-highest rounded-xl">
+                                    <div key={shoe.id} className="flex justify-between items-center p-4 bg-surface-container-highest rounded-xl grayscale">
                                         <div>
                                             <div className="font-bold text-surface-on">{shoe.brand} {shoe.model}</div>
-                                            <div className="text-xs text-surface-on-variant">Retire Mileage: {shoe.distance.toFixed(1)} km</div>
+                                            <div className="text-xs text-surface-on-variant">Retired at {shoe.distance.toFixed(1)} km</div>
                                         </div>
                                         <div className="flex gap-2">
                                             <button 

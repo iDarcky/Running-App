@@ -209,7 +209,8 @@ const App: React.FC = () => {
                             onAddRun={handleAddRun} 
                             onAddRuns={handleAddRuns}
                             onUpdateRun={handleUpdateRun} 
-                            onDeleteRun={handleDeleteRun} 
+                            onDeleteRun={handleDeleteRun}
+                            profile={profile}
                         />
                     )}
                     {activeTab === 'coach' && (

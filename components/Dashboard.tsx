@@ -1,6 +1,7 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { Run, UserProfile, RunType } from '../types';
-import { RUN_TYPE_COLORS } from '../constants';
+import { RUN_TYPE_COLORS, SAMPLE_RUNS, ACHIEVEMENTS } from '../constants';
 import { StatCard, Modal } from './UIComponents';
 import GoalTracker from './GoalTracker';
 import { 
@@ -11,9 +12,9 @@ import {
   Activity, Timer, Heart, Trophy, Medal, 
   TrendingUp, Check, Maximize2, Minimize2, X,
   Settings2, Plus, ChevronLeft, ChevronRight, 
-  Map, Footprints, BarChart3, PieChart, Target
+  Map, Footprints, BarChart3, PieChart, Target, Flame, Sparkles, Star, Award, Calendar, AlertTriangle
 } from 'lucide-react';
-import { formatPace, formatDate } from '../utils/formatters';
+import { formatPace, formatDate, formatFullDate, formatDuration } from '../utils/formatters';
 
 interface DashboardProps {
   runs: Run[];
@@ -22,6 +23,7 @@ interface DashboardProps {
   onAddGoal: (goal: any) => void;
   onDeleteGoal: (id: string) => void;
   onNavigate: (tab: 'dashboard' | 'log' | 'coach' | 'profile') => void;
+  onAddRuns?: (runs: Run[]) => void; // Optional prop for demo data
 }
 
 // Widget Definition Types
@@ -33,6 +35,9 @@ interface WidgetLayout {
 
 const AVAILABLE_WIDGETS = [
     { id: 'stats', label: 'Key Statistics', icon: Activity, defaultSize: 'full' as WidgetSize },
+    { id: 'shoe_tracker', label: 'Gear Status', icon: Footprints, defaultSize: 'half' as WidgetSize },
+    { id: 'rotw', label: 'Run of the Week', icon: Star, defaultSize: 'half' as WidgetSize },
+    { id: 'streak', label: 'Current Streak', icon: Flame, defaultSize: 'half' as WidgetSize },
     { id: 'records', label: 'Personal Bests', icon: Medal, defaultSize: 'half' as WidgetSize },
     { id: 'volume', label: 'Training Volume', icon: BarChart3, defaultSize: 'full' as WidgetSize },
     { id: 'intensity', label: 'Intensity Dist.', icon: PieChart, defaultSize: 'half' as WidgetSize },
@@ -40,7 +45,7 @@ const AVAILABLE_WIDGETS = [
     { id: 'trends', label: 'Pace vs Heart Rate', icon: TrendingUp, defaultSize: 'full' as WidgetSize },
 ];
 
-const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, onDeleteGoal, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, onDeleteGoal, onNavigate, onAddRuns }) => {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year' | 'all'>('all');
   const [greeting, setGreeting] = useState('');
   
@@ -56,7 +61,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
       else if (hour < 18) setGreeting('Good afternoon');
       else setGreeting('Good evening');
 
-      const savedLayout = localStorage.getItem('redline_dashboard_layout_v4');
+      const savedLayout = localStorage.getItem('redline_dashboard_layout_v6');
       if (savedLayout) {
           try {
             setLayout(JSON.parse(savedLayout));
@@ -70,7 +75,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
 
   const saveLayout = (newLayout: WidgetLayout[]) => {
       setLayout(newLayout);
-      localStorage.setItem('redline_dashboard_layout_v4', JSON.stringify(newLayout));
+      localStorage.setItem('redline_dashboard_layout_v6', JSON.stringify(newLayout));
   };
 
   // --- Drag and Drop Logic ---
@@ -181,6 +186,52 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
       }));
   }, [filteredRuns]);
 
+  const streakData = useMemo(() => {
+      if (runs.length === 0) return { current: 0, max: 0, active: false };
+      
+      const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      
+      let currentStreak = 0;
+      let checkDate = new Date(today);
+      
+      // Check if we ran this week
+      const getWeekStart = (d: Date) => {
+          const date = new Date(d);
+          const day = date.getDay(); // 0 (Sun) to 6 (Sat)
+          const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+          return new Date(date.setDate(diff));
+      };
+
+      // Simple Weekly Streak Logic
+      const uniqueWeeks = new Set(sortedRuns.map(r => getWeekStart(new Date(r.date)).toDateString()));
+      
+      // Check continuity from current week backwards
+      let tempDate = getWeekStart(new Date());
+      
+      // If no run this week yet, check last week to keep streak alive?
+      // For simplicity, let's count consecutive active weeks
+      while (uniqueWeeks.has(tempDate.toDateString())) {
+          currentStreak++;
+          tempDate.setDate(tempDate.getDate() - 7);
+      }
+      
+      return { current: currentStreak, max: currentStreak, active: currentStreak > 0 };
+  }, [runs]);
+
+  const runOfTheWeek = useMemo(() => {
+      const now = new Date();
+      // 7 days ago
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weeklyRuns = runs.filter(r => new Date(r.date) >= oneWeekAgo);
+      
+      if (weeklyRuns.length === 0) return null;
+
+      // Sort by distance descending
+      return weeklyRuns.reduce((prev, current) => (prev.distance > current.distance) ? prev : current);
+  }, [runs]);
+
   const hrZoneData = useMemo(() => {
     const age = profile?.age && profile.age > 0 ? profile.age : 30;
     const maxHr = 220 - age;
@@ -269,6 +320,131 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                       />
                   </div>
               );
+            case 'shoe_tracker':
+                // Find default shoe or the one with most mileage as fallback
+                const defaultShoe = profile?.shoes?.find(s => s.isDefault && !s.isRetired) 
+                    || profile?.shoes?.filter(s => !s.isRetired).sort((a,b) => b.distance - a.distance)[0];
+
+                if (!defaultShoe) {
+                     return (
+                        <div className="bg-surface-container rounded-[24px] p-6 h-full shadow-sm border border-outline-variant/20 flex flex-col items-center justify-center text-center">
+                            <Footprints size={32} className="text-surface-on-variant opacity-50 mb-2" />
+                            <p className="text-sm text-surface-on-variant font-bold">No active gear found</p>
+                            <button onClick={() => onNavigate('profile')} className="text-primary text-xs font-bold mt-2 hover:underline">Add Shoes</button>
+                        </div>
+                     );
+                }
+                
+                const progress = Math.min(100, (defaultShoe.distance / defaultShoe.maxDistance) * 100);
+                const remaining = Math.max(0, defaultShoe.maxDistance - defaultShoe.distance);
+                let barColor = 'bg-[#06D6A0]';
+                if (progress > 50) barColor = 'bg-[#FFD166]';
+                if (progress > 80) barColor = 'bg-[#EF476F]';
+
+                return (
+                    <div className="bg-surface-container rounded-[24px] p-6 h-full shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+                         <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-bold text-surface-on flex items-center gap-2">
+                                <Footprints className="text-primary" size={24} />
+                                Gear Status
+                            </h3>
+                            {defaultShoe.isDefault && (
+                                <span className="bg-primary/10 text-primary text-[10px] font-bold uppercase px-2 py-1 rounded-md">Primary</span>
+                            )}
+                        </div>
+                        
+                        <div className="flex-1 flex flex-col justify-center">
+                             <h4 className="text-lg font-bold text-surface-on truncate">{defaultShoe.brand}</h4>
+                             <p className="text-sm text-surface-on-variant font-medium truncate mb-4">{defaultShoe.model}</p>
+                             
+                             <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="font-bold text-surface-on">{defaultShoe.distance.toFixed(1)} km</span>
+                                    <span className="text-surface-on-variant text-xs">{defaultShoe.maxDistance} km max</span>
+                                </div>
+                                <div className="relative h-3 bg-surface-container-highest rounded-full overflow-hidden">
+                                     <div 
+                                        className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${barColor}`}
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between items-center pt-1">
+                                    <span className="text-xs font-bold text-surface-on-variant">{Math.round(100 - progress)}% Health</span>
+                                    {remaining < 50 && (
+                                        <span className="flex items-center gap-1 text-xs text-[#EF476F] font-bold">
+                                            <AlertTriangle size={10} /> Replace Soon
+                                        </span>
+                                    )}
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                );
+            case 'rotw':
+                return (
+                    <div className="bg-surface-container rounded-[24px] p-6 h-full shadow-sm border border-outline-variant/20 flex flex-col relative overflow-hidden">
+                         <h3 className="text-xl font-bold text-surface-on mb-4 flex items-center gap-2 relative z-10">
+                            <Star className="text-[#FFD166]" size={24} fill="currentColor" />
+                            Run of the Week
+                        </h3>
+                        {runOfTheWeek ? (
+                            <div className="relative z-10 flex-1 flex flex-col justify-center">
+                                <div className="flex items-baseline gap-1 mb-1">
+                                     <span className="text-5xl font-bold text-surface-on tracking-tight">{runOfTheWeek.distance}</span>
+                                     <span className="text-lg font-medium text-surface-on-variant">km</span>
+                                </div>
+                                <div className="flex gap-4 text-sm font-bold text-surface-on-variant mb-4">
+                                    <span className="flex items-center gap-1"><Calendar size={14}/> {formatFullDate(runOfTheWeek.date)}</span>
+                                    <span className="flex items-center gap-1"><Timer size={14}/> {formatDuration(runOfTheWeek.duration)}</span>
+                                </div>
+                                 <div className="mt-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-bold w-fit">
+                                    <Trophy size={12} /> Longest Effort
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-surface-on-variant opacity-60">
+                                <p className="text-sm font-bold">No runs this week</p>
+                            </div>
+                        )}
+                        {/* Background Decoration */}
+                        <div className="absolute -bottom-4 -right-4 opacity-5 text-surface-on pointer-events-none">
+                            <Award size={140} />
+                        </div>
+                    </div>
+                );
+            case 'streak':
+                const nextAchievement = ACHIEVEMENTS.find(a => !a.condition(runs));
+                return (
+                    <div className="bg-surface-container rounded-[24px] p-6 h-full shadow-sm border border-outline-variant/20 flex flex-col justify-between relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Flame size={120} />
+                        </div>
+                        <div>
+                             <h3 className="text-xl font-bold text-surface-on mb-2 flex items-center gap-2">
+                                <Flame className="text-[#FC4C02]" size={24} fill="currentColor" />
+                                Streak
+                            </h3>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-5xl font-black text-surface-on">{streakData.current}</span>
+                                <span className="text-lg font-bold text-surface-on-variant">WEEKS</span>
+                            </div>
+                            <p className="text-xs text-surface-on-variant font-medium mt-1">
+                                {streakData.active ? 'Keep the flame alive!' : 'Start a new streak this week.'}
+                            </p>
+                        </div>
+                        {nextAchievement && (
+                            <div className="mt-4 bg-surface-container-high rounded-xl p-3 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center shrink-0">
+                                    <Trophy size={14} className="text-tertiary-on-container" />
+                                </div>
+                                <div className="overflow-hidden">
+                                    <p className="text-[10px] uppercase font-bold text-surface-on-variant">Next Unlock</p>
+                                    <p className="text-xs font-bold text-surface-on truncate">{nextAchievement.title}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
            case 'goals':
                return (
                    <GoalTracker runs={runs} goals={goals} onAddGoal={onAddGoal} onDeleteGoal={onDeleteGoal} />
@@ -440,6 +616,35 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
             </div>
         </div>
 
+        {/* Zero State / Onboarding */}
+        {runs.length === 0 && (
+            <div className="bg-surface-container rounded-[32px] p-8 mb-8 border border-outline-variant/20 text-center animate-fade-in">
+                <div className="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Sparkles size={40} className="text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold text-surface-on mb-3">Welcome to RedLine</h3>
+                <p className="text-surface-on-variant max-w-md mx-auto mb-8">
+                    Your training dashboard is looking a little empty. Log your first run or load some demo data to see the analytics in action.
+                </p>
+                <div className="flex justify-center gap-4">
+                    <button 
+                        onClick={() => onNavigate('log')}
+                        className="bg-primary text-primary-on px-8 py-3 rounded-full font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform"
+                    >
+                        Log a Run
+                    </button>
+                    {onAddRuns && (
+                        <button 
+                            onClick={() => onAddRuns(SAMPLE_RUNS)}
+                            className="bg-surface-container-high text-surface-on px-8 py-3 rounded-full font-bold hover:bg-surface-container-highest transition-colors border border-outline-variant/20"
+                        >
+                            Load Demo Data
+                        </button>
+                    )}
+                </div>
+            </div>
+        )}
+
         {/* Edit Mode Toolbar */}
         {isEditingLayout && (
             <div className="mb-8 bg-surface-container p-4 rounded-2xl border border-primary/30 animate-slide-down">
@@ -461,40 +666,42 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
             </div>
         )}
 
-        {/* Grid Layout - Expanded to 3 columns on XL screens */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-             {layout.map((widget, index) => (
-                 <div 
-                    key={widget.id}
-                    draggable={isEditingLayout}
-                    onDragStart={(e) => handleDragStart(e, index)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDragEnd={handleDragEnd}
-                    className={`
-                        transition-all duration-300 ease-in-out
-                        ${widget.size === 'full' ? 'lg:col-span-2 xl:col-span-2' : 'lg:col-span-1 xl:col-span-1'}
-                        ${isEditingLayout ? 'cursor-move ring-2 ring-primary/20 ring-offset-2 rounded-[24px]' : ''}
-                        ${draggedItemIndex === index ? 'opacity-50 scale-95' : 'opacity-100'}
-                    `}
-                 >
-                     <div className="relative h-full group">
-                         {/* Widget Controls */}
-                         {isEditingLayout && (
-                             <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black text-white dark:bg-white dark:text-black rounded-full p-1.5 shadow-xl ring-1 ring-white/20 animate-fade-in">
-                                 <button onClick={() => moveWidget(index, 'prev')} className="p-1 hover:bg-white/20 rounded-full transition-colors" disabled={index === 0} title="Move Left/Up"><ChevronLeft size={14} /></button>
-                                 <button onClick={() => toggleWidgetSize(widget.id)} className="p-1 hover:bg-white/20 rounded-full transition-colors" title="Resize">
-                                     {widget.size === 'full' ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                                 </button>
-                                 <button onClick={() => removeWidget(widget.id)} className="p-1 hover:bg-red-500 hover:text-white rounded-full transition-colors" title="Remove"><X size={14} /></button>
-                                 <button onClick={() => moveWidget(index, 'next')} className="p-1 hover:bg-white/20 rounded-full transition-colors" disabled={index === layout.length - 1} title="Move Right/Down"><ChevronRight size={14} /></button>
-                             </div>
-                         )}
-                         
-                         {renderWidget(widget.id)}
-                     </div>
-                 </div>
-             ))}
-        </div>
+        {/* Grid Layout */}
+        {runs.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {layout.map((widget, index) => (
+                    <div 
+                        key={widget.id}
+                        draggable={isEditingLayout}
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragEnd={handleDragEnd}
+                        className={`
+                            transition-all duration-300 ease-in-out
+                            ${widget.size === 'full' ? 'lg:col-span-2 xl:col-span-2' : 'lg:col-span-1 xl:col-span-1'}
+                            ${isEditingLayout ? 'cursor-move ring-2 ring-primary/20 ring-offset-2 rounded-[24px]' : ''}
+                            ${draggedItemIndex === index ? 'opacity-50 scale-95' : 'opacity-100'}
+                        `}
+                    >
+                        <div className="relative h-full group">
+                            {/* Widget Controls */}
+                            {isEditingLayout && (
+                                <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black text-white dark:bg-white dark:text-black rounded-full p-1.5 shadow-xl ring-1 ring-white/20 animate-fade-in">
+                                    <button onClick={() => moveWidget(index, 'prev')} className="p-1 hover:bg-white/20 rounded-full transition-colors" disabled={index === 0} title="Move Left/Up"><ChevronLeft size={14} /></button>
+                                    <button onClick={() => toggleWidgetSize(widget.id)} className="p-1 hover:bg-white/20 rounded-full transition-colors" title="Resize">
+                                        {widget.size === 'full' ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                                    </button>
+                                    <button onClick={() => removeWidget(widget.id)} className="p-1 hover:bg-red-500 hover:text-white rounded-full transition-colors" title="Remove"><X size={14} /></button>
+                                    <button onClick={() => moveWidget(index, 'next')} className="p-1 hover:bg-white/20 rounded-full transition-colors" disabled={index === layout.length - 1} title="Move Right/Down"><ChevronRight size={14} /></button>
+                                </div>
+                            )}
+                            
+                            {renderWidget(widget.id)}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
     </div>
   );
 };

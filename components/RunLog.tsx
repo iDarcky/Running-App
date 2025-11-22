@@ -2,11 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, StravaToken, GoogleToken, UserProfile } from '../types';
 import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
-import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Pencil, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging, Timer } from 'lucide-react';
+import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Pencil, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging, Timer, Share2 } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
 import { Modal, Input } from './UIComponents';
 import RunForm from './RunForm';
+import SocialShareModal from './SocialShareModal';
 import { formatDuration, formatFullDate, formatPace } from '../utils/formatters';
 
 interface RunLogProps {
@@ -23,6 +24,9 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
   const [isSyncing, setIsSyncing] = useState(false);
   const [filterType, setFilterType] = useState<RunType | 'All'>('All');
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Share State
+  const [shareRun, setShareRun] = useState<Run | null>(null);
   
   // Expandable card state
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -277,7 +281,9 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
   const getShoeName = (shoeId?: string) => {
       if (!shoeId || !profile?.shoes) return null;
       const shoe = profile.shoes.find(s => s.id === shoeId);
-      return shoe ? `${shoe.brand} ${shoe.model}` : null;
+      if (!shoe) return null;
+      const name = shoe.nickname || `${shoe.brand} ${shoe.model}`;
+      return shoe.isRetired ? `${name} (Retired)` : name;
   };
 
   if (authStatus !== 'idle') {
@@ -399,7 +405,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                             <div className="flex-1 min-w-0">
                                 {/* Header */}
                                 <div className="flex justify-between items-center mb-4 cursor-pointer" onClick={() => toggleExpand(run.id)}>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-wrap items-center gap-3">
                                         <div 
                                             style={{ color: RUN_TYPE_COLORS[run.type] }} 
                                             className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 whitespace-nowrap"
@@ -407,11 +413,22 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                             {getRunTypeIcon(run.type, 16)}
                                             {run.type}
                                         </div>
-                                        <div className="text-surface-on-variant/40">|</div>
+                                        <div className="text-surface-on-variant/40 hidden sm:block">|</div>
                                         <div className="text-sm font-medium text-surface-on-variant flex items-center gap-2">
                                             <Calendar size={14} />
                                             {formatFullDate(run.date)}
                                         </div>
+                                        
+                                        {/* Shoe Badge in Collapsed View */}
+                                        {shoeName && (
+                                            <>
+                                                <div className="text-surface-on-variant/40 hidden sm:block">|</div>
+                                                <div className="text-xs font-bold text-surface-on-variant flex items-center gap-1.5 bg-surface-container-high px-2 py-1 rounded-md">
+                                                    <Footprints size={12} className="text-primary" />
+                                                    <span className="truncate max-w-[120px]">{shoeName}</span>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                     <div className={`transition-transform duration-300 text-surface-on-variant ${isExpanded ? 'rotate-180' : ''}`}>
                                         <ChevronDown size={20} />
@@ -489,19 +506,28 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                         )}
 
                                          {/* Actions */}
-                                         <div className="flex justify-end gap-3">
+                                         <div className="flex justify-between items-center">
                                               <button 
-                                                 onClick={(e) => { e.stopPropagation(); handleEditClick(run); }}
-                                                 className="px-5 py-2.5 rounded-full bg-surface-container-highest hover:bg-surface-container-high font-bold text-sm flex items-center gap-2 transition-colors"
+                                                 onClick={(e) => { e.stopPropagation(); setShareRun(run); }}
+                                                 className="px-5 py-2.5 rounded-full bg-surface-container-highest hover:bg-surface-container-high text-surface-on font-bold text-sm flex items-center gap-2 transition-colors"
                                              >
-                                                 <Pencil size={16} /> Edit
+                                                 <Share2 size={16} /> Share Card
                                              </button>
-                                             <button 
-                                                 onClick={(e) => { e.stopPropagation(); onDeleteRun(run.id); }}
-                                                 className="px-5 py-2.5 rounded-full bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 font-bold text-sm flex items-center gap-2 transition-colors"
-                                             >
-                                                 <Trash2 size={16} /> Delete
-                                             </button>
+                                             
+                                             <div className="flex gap-3">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleEditClick(run); }}
+                                                    className="px-5 py-2.5 rounded-full bg-surface-container-highest hover:bg-surface-container-high font-bold text-sm flex items-center gap-2 transition-colors"
+                                                >
+                                                    <Pencil size={16} /> Edit
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); onDeleteRun(run.id); }}
+                                                    className="px-5 py-2.5 rounded-full bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 font-bold text-sm flex items-center gap-2 transition-colors"
+                                                >
+                                                    <Trash2 size={16} /> Delete
+                                                </button>
+                                             </div>
                                          </div>
                                     </div>
                                 </div>
@@ -526,6 +552,14 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
             profile={profile}
           />
       </Modal>
+      
+      {/* Social Share Modal */}
+      {shareRun && (
+          <SocialShareModal 
+            run={shareRun}
+            onClose={() => setShareRun(null)}
+          />
+      )}
 
       {/* Strava Modal */}
       <Modal
