@@ -238,7 +238,19 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
 
   const handleFormSubmit = (data: Partial<Run>) => {
     if (editingId) {
-        onUpdateRun({ ...data, id: editingId } as Run);
+        // Enforce Number types for critical fields to ensure calculation robustness
+        const updatedRun = {
+             ...runs.find(r => r.id === editingId)!,
+             ...data,
+             id: editingId,
+             distance: Number(data.distance),
+             duration: Number(data.duration),
+             avgHr: Number(data.avgHr),
+             rpe: Number(data.rpe),
+             cadence: data.cadence ? Number(data.cadence) : undefined,
+             strideLength: data.strideLength ? Number(data.strideLength) : undefined,
+        } as Run;
+        onUpdateRun(updatedRun);
     } else {
         const run: Run = {
             id: Date.now().toString(),

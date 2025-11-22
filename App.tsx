@@ -1,47 +1,37 @@
 
 import React, { useState, useEffect } from 'react';
-import { Run, Goal, UserProfile, Race } from './types';
-import { SAMPLE_RUNS, SAMPLE_GOALS } from './constants';
+import { Run, Goal, UserProfile, Race, Shoe } from './types';
+import { SAMPLE_GOALS, DEMO_SHOES, generateDemoRuns } from './constants';
 import Dashboard from './components/Dashboard';
 import RunLog from './components/RunLog';
 import CoachInsights from './components/CoachInsights';
 import RacePrep from './components/RacePrep';
 import Profile from './components/Profile';
-import { LayoutGrid, CalendarDays, Bot, Activity, User, Trophy } from 'lucide-react';
+import { LandingPage } from './components/LandingPage';
+import { LayoutDashboard, CalendarRange, Sparkles, FlagTriangleRight, User } from 'lucide-react';
+import { RedLineLogo } from './components/Logo';
+import { NavButton } from './components/NavButton';
 
-// Moved outside App to prevent re-creation on every render
-const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false }: { tab: string, activeTab: string, icon: any, label: string, onClick: (t: any) => void, mobile?: boolean }) => {
-    const isActive = activeTab === tab;
-    return (
-        <button 
-            onClick={() => onClick(tab)}
-            className={`
-                flex items-center transition-all duration-300 group relative
-                ${mobile 
-                    ? `justify-center flex-col h-16 w-full rounded-2xl ${isActive ? 'text-primary' : 'text-surface-on-variant/60 hover:text-surface-on-variant'}` 
-                    : `justify-start gap-3 w-full px-4 py-3 rounded-full mb-2 ${isActive ? 'bg-primary text-primary-on shadow-lg shadow-primary/25 font-bold' : 'text-surface-on-variant hover:bg-surface-container-highest hover:text-surface-on'}`
-                }
-            `}
-        >
-            <div className={`transition-transform duration-300 ${isActive && !mobile ? 'scale-110' : ''} ${mobile && isActive ? '-translate-y-4' : ''}`}>
-                <Icon size={mobile ? 24 : 20} className={isActive ? 'fill-current' : ''} strokeWidth={mobile && isActive ? 2.5 : 2} />
-            </div>
-            
-            {!mobile && <span>{label}</span>}
-            {mobile && (
-                <span className={`text-[10px] font-bold transition-all duration-300 absolute bottom-2 leading-none ${isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-                    {label}
-                </span>
-            )}
-            
-            {!mobile && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>}
-            {mobile && isActive && <div className="absolute top-1.5 w-1 h-1 rounded-full bg-primary"></div>}
-        </button>
-    );
+// Pure helper function for robust calculation
+const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
+    if (!shoes || !Array.isArray(shoes)) return [];
+    
+    return shoes.map(shoe => {
+        const distance = currentRuns
+          .filter(r => r.shoeId === shoe.id)
+          .reduce((acc, r) => {
+              const val = parseFloat(String(r.distance));
+              return acc + (isNaN(val) ? 0 : val);
+          }, 0);
+          
+        return { ...shoe, distance: Number(distance.toFixed(2)) };
+    });
 };
 
 const App: React.FC = () => {
+  const [showLanding, setShowLanding] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
+  
   const [runs, setRuns] = useState<Run[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [races, setRaces] = useState<Race[]>([]);
@@ -64,15 +54,18 @@ const App: React.FC = () => {
       const savedRaces = localStorage.getItem('stride_races');
       const savedProfile = localStorage.getItem('stride_profile');
       const savedTheme = localStorage.getItem('stride_theme');
+      const hasOnboarded = localStorage.getItem('redline_onboarded');
 
-      if (savedRuns) {
-          try {
-              const parsedRuns = JSON.parse(savedRuns);
-              setRuns(parsedRuns);
-          } catch(e) { console.error("Error parsing runs", e); setRuns(SAMPLE_RUNS); }
-      } else {
-          setRuns(SAMPLE_RUNS);
+      // If user has onboarded before, skip landing
+      if (hasOnboarded === 'true' && savedProfile) {
+          setShowLanding(false);
       }
+
+      let loadedRuns: Run[] = [];
+      if (savedRuns) {
+          try { loadedRuns = JSON.parse(savedRuns); } catch(e) { console.error("Error parsing runs", e); }
+      }
+      setRuns(loadedRuns);
 
       if (savedGoals) {
           try { setGoals(JSON.parse(savedGoals)); } catch(e) { setGoals(SAMPLE_GOALS); }
@@ -84,9 +77,18 @@ const App: React.FC = () => {
           try { setRaces(JSON.parse(savedRaces)); } catch(e) { setRaces([]); }
       }
 
+      let loadedProfile: UserProfile = { name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: [] };
       if (savedProfile) {
-          try { setProfile(JSON.parse(savedProfile)); } catch(e) {}
+          try { loadedProfile = JSON.parse(savedProfile); } catch(e) {}
       }
+
+      // Recalculate Shoe Mileage on Load to ensure sync and data integrity
+      if (loadedProfile.shoes && loadedProfile.shoes.length > 0) {
+          const updatedShoes = calculateShoeMileage(loadedProfile.shoes, loadedRuns);
+          loadedProfile.shoes = updatedShoes;
+      }
+      
+      setProfile(loadedProfile);
 
       if (savedTheme === 'dark') {
           setTheme('dark');
@@ -96,10 +98,16 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // Save Data Helpers
+  // --- Save Logic ---
   const saveRuns = (newRuns: Run[]) => {
       setRuns(newRuns);
       localStorage.setItem('stride_runs', JSON.stringify(newRuns));
+      if (profile.shoes && profile.shoes.length > 0) {
+          const updatedShoes = calculateShoeMileage(profile.shoes, newRuns);
+          const newProfile = { ...profile, shoes: updatedShoes };
+          setProfile(newProfile);
+          localStorage.setItem('stride_profile', JSON.stringify(newProfile));
+      }
   };
 
   const saveGoals = (newGoals: Goal[]) => {
@@ -113,6 +121,9 @@ const App: React.FC = () => {
   };
 
   const saveProfile = (newProfile: UserProfile) => {
+      if (newProfile.shoes) {
+          newProfile.shoes = calculateShoeMileage(newProfile.shoes, runs);
+      }
       setProfile(newProfile);
       localStorage.setItem('stride_profile', JSON.stringify(newProfile));
   };
@@ -125,10 +136,44 @@ const App: React.FC = () => {
       else document.documentElement.classList.remove('dark');
   };
 
-  // Handlers
+  // --- Onboarding Handlers ---
+
+  const completeOnboarding = (newProfile: UserProfile, initialRuns: Run[]) => {
+      saveProfile(newProfile);
+      saveRuns(initialRuns);
+      localStorage.setItem('redline_onboarded', 'true');
+      setShowLanding(false);
+  };
+
+  const handleLogin = (name: string, email: string) => {
+      // For prototype, we just create a local profile
+      const newProfile = { ...profile, name: name };
+      completeOnboarding(newProfile, []); // Start with empty runs for logged in user unless we pull from cloud later
+  };
+
+  const handleGuest = (useDemoData: boolean) => {
+      let initialRuns: Run[] = [];
+      let initialShoes: Shoe[] = [];
+
+      if (useDemoData) {
+          initialRuns = generateDemoRuns();
+          // DEMO_SHOES are imported from constants
+          // We need to calc their initial distance based on the demo runs immediately
+          initialShoes = calculateShoeMileage(DEMO_SHOES, initialRuns);
+      }
+
+      const newProfile = { 
+          ...profile, 
+          name: 'Guest Runner',
+          shoes: initialShoes
+      };
+
+      completeOnboarding(newProfile, initialRuns);
+  };
+
+  // --- CRUD Handlers ---
   const handleAddRun = (run: Run) => saveRuns([run, ...runs]);
   const handleAddRuns = (newRuns: Run[]) => {
-      // Avoid duplicates by ID
       const existingIds = new Set(runs.map(r => r.id));
       const uniqueNewRuns = newRuns.filter(r => !existingIds.has(r.id));
       saveRuns([...uniqueNewRuns, ...runs]);
@@ -146,14 +191,13 @@ const App: React.FC = () => {
   const handleReset = () => {
       if (window.confirm("Are you sure you want to reset all data? This cannot be undone.")) {
           localStorage.clear();
-          setRuns(SAMPLE_RUNS);
-          setGoals(SAMPLE_GOALS);
-          setRaces([]);
-          setProfile({ name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: [] });
-          setActiveTab('dashboard');
           window.location.reload();
       }
   };
+
+  if (showLanding) {
+      return <LandingPage onLogin={handleLogin} onGuest={handleGuest} />;
+  }
 
   return (
     <div className={`min-h-screen bg-surface transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
@@ -161,17 +205,17 @@ const App: React.FC = () => {
             {/* Sidebar (Desktop) */}
             <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10">
                 <div className="flex items-center gap-3 px-4 mb-10">
-                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-                        <Activity className="text-primary-on" size={24} />
+                    <div className="w-10 h-10 bg-[#090909] rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                        <RedLineLogo className="w-6 h-6 text-[#D32F2F]" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tighter text-surface-on"><span className="text-primary">Red</span>Line</h1>
                 </div>
 
                 <nav className="flex-1 space-y-2">
-                    <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutGrid} label="Dashboard" onClick={setActiveTab} />
-                    <NavButton tab="log" activeTab={activeTab} icon={CalendarDays} label="Training Log" onClick={setActiveTab} />
-                    <NavButton tab="coach" activeTab={activeTab} icon={Bot} label="Coach" onClick={setActiveTab} />
-                    <NavButton tab="race" activeTab={activeTab} icon={Trophy} label="Race Prep" onClick={setActiveTab} />
+                    <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Dashboard" onClick={setActiveTab} />
+                    <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Training Log" onClick={setActiveTab} />
+                    <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} />
+                    <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race Prep" onClick={setActiveTab} />
                 </nav>
 
                 <div 
@@ -238,13 +282,13 @@ const App: React.FC = () => {
                 </div>
             </main>
 
-            {/* Floating Bottom Nav (Mobile) - Updated for Safe Area support */}
+            {/* Floating Bottom Nav (Mobile) */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe z-50 flex justify-center pointer-events-none">
                  <div className="bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 w-full max-w-md pointer-events-auto">
-                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutGrid} label="Home" onClick={setActiveTab} mobile />
-                     <NavButton tab="log" activeTab={activeTab} icon={CalendarDays} label="Log" onClick={setActiveTab} mobile />
-                     <NavButton tab="coach" activeTab={activeTab} icon={Bot} label="Coach" onClick={setActiveTab} mobile />
-                     <NavButton tab="race" activeTab={activeTab} icon={Trophy} label="Race" onClick={setActiveTab} mobile />
+                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
+                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
+                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
+                     <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race" onClick={setActiveTab} mobile />
                      <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
                  </div>
             </nav>
