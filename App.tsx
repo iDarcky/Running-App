@@ -51,7 +51,8 @@ const App: React.FC = () => {
     weight: 0,
     age: 0,
     sex: '',
-    shoeModel: ''
+    shoeModel: '',
+    shoes: []
   });
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -148,7 +149,7 @@ const App: React.FC = () => {
           setRuns(SAMPLE_RUNS);
           setGoals(SAMPLE_GOALS);
           setRaces([]);
-          setProfile({ name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '' });
+          setProfile({ name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: [] });
           setActiveTab('dashboard');
           window.location.reload();
       }

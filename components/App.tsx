@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Run, Goal, UserProfile, Race } from '../types';
+import { Run, Goal, UserProfile, Race, Shoe } from '../types';
 import { SAMPLE_RUNS, SAMPLE_GOALS } from '../constants';
 import Dashboard from './components/Dashboard';
 import RunLog from './components/RunLog';
@@ -22,7 +22,8 @@ const App: React.FC = () => {
     weight: 0,
     age: 0,
     sex: '',
-    shoeModel: ''
+    shoeModel: '',
+    shoes: []
   });
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
@@ -35,14 +36,11 @@ const App: React.FC = () => {
       const savedProfile = localStorage.getItem('stride_profile');
       const savedTheme = localStorage.getItem('stride_theme');
 
+      let loadedRuns = SAMPLE_RUNS;
       if (savedRuns) {
-          try {
-              const parsedRuns = JSON.parse(savedRuns);
-              setRuns(parsedRuns);
-          } catch(e) { console.error("Error parsing runs", e); setRuns(SAMPLE_RUNS); }
-      } else {
-          setRuns(SAMPLE_RUNS);
+          try { loadedRuns = JSON.parse(savedRuns); } catch(e) { console.error("Error parsing runs", e); }
       }
+      setRuns(loadedRuns);
 
       if (savedGoals) {
           try { setGoals(JSON.parse(savedGoals)); } catch(e) { setGoals(SAMPLE_GOALS); }
@@ -54,9 +52,18 @@ const App: React.FC = () => {
           try { setRaces(JSON.parse(savedRaces)); } catch(e) { setRaces([]); }
       }
 
+      let loadedProfile: UserProfile = { name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: [] };
       if (savedProfile) {
-          try { setProfile(JSON.parse(savedProfile)); } catch(e) {}
+          try { loadedProfile = JSON.parse(savedProfile); } catch(e) {}
       }
+
+      // Recalculate Shoe Mileage on Load to ensure sync
+      if (loadedProfile.shoes) {
+          const updatedShoes = calculateShoeMileage(loadedProfile.shoes, loadedRuns);
+          loadedProfile.shoes = updatedShoes;
+      }
+      
+      setProfile(loadedProfile);
 
       if (savedTheme === 'dark') {
           setTheme('dark');
@@ -66,10 +73,28 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
+  // Helper to recalculate mileage for all shoes based on current runs
+  const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
+      return shoes.map(shoe => {
+          const distance = currentRuns
+            .filter(r => r.shoeId === shoe.id)
+            .reduce((acc, r) => acc + r.distance, 0);
+          return { ...shoe, distance };
+      });
+  };
+
   // Save Data Helpers
   const saveRuns = (newRuns: Run[]) => {
       setRuns(newRuns);
       localStorage.setItem('stride_runs', JSON.stringify(newRuns));
+      
+      // Update shoe mileage when runs change
+      if (profile.shoes && profile.shoes.length > 0) {
+          const updatedShoes = calculateShoeMileage(profile.shoes, newRuns);
+          const newProfile = { ...profile, shoes: updatedShoes };
+          setProfile(newProfile);
+          localStorage.setItem('stride_profile', JSON.stringify(newProfile));
+      }
   };
 
   const saveGoals = (newGoals: Goal[]) => {
@@ -83,6 +108,10 @@ const App: React.FC = () => {
   };
 
   const saveProfile = (newProfile: UserProfile) => {
+      // Ensure we calculate mileage before saving if runs exist
+      if (newProfile.shoes) {
+          newProfile.shoes = calculateShoeMileage(newProfile.shoes, runs);
+      }
       setProfile(newProfile);
       localStorage.setItem('stride_profile', JSON.stringify(newProfile));
   };
@@ -119,7 +148,7 @@ const App: React.FC = () => {
           setRuns(SAMPLE_RUNS);
           setGoals(SAMPLE_GOALS);
           setRaces([]);
-          setProfile({ name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '' });
+          setProfile({ name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: [] });
           setActiveTab('dashboard');
           window.location.reload();
       }
@@ -179,7 +208,8 @@ const App: React.FC = () => {
                             onAddRun={handleAddRun} 
                             onAddRuns={handleAddRuns}
                             onUpdateRun={handleUpdateRun} 
-                            onDeleteRun={handleDeleteRun} 
+                            onDeleteRun={handleDeleteRun}
+                            profile={profile}
                         />
                     )}
                     {activeTab === 'coach' && (

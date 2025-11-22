@@ -10,6 +10,17 @@ export enum RunType {
 
 export type RunSource = 'Manual' | 'Garmin' | 'Strava' | 'Apple Health' | 'Health Connect' | 'Google Fit';
 
+export interface Shoe {
+  id: string;
+  brand: string;
+  model: string;
+  nickname?: string;
+  distance: number; // km accumulated
+  maxDistance: number; // km limit (usually 800)
+  isRetired: boolean;
+  image?: string; // Optional URL
+}
+
 export interface Run {
   id: string;
   date: string; // ISO date string
@@ -23,6 +34,7 @@ export interface Run {
   groundContactTime?: number; // ms
   source?: RunSource;
   notes?: string;
+  shoeId?: string; // Link to a shoe
 }
 
 export interface UserProfile {
@@ -31,7 +43,8 @@ export interface UserProfile {
   weight: number; // kg
   age: number;
   sex: 'Male' | 'Female' | 'Other' | '';
-  shoeModel: string;
+  shoeModel: string; // Legacy field, kept for backward compatibility
+  shoes: Shoe[]; // New array of shoes
 }
 
 export interface InsightResponse {

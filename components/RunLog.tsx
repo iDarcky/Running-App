@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Run, RunType, StravaToken, GoogleToken } from '../types';
+import { Run, RunType, StravaToken, GoogleToken, UserProfile } from '../types';
 import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
 import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Pencil, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging, Timer } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
@@ -14,9 +15,10 @@ interface RunLogProps {
   onAddRuns: (runs: Run[]) => void;
   onUpdateRun: (run: Run) => void;
   onDeleteRun: (id: string) => void;
+  profile?: UserProfile;
 }
 
-const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun, onDeleteRun }) => {
+const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun, onDeleteRun, profile }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [filterType, setFilterType] = useState<RunType | 'All'>('All');
@@ -245,7 +247,8 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
             cadence: data.cadence ? Number(data.cadence) : undefined,
             strideLength: data.strideLength ? Number(data.strideLength) : undefined,
             source: 'Manual',
-            notes: data.notes || ''
+            notes: data.notes || '',
+            shoeId: data.shoeId
         };
         onAddRun(run);
     }
@@ -269,6 +272,12 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
       case RunType.RECOVERY: return <BatteryCharging size={size} className="shrink-0" />;
       default: return <Activity size={size} className="shrink-0" />;
     }
+  };
+  
+  const getShoeName = (shoeId?: string) => {
+      if (!shoeId || !profile?.shoes) return null;
+      const shoe = profile.shoes.find(s => s.id === shoeId);
+      return shoe ? `${shoe.brand} ${shoe.model}` : null;
   };
 
   if (authStatus !== 'idle') {
@@ -376,6 +385,8 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
         ) : (
             filteredRuns.map(run => {
                 const isExpanded = expandedId === run.id;
+                const shoeName = getShoeName(run.shoeId);
+
                 return (
                     <div key={run.id} className="bg-surface-container rounded-3xl p-6 relative overflow-hidden transition-all hover:shadow-md">
                         <div className="flex gap-4">
@@ -451,11 +462,21 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                                  <div className="text-xs font-bold opacity-50 uppercase tracking-wide">Effort</div>
                                                  <div className="text-lg font-bold">{run.rpe || '--'} <span className="text-xs font-normal opacity-60">/ 10</span></div>
                                              </div>
-                                             {/* Source */}
+                                             {/* Source / Shoe */}
                                              <div className="bg-surface-container-high rounded-2xl p-4 flex flex-col items-center justify-center text-center">
-                                                 {run.source === 'Strava' ? <Zap size={20} className="mb-2 text-[#FC4C02]" fill="currentColor" /> : <Activity size={20} className="mb-2 opacity-50" />}
-                                                 <div className="text-xs font-bold opacity-50 uppercase tracking-wide">Source</div>
-                                                 <div className="text-lg font-bold truncate w-full px-2">{run.source || 'Manual'}</div>
+                                                 {shoeName ? (
+                                                     <>
+                                                        <Footprints size={20} className="mb-2 text-primary opacity-80" />
+                                                        <div className="text-xs font-bold opacity-50 uppercase tracking-wide">Gear</div>
+                                                        <div className="text-xs font-bold truncate w-full px-2">{shoeName}</div>
+                                                     </>
+                                                 ) : (
+                                                     <>
+                                                        {run.source === 'Strava' ? <Zap size={20} className="mb-2 text-[#FC4C02]" fill="currentColor" /> : <Activity size={20} className="mb-2 opacity-50" />}
+                                                        <div className="text-xs font-bold opacity-50 uppercase tracking-wide">Source</div>
+                                                        <div className="text-lg font-bold truncate w-full px-2">{run.source || 'Manual'}</div>
+                                                     </>
+                                                 )}
                                              </div>
                                          </div>
 
@@ -502,6 +523,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
             initialData={editingRun} 
             onSubmit={handleFormSubmit}
             isEditing={!!editingId}
+            profile={profile}
           />
       </Modal>
 

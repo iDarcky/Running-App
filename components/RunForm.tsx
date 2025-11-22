@@ -1,17 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { Run, RunType } from '../types';
+import { Run, RunType, UserProfile } from '../types';
 import { RUN_TYPE_ORDER, RUN_TYPE_COLORS } from '../constants';
 import { Input } from './UIComponents';
-import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map, Trophy, BatteryCharging } from 'lucide-react';
+import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map, Trophy, BatteryCharging, ChevronDown } from 'lucide-react';
 
 interface RunFormProps {
     initialData?: Partial<Run>;
     onSubmit: (data: Partial<Run>) => void;
     isEditing: boolean;
+    profile?: UserProfile;
 }
 
-const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing }) => {
+const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, profile }) => {
     const [formData, setFormData] = useState<Partial<Run>>({
         date: new Date().toISOString().split('T')[0],
         type: RunType.EASY,
@@ -22,7 +23,8 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing }) =
         cadence: 165,
         strideLength: 1.0,
         source: 'Manual',
-        notes: ''
+        notes: '',
+        shoeId: ''
     });
 
     useEffect(() => {
@@ -46,7 +48,9 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing }) =
           case RunType.RECOVERY: return <BatteryCharging size={20} />;
           default: return <Activity size={20} />;
         }
-      };
+    };
+    
+    const activeShoes = profile?.shoes?.filter(s => !s.isRetired) || [];
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
@@ -112,6 +116,31 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing }) =
                         })}
                     </div>
                 </div>
+                
+                {/* Shoe Selection */}
+                {activeShoes.length > 0 && (
+                     <div className="relative w-full pt-2 group">
+                        <div className="absolute top-[26px] left-0 pl-4 flex items-center pointer-events-none">
+                           <Footprints className="text-surface-on-variant/70 group-focus-within:text-primary transition-colors" size={20} />
+                       </div>
+                       <select 
+                           value={formData.shoeId || ''}
+                           onChange={(e) => setFormData({...formData, shoeId: e.target.value})}
+                           className="block w-full pl-12 pr-10 pt-6 pb-2 bg-surface-container-highest rounded-xl border-b border-outline-variant/30 text-surface-on appearance-none focus:border-primary focus:outline-none cursor-pointer font-semibold transition-colors"
+                       >
+                           <option value="">None Selected</option>
+                           {activeShoes.map(shoe => (
+                               <option key={shoe.id} value={shoe.id}>{shoe.brand} {shoe.model}</option>
+                           ))}
+                       </select>
+                       <label className="absolute left-12 top-2 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-focus-within:text-primary">
+                           Gear
+                       </label>
+                       <div className="absolute top-[26px] right-4 pointer-events-none text-surface-on-variant group-focus-within:text-primary transition-colors">
+                           <ChevronDown size={16} />
+                       </div>
+                   </div>
+                )}
 
                 {/* Advanced Stats */}
                 <div className="grid grid-cols-3 gap-4">
