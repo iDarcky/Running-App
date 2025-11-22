@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Run, Goal, UserProfile, Race } from '../types';
 import { SAMPLE_RUNS, SAMPLE_GOALS } from '../constants';
@@ -130,8 +131,8 @@ const App: React.FC = () => {
             {/* Sidebar (Desktop) */}
             <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10">
                 <div className="flex items-center gap-3 px-4 mb-10">
-                    <div className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-lg shadow-black/10 dark:shadow-white/10">
-                        <RedLineLogo className="w-6 h-6 text-white dark:text-black" />
+                    <div className="w-10 h-10 bg-[#090909] rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                        <RedLineLogo className="w-6 h-6 text-[#D32F2F]" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tighter text-surface-on"><span className="text-primary">Red</span>Line</h1>
                 </div>

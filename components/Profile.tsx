@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { Input } from './UIComponents';
@@ -32,8 +33,8 @@ const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
         <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in p-4">
             <div className="w-full max-w-md bg-surface-container rounded-[32px] p-8 shadow-xl relative overflow-hidden border border-outline-variant/20">
                 <div className="text-center mb-8 relative z-10">
-                    <div className="bg-black w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <RedLineLogo className="w-10 h-10 text-white" />
+                    <div className="bg-[#090909] w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20">
+                        <RedLineLogo className="w-10 h-10 text-[#D32F2F]" />
                     </div>
                     <h2 className="text-3xl font-bold text-surface-on tracking-tight">
                         {authMode === 'login' ? 'Welcome to RedLine' : 'Join RedLine'}
