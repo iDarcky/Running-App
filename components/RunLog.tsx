@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Run, RunType, StravaToken, GoogleToken, UserProfile } from '../types';
+import { Run, RunType, StravaToken, GoogleToken, UserProfile, Shoe } from '../types';
 import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
 import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Pencil, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging, Timer, Share2 } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
@@ -16,10 +16,11 @@ interface RunLogProps {
   onAddRuns: (runs: Run[]) => void;
   onUpdateRun: (run: Run) => void;
   onDeleteRun: (id: string) => void;
+  onAddShoe?: (shoe: Shoe) => void;
   profile?: UserProfile;
 }
 
-const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun, onDeleteRun, profile }) => {
+const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun, onDeleteRun, onAddShoe, profile }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [filterType, setFilterType] = useState<RunType | 'All'>('All');
@@ -562,6 +563,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
             onSubmit={handleFormSubmit}
             isEditing={!!editingId}
             profile={profile}
+            onAddShoe={onAddShoe}
           />
       </Modal>
       

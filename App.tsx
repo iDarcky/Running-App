@@ -8,7 +8,7 @@ import CoachInsights from './components/CoachInsights';
 import RacePrep from './components/RacePrep';
 import Profile from './components/Profile';
 import { LandingPage } from './components/LandingPage';
-import { LayoutDashboard, CalendarRange, Sparkles, FlagTriangleRight, User } from 'lucide-react';
+import { LayoutDashboard, CalendarRange, Sparkles, FlagTriangleRight, User, AlertTriangle } from 'lucide-react';
 import { RedLineLogo } from './components/Logo';
 import { NavButton } from './components/NavButton';
 
@@ -31,6 +31,7 @@ const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
+  const [isDemoMode, setIsDemoMode] = useState(false);
   
   const [runs, setRuns] = useState<Run[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -55,11 +56,14 @@ const App: React.FC = () => {
       const savedProfile = localStorage.getItem('stride_profile');
       const savedTheme = localStorage.getItem('stride_theme');
       const hasOnboarded = localStorage.getItem('redline_onboarded');
+      const demoMode = localStorage.getItem('redline_demo_mode') === 'true';
 
       // If user has onboarded before, skip landing
       if (hasOnboarded === 'true' && savedProfile) {
           setShowLanding(false);
       }
+      
+      setIsDemoMode(demoMode);
 
       let loadedRuns: Run[] = [];
       if (savedRuns) {
@@ -160,6 +164,11 @@ const App: React.FC = () => {
           // DEMO_SHOES are imported from constants
           // We need to calc their initial distance based on the demo runs immediately
           initialShoes = calculateShoeMileage(DEMO_SHOES, initialRuns);
+          localStorage.setItem('redline_demo_mode', 'true');
+          setIsDemoMode(true);
+      } else {
+          localStorage.removeItem('redline_demo_mode');
+          setIsDemoMode(false);
       }
 
       const newProfile = { 
@@ -188,11 +197,21 @@ const App: React.FC = () => {
   const handleUpdateRace = (updatedRace: Race) => saveRaces(races.map(r => r.id === updatedRace.id ? updatedRace : r));
   const handleDeleteRace = (id: string) => saveRaces(races.filter(r => r.id !== id));
 
+  const handleAddShoe = (shoe: Shoe) => {
+      const updatedShoes = [...(profile.shoes || []), shoe];
+      saveProfile({ ...profile, shoes: updatedShoes });
+  };
+
   const handleReset = () => {
       if (window.confirm("Are you sure you want to reset all data? This cannot be undone.")) {
           localStorage.clear();
           window.location.reload();
       }
+  };
+
+  const handleExitDemo = () => {
+      localStorage.clear();
+      window.location.reload();
   };
 
   if (showLanding) {
@@ -201,9 +220,23 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-surface transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
+        {/* Demo Banner */}
+        {isDemoMode && (
+            <div className="bg-orange-500 text-white text-sm font-bold px-4 py-2 flex items-center justify-center gap-4 relative z-[60] shadow-sm">
+               <div className="flex items-center gap-2">
+                   <AlertTriangle size={16} fill="currentColor" className="text-orange-700" /> 
+                   <span>Demo Mode Active</span>
+               </div>
+               <div className="w-[1px] h-4 bg-white/20"></div>
+               <button onClick={handleExitDemo} className="underline hover:text-orange-100 transition-colors">
+                   Exit & Clear Data
+               </button>
+            </div>
+        )}
+
         <div className="flex min-h-screen w-full relative">
             {/* Sidebar (Desktop) */}
-            <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10">
+            <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10 top-[36px]">
                 <div className="flex items-center gap-3 px-4 mb-10">
                     <div className="w-10 h-10 bg-[#090909] rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
                         <RedLineLogo className="w-6 h-6 text-[#D32F2F]" />
@@ -230,71 +263,4 @@ const App: React.FC = () => {
                             <p className="text-sm font-bold text-surface-on truncate">{profile.name || 'Guest Runner'}</p>
                             <p className="text-[10px] text-surface-on-variant truncate group-hover:text-primary transition-colors">View Profile</p>
                         </div>
-                    </div>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-6 pb-32 md:pb-8 w-full overflow-x-hidden">
-                <div className="w-full px-4 md:px-8">
-                    {activeTab === 'dashboard' && (
-                        <Dashboard 
-                            runs={runs} 
-                            goals={goals} 
-                            profile={profile} 
-                            onAddGoal={handleAddGoal} 
-                            onDeleteGoal={handleDeleteGoal}
-                            onNavigate={setActiveTab}
-                        />
-                    )}
-                    {activeTab === 'log' && (
-                        <RunLog 
-                            runs={runs} 
-                            onAddRun={handleAddRun} 
-                            onAddRuns={handleAddRuns}
-                            onUpdateRun={handleUpdateRun} 
-                            onDeleteRun={handleDeleteRun}
-                            profile={profile}
-                        />
-                    )}
-                    {activeTab === 'coach' && (
-                        <CoachInsights runs={runs} profile={profile} />
-                    )}
-                    {activeTab === 'race' && (
-                        <RacePrep 
-                            races={races}
-                            runs={runs}
-                            profile={profile}
-                            onAddRace={handleAddRace}
-                            onUpdateRace={handleUpdateRace}
-                            onDeleteRace={handleDeleteRace}
-                        />
-                    )}
-                    {activeTab === 'profile' && (
-                        <Profile 
-                            profile={profile} 
-                            onSaveProfile={saveProfile} 
-                            onReset={handleReset} 
-                            theme={theme}
-                            toggleTheme={toggleTheme}
-                        />
-                    )}
-                </div>
-            </main>
-
-            {/* Floating Bottom Nav (Mobile) */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe z-50 flex justify-center pointer-events-none">
-                 <div className="bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 w-full max-w-md pointer-events-auto">
-                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
-                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
-                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
-                     <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race" onClick={setActiveTab} mobile />
-                     <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
-                 </div>
-            </nav>
-        </div>
-    </div>
-  );
-};
-
-export default App;
+                    

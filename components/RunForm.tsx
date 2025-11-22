@@ -1,18 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Run, RunType, UserProfile } from '../types';
+import { Run, RunType, UserProfile, Shoe } from '../types';
 import { RUN_TYPE_ORDER, RUN_TYPE_COLORS } from '../constants';
 import { Input, Select } from './UIComponents';
-import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map, Trophy, BatteryCharging, ChevronDown, Check, Save } from 'lucide-react';
+import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map, Trophy, BatteryCharging, ChevronDown, Check, Save, Plus, AlertCircle, X } from 'lucide-react';
 
 interface RunFormProps {
     initialData?: Partial<Run>;
     onSubmit: (data: Partial<Run>) => void;
     isEditing: boolean;
     profile?: UserProfile;
+    onAddShoe?: (shoe: Shoe) => void;
 }
 
-const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, profile }) => {
+const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, profile, onAddShoe }) => {
     const [formData, setFormData] = useState<Partial<Run>>({
         date: new Date().toISOString().split('T')[0],
         type: RunType.EASY,
@@ -27,6 +28,11 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
         shoeId: ''
     });
 
+    // Inline Shoe Creation State
+    const [isCreatingShoe, setIsCreatingShoe] = useState(false);
+    const [newShoeBrand, setNewShoeBrand] = useState('');
+    const [newShoeModel, setNewShoeModel] = useState('');
+
     useEffect(() => {
         if (initialData) {
             setFormData(prev => ({ ...prev, ...initialData }));
@@ -40,12 +46,14 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
     const availableShoes = allShoes.filter(s => !s.isRetired || s.id === formData.shoeId);
     
     const defaultShoe = activeShoes.find(s => s.isDefault);
+    const hasShoes = availableShoes.length > 0;
 
     useEffect(() => {
         // Only auto-set default if:
         // 1. We are NOT editing an existing run (we don't want to overwrite historical data)
         // 2. No shoe is currently selected in the form
-        if (!isEditing && !formData.shoeId) {
+        // 3. We are not currently creating a shoe
+        if (!isEditing && !formData.shoeId && !isCreatingShoe) {
             if (defaultShoe) {
                 setFormData(prev => ({ ...prev, shoeId: defaultShoe.id }));
             } else if (activeShoes.length === 1) {
@@ -53,11 +61,35 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
                 setFormData(prev => ({ ...prev, shoeId: activeShoes[0].id }));
             }
         }
-    }, [isEditing, formData.shoeId, activeShoes.length, defaultShoe]);
+    }, [isEditing, formData.shoeId, activeShoes.length, defaultShoe, isCreatingShoe]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+
+        let finalShoeId = formData.shoeId;
+
+        // If inline shoe creation is active and filled
+        if (isCreatingShoe && newShoeBrand && newShoeModel && onAddShoe) {
+            const newShoeId = Date.now().toString();
+            const newShoe: Shoe = {
+                id: newShoeId,
+                brand: newShoeBrand,
+                model: newShoeModel,
+                distance: 0,
+                maxDistance: 800,
+                isRetired: false,
+                isDefault: !hasShoes // Make default if it's the first one
+            };
+            
+            // Create the shoe immediately via callback
+            onAddShoe(newShoe);
+            finalShoeId = newShoeId;
+        }
+
+        onSubmit({
+            ...formData,
+            shoeId: finalShoeId
+        });
     };
 
     const getRunTypeIcon = (type: RunType) => {
@@ -166,20 +198,68 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
                         icon={Footprints}
                     />
                     
-                    {/* Shoe Selector */}
-                    <Select 
-                        label="Gear"
-                        icon={Footprints}
-                        value={formData.shoeId || ''}
-                        onChange={(e: any) => setFormData({...formData, shoeId: e.target.value})}
-                        options={[
-                            { value: '', label: 'No Shoe Selected' },
-                            ...availableShoes.map(s => ({ 
-                                value: s.id, 
-                                label: `${s.brand} ${s.model}${s.isDefault ? ' (Primary)' : ''}` 
-                            }))
-                        ]}
-                    />
+                    {/* Shoe Selector Logic */}
+                    {isCreatingShoe ? (
+                         <div className="col-span-1 bg-surface-container-high rounded-2xl p-3 border border-primary/30 animate-fade-in relative">
+                             <button 
+                                type="button" 
+                                onClick={() => setIsCreatingShoe(false)}
+                                className="absolute top-2 right-2 text-surface-on-variant hover:text-surface-on"
+                             >
+                                 <X size={14} />
+                             </button>
+                             <div className="text-[10px] font-bold uppercase text-primary mb-2">New Shoe</div>
+                             <div className="space-y-2">
+                                 <input 
+                                    className="w-full bg-surface-container-highest p-2 rounded-lg text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
+                                    placeholder="Brand (e.g. Nike)"
+                                    value={newShoeBrand}
+                                    onChange={e => setNewShoeBrand(e.target.value)}
+                                    autoFocus
+                                 />
+                                 <input 
+                                    className="w-full bg-surface-container-highest p-2 rounded-lg text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
+                                    placeholder="Model (e.g. Pegasus)"
+                                    value={newShoeModel}
+                                    onChange={e => setNewShoeModel(e.target.value)}
+                                 />
+                             </div>
+                         </div>
+                    ) : !hasShoes && !isCreatingShoe ? (
+                        <div 
+                            className="col-span-1 bg-orange-50 dark:bg-orange-900/20 rounded-2xl p-3 border border-orange-100 dark:border-orange-900/30 flex flex-col justify-between cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => onAddShoe ? setIsCreatingShoe(true) : null}
+                        >
+                             <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                                 <AlertCircle size={16} />
+                                 <span className="text-xs font-bold uppercase">No Gear</span>
+                             </div>
+                             <div className="mt-2 flex items-center gap-2 text-orange-800 dark:text-orange-200 font-bold text-sm">
+                                 <Plus size={16} /> Add Shoe
+                             </div>
+                        </div>
+                    ) : (
+                         <Select 
+                            label="Gear"
+                            icon={Footprints}
+                            value={formData.shoeId || ''}
+                            onChange={(e: any) => {
+                                if (e.target.value === 'NEW') {
+                                    setIsCreatingShoe(true);
+                                } else {
+                                    setFormData({...formData, shoeId: e.target.value});
+                                }
+                            }}
+                            options={[
+                                { value: '', label: 'No Shoe Selected' },
+                                ...availableShoes.map(s => ({ 
+                                    value: s.id, 
+                                    label: `${s.brand} ${s.model}${s.isDefault ? ' (Primary)' : ''}` 
+                                })),
+                                { value: 'NEW', label: '+ Add New Shoe...' }
+                            ]}
+                        />
+                    )}
                 </div>
 
                 <div className="relative group">

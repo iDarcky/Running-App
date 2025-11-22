@@ -81,8 +81,7 @@ export const DEMO_SHOES: Shoe[] = [
         id: 'demo_shoe_1',
         brand: 'Adidas',
         model: 'Evo SL',
-        nickname: 'Daily Trainer',
-        distance: 0, // Will be calculated
+        distance: 0, // Will be calculated dynamically
         maxDistance: 800,
         isRetired: false,
         isDefault: true
@@ -91,8 +90,7 @@ export const DEMO_SHOES: Shoe[] = [
         id: 'demo_shoe_2',
         brand: 'Nike',
         model: 'Alphafly 3',
-        nickname: 'Race Day',
-        distance: 0, // Will be calculated
+        distance: 0, // Will be calculated dynamically
         maxDistance: 400,
         isRetired: false,
         isDefault: false
@@ -115,7 +113,7 @@ export const generateDemoRuns = (): Run[] => {
         "Great weather for a run.", "Intervals were tough.", "Morning shakeout.", "Pushed the pace at the end."
     ];
 
-    // Generate 18 runs
+    // Generate 18 runs to ensure good chart data
     for (let i = 0; i < 18; i++) {
         const daysAgo = i * 2 + getRandomInt(0, 1); // Spread out over ~36 days
         const date = new Date();
@@ -126,7 +124,7 @@ export const generateDemoRuns = (): Run[] => {
             ? RUN_TYPE_ORDER[i] 
             : types[getRandomInt(0, types.length - 1)];
 
-        // Assign Shoe based on type
+        // Assign Shoe based on type logic
         // Speed/Race -> Alphafly (id: demo_shoe_2)
         // Daily/Easy/Long -> Evo SL (id: demo_shoe_1)
         const isSpeed = type === RunType.RACE || type === RunType.INTERVAL || type === RunType.TEMPO;
@@ -183,9 +181,9 @@ export const generateDemoRuns = (): Run[] => {
         });
     }
 
+    // Sort by date descending
     return runs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
-// Deprecated but kept for backwards compatibility types if needed, 
-// but we should rely on generateDemoRuns for new installs
+// Deprecated but kept for backwards compatibility if needed
 export const SAMPLE_RUNS: Run[] = generateDemoRuns();
