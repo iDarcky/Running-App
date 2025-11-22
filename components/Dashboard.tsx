@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { Run, UserProfile, RunType } from '../types';
 import { RUN_TYPE_COLORS } from '../constants';
@@ -14,6 +13,7 @@ import {
   Settings2, Plus, ChevronLeft, ChevronRight, 
   Map, Footprints, BarChart3, PieChart, Target
 } from 'lucide-react';
+import { formatPace, formatDate } from '../utils/formatters';
 
 interface DashboardProps {
   runs: Run[];
@@ -153,9 +153,6 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     if (filteredRuns.length === 0) return { totalDistance: "0.0", avgPace: 0, totalRuns: 0, avgHr: 0, avgCadence: 0, avgPaceStr: "0:00" };
     const totalDistance = filteredRuns.reduce((acc, run) => acc + run.distance, 0);
     const totalDuration = filteredRuns.reduce((acc, run) => acc + run.duration, 0);
-    const avgPaceDec = totalDistance > 0 ? totalDuration / totalDistance : 0; 
-    const paceMin = Math.floor(avgPaceDec);
-    const paceSec = Math.round((avgPaceDec - paceMin) * 60);
     const totalRuns = filteredRuns.length;
     const avgHr = Math.round(filteredRuns.reduce((acc, run) => acc + run.avgHr, 0) / totalRuns);
     const runsWithCadence = filteredRuns.filter(r => r.cadence);
@@ -164,7 +161,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
         : 0;
     return {
       totalDistance: totalDistance.toFixed(1),
-      avgPaceStr: `${paceMin}:${paceSec.toString().padStart(2, '0')}`,
+      avgPaceStr: formatPace(totalDistance, totalDuration),
       totalRuns,
       avgHr,
       avgCadence
@@ -175,7 +172,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     return [...filteredRuns]
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map(run => ({
-            date: new Date(run.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+            date: formatDate(run.date),
             distance: run.distance,
             pace: parseFloat((run.duration / run.distance).toFixed(2)),
             hr: run.avgHr,

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, StravaToken, GoogleToken } from '../types';
 import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
@@ -7,6 +6,7 @@ import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaTo
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
 import { Modal, Input } from './UIComponents';
 import RunForm from './RunForm';
+import { formatDuration, formatFullDate, formatPace } from '../utils/formatters';
 
 interface RunLogProps {
   runs: Run[];
@@ -259,14 +259,6 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
 
   const filteredRuns = filterType === 'All' ? runs : runs.filter(r => r.type === filterType);
 
-  const formatDuration = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = Math.floor(minutes % 60);
-    const s = Math.round((minutes * 60) % 60);
-    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
   const getRunTypeIcon = (type: RunType, size: number = 14) => {
     switch (type) {
       case RunType.EASY: return <Feather size={size} className="shrink-0" />;
@@ -407,7 +399,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                         <div className="text-surface-on-variant/40">|</div>
                                         <div className="text-sm font-medium text-surface-on-variant flex items-center gap-2">
                                             <Calendar size={14} />
-                                            {new Date(run.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                            {formatFullDate(run.date)}
                                         </div>
                                     </div>
                                     <div className={`transition-transform duration-300 text-surface-on-variant ${isExpanded ? 'rotate-180' : ''}`}>
@@ -430,8 +422,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                         <div>
                                             <div className="text-[10px] font-bold uppercase text-surface-on-variant mb-1 flex items-center justify-end gap-1"><Timer size={12} /> Pace</div>
                                             <div className="text-xl font-bold text-surface-on leading-none">
-                                                {Math.floor(run.duration / run.distance)}:
-                                                {Math.round(((run.duration / run.distance) % 1) * 60).toString().padStart(2, '0')}
+                                                {formatPace(run.distance, run.duration)}
                                             </div>
                                         </div>
                                     </div>

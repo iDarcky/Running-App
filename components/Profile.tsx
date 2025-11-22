@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { Input } from './UIComponents';
 import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail, AlertTriangle, Trash2, Moon, Sun } from 'lucide-react';
+import { RedLineLogo } from './Logo';
 
 interface ProfileProps {
   profile: UserProfile;
@@ -10,13 +11,6 @@ interface ProfileProps {
   theme: 'light' | 'dark';
   toggleTheme: () => void;
 }
-
-// Custom Logo Component
-const RedLineLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 512 512" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-     <path d="M170 96h100l-50 256h170v80H120V96z" fill="currentColor"/>
-  </svg>
-);
 
 // Auth Screen Component - Separated to isolate state and rendering
 const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {

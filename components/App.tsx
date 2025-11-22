@@ -6,45 +6,9 @@ import RunLog from './components/RunLog';
 import CoachInsights from './components/CoachInsights';
 import RacePrep from './components/RacePrep';
 import Profile from './components/Profile';
-import { LayoutDashboard, CalendarRange, Sparkles, Activity, User, FlagTriangleRight } from 'lucide-react';
-
-// Custom Logo Component
-const RedLineLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 512 512" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-     <path d="M170 96h100l-50 256h170v80H120V96z" fill="currentColor"/>
-  </svg>
-);
-
-// Moved outside App to prevent re-creation on every render
-const NavButton = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false }: { tab: string, activeTab: string, icon: any, label: string, onClick: (t: any) => void, mobile?: boolean }) => {
-    const isActive = activeTab === tab;
-    return (
-        <button 
-            onClick={() => onClick(tab)}
-            className={`
-                flex items-center transition-all duration-300 group relative
-                ${mobile 
-                    ? `justify-center flex-col h-16 w-full rounded-2xl ${isActive ? 'text-primary' : 'text-surface-on-variant/60 hover:text-surface-on-variant'}` 
-                    : `justify-start gap-3 w-full px-4 py-3 rounded-full mb-2 ${isActive ? 'bg-primary text-primary-on shadow-lg shadow-primary/25 font-bold' : 'text-surface-on-variant hover:bg-surface-container-highest hover:text-surface-on'}`
-                }
-            `}
-        >
-            <div className={`transition-transform duration-300 ${isActive && !mobile ? 'scale-110' : ''} ${mobile && isActive ? '-translate-y-4' : ''}`}>
-                <Icon size={mobile ? 24 : 20} className={isActive ? 'fill-current' : ''} strokeWidth={mobile && isActive ? 2.5 : 2} />
-            </div>
-            
-            {!mobile && <span>{label}</span>}
-            {mobile && (
-                <span className={`text-[10px] font-bold transition-all duration-300 absolute bottom-2 leading-none ${isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-                    {label}
-                </span>
-            )}
-            
-            {!mobile && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>}
-            {mobile && isActive && <div className="absolute top-1.5 w-1 h-1 rounded-full bg-primary"></div>}
-        </button>
-    );
-};
+import { LayoutDashboard, CalendarRange, Sparkles, FlagTriangleRight, User } from 'lucide-react';
+import { RedLineLogo } from './components/Logo';
+import { NavButton } from './components/NavButton';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
