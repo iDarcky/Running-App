@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Shoe, Run } from '../types';
 import { ACHIEVEMENTS, SAMPLE_RUNS } from '../constants';
@@ -148,7 +147,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
     });
 
     // Load runs from storage to calc achievements
-    const savedRuns = localStorage.getItem('stride_runs');
+    const savedRuns = localStorage.getItem('redline_runs');
     if (savedRuns) {
         try {
             setAllRuns(JSON.parse(savedRuns));

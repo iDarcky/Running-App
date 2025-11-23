@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Run, Goal, UserProfile, Race, Shoe } from '../types';
 import { SAMPLE_RUNS, SAMPLE_GOALS } from '../constants';
@@ -30,11 +29,11 @@ const App: React.FC = () => {
   // Load Data
   useEffect(() => {
     const loadData = () => {
-      const savedRuns = localStorage.getItem('stride_runs');
-      const savedGoals = localStorage.getItem('stride_goals');
-      const savedRaces = localStorage.getItem('stride_races');
-      const savedProfile = localStorage.getItem('stride_profile');
-      const savedTheme = localStorage.getItem('stride_theme');
+      const savedRuns = localStorage.getItem('redline_runs');
+      const savedGoals = localStorage.getItem('redline_goals');
+      const savedRaces = localStorage.getItem('redline_races');
+      const savedProfile = localStorage.getItem('redline_profile');
+      const savedTheme = localStorage.getItem('redline_theme');
 
       let loadedRuns = SAMPLE_RUNS;
       if (savedRuns) {
@@ -86,25 +85,25 @@ const App: React.FC = () => {
   // Save Data Helpers
   const saveRuns = (newRuns: Run[]) => {
       setRuns(newRuns);
-      localStorage.setItem('stride_runs', JSON.stringify(newRuns));
+      localStorage.setItem('redline_runs', JSON.stringify(newRuns));
       
       // Update shoe mileage when runs change
       if (profile.shoes && profile.shoes.length > 0) {
           const updatedShoes = calculateShoeMileage(profile.shoes, newRuns);
           const newProfile = { ...profile, shoes: updatedShoes };
           setProfile(newProfile);
-          localStorage.setItem('stride_profile', JSON.stringify(newProfile));
+          localStorage.setItem('redline_profile', JSON.stringify(newProfile));
       }
   };
 
   const saveGoals = (newGoals: Goal[]) => {
       setGoals(newGoals);
-      localStorage.setItem('stride_goals', JSON.stringify(newGoals));
+      localStorage.setItem('redline_goals', JSON.stringify(newGoals));
   };
   
   const saveRaces = (newRaces: Race[]) => {
       setRaces(newRaces);
-      localStorage.setItem('stride_races', JSON.stringify(newRaces));
+      localStorage.setItem('redline_races', JSON.stringify(newRaces));
   };
 
   const saveProfile = (newProfile: UserProfile) => {
@@ -113,13 +112,13 @@ const App: React.FC = () => {
           newProfile.shoes = calculateShoeMileage(newProfile.shoes, runs);
       }
       setProfile(newProfile);
-      localStorage.setItem('stride_profile', JSON.stringify(newProfile));
+      localStorage.setItem('redline_profile', JSON.stringify(newProfile));
   };
 
   const toggleTheme = () => {
       const newTheme = theme === 'light' ? 'dark' : 'light';
       setTheme(newTheme);
-      localStorage.setItem('stride_theme', newTheme);
+      localStorage.setItem('redline_theme', newTheme);
       if (newTheme === 'dark') document.documentElement.classList.add('dark');
       else document.documentElement.classList.remove('dark');
   };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Run, Goal, UserProfile, Race, Shoe } from './types';
 import { SAMPLE_GOALS, DEMO_SHOES, generateDemoRuns } from './constants';
@@ -50,11 +49,11 @@ const App: React.FC = () => {
   // Load Data
   useEffect(() => {
     const loadData = () => {
-      const savedRuns = localStorage.getItem('stride_runs');
-      const savedGoals = localStorage.getItem('stride_goals');
-      const savedRaces = localStorage.getItem('stride_races');
-      const savedProfile = localStorage.getItem('stride_profile');
-      const savedTheme = localStorage.getItem('stride_theme');
+      const savedRuns = localStorage.getItem('redline_runs');
+      const savedGoals = localStorage.getItem('redline_goals');
+      const savedRaces = localStorage.getItem('redline_races');
+      const savedProfile = localStorage.getItem('redline_profile');
+      const savedTheme = localStorage.getItem('redline_theme');
       const hasOnboarded = localStorage.getItem('redline_onboarded');
       const demoMode = localStorage.getItem('redline_demo_mode') === 'true';
 
@@ -105,23 +104,23 @@ const App: React.FC = () => {
   // --- Save Logic ---
   const saveRuns = (newRuns: Run[]) => {
       setRuns(newRuns);
-      localStorage.setItem('stride_runs', JSON.stringify(newRuns));
+      localStorage.setItem('redline_runs', JSON.stringify(newRuns));
       if (profile.shoes && profile.shoes.length > 0) {
           const updatedShoes = calculateShoeMileage(profile.shoes, newRuns);
           const newProfile = { ...profile, shoes: updatedShoes };
           setProfile(newProfile);
-          localStorage.setItem('stride_profile', JSON.stringify(newProfile));
+          localStorage.setItem('redline_profile', JSON.stringify(newProfile));
       }
   };
 
   const saveGoals = (newGoals: Goal[]) => {
       setGoals(newGoals);
-      localStorage.setItem('stride_goals', JSON.stringify(newGoals));
+      localStorage.setItem('redline_goals', JSON.stringify(newGoals));
   };
   
   const saveRaces = (newRaces: Race[]) => {
       setRaces(newRaces);
-      localStorage.setItem('stride_races', JSON.stringify(newRaces));
+      localStorage.setItem('redline_races', JSON.stringify(newRaces));
   };
 
   const saveProfile = (newProfile: UserProfile) => {
@@ -129,13 +128,13 @@ const App: React.FC = () => {
           newProfile.shoes = calculateShoeMileage(newProfile.shoes, runs);
       }
       setProfile(newProfile);
-      localStorage.setItem('stride_profile', JSON.stringify(newProfile));
+      localStorage.setItem('redline_profile', JSON.stringify(newProfile));
   };
 
   const toggleTheme = () => {
       const newTheme = theme === 'light' ? 'dark' : 'light';
       setTheme(newTheme);
-      localStorage.setItem('stride_theme', newTheme);
+      localStorage.setItem('redline_theme', newTheme);
       if (newTheme === 'dark') document.documentElement.classList.add('dark');
       else document.documentElement.classList.remove('dark');
   };
@@ -263,4 +262,72 @@ const App: React.FC = () => {
                             <p className="text-sm font-bold text-surface-on truncate">{profile.name || 'Guest Runner'}</p>
                             <p className="text-[10px] text-surface-on-variant truncate group-hover:text-primary transition-colors">View Profile</p>
                         </div>
-                    
+                    </div>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-6 pb-32 md:pb-8 w-full overflow-x-hidden">
+                <div className="w-full px-4 md:px-8">
+                    {activeTab === 'dashboard' && (
+                        <Dashboard 
+                            runs={runs} 
+                            goals={goals} 
+                            profile={profile} 
+                            onAddGoal={handleAddGoal} 
+                            onDeleteGoal={handleDeleteGoal}
+                            onNavigate={setActiveTab}
+                        />
+                    )}
+                    {activeTab === 'log' && (
+                        <RunLog 
+                            runs={runs} 
+                            onAddRun={handleAddRun} 
+                            onAddRuns={handleAddRuns}
+                            onUpdateRun={handleUpdateRun} 
+                            onDeleteRun={handleDeleteRun}
+                            onAddShoe={handleAddShoe}
+                            profile={profile}
+                        />
+                    )}
+                    {activeTab === 'coach' && (
+                        <CoachInsights runs={runs} profile={profile} />
+                    )}
+                    {activeTab === 'race' && (
+                        <RacePrep 
+                            races={races}
+                            runs={runs}
+                            profile={profile}
+                            onAddRace={handleAddRace}
+                            onUpdateRace={handleUpdateRace}
+                            onDeleteRace={handleDeleteRace}
+                        />
+                    )}
+                    {activeTab === 'profile' && (
+                        <Profile 
+                            profile={profile} 
+                            onSaveProfile={saveProfile} 
+                            onReset={handleReset} 
+                            theme={theme}
+                            toggleTheme={toggleTheme}
+                        />
+                    )}
+                </div>
+            </main>
+
+            {/* Floating Bottom Nav (Mobile) */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe z-50 flex justify-center pointer-events-none">
+                 <div className="bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 w-full max-w-md pointer-events-auto">
+                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
+                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
+                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
+                     <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race" onClick={setActiveTab} mobile />
+                     <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
+                 </div>
+            </nav>
+        </div>
+    </div>
+  );
+};
+
+export default App;
