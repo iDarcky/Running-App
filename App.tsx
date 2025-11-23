@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Run, Goal, UserProfile, Race, Shoe } from './types';
 import { SAMPLE_GOALS, DEMO_SHOES, generateDemoRuns } from './constants';
@@ -235,7 +236,7 @@ const App: React.FC = () => {
 
         <div className="flex min-h-screen w-full relative">
             {/* Sidebar (Desktop) */}
-            <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10 top-[36px]">
+            <aside className={`hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10 transition-[top] duration-300 ${isDemoMode ? 'top-[38px]' : 'top-0'}`}>
                 <div className="flex items-center gap-3 px-4 mb-10">
                     <div className="w-10 h-10 bg-[#090909] rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
                         <RedLineLogo className="w-6 h-6 text-[#D32F2F]" />
