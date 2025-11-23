@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { RedLineLogo } from './Logo';
-import { ChevronRight, User, Mail, Lock, Database, Sparkles, PlayCircle } from 'lucide-react';
+import { ChevronRight, User, Mail, Lock, Database, PlayCircle } from 'lucide-react';
 import { Input } from './UIComponents';
 
 interface LandingPageProps {
