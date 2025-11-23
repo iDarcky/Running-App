@@ -35,7 +35,7 @@ interface WidgetLayout {
 
 const AVAILABLE_WIDGETS = [
     { id: 'stats', label: 'Key Statistics', icon: Activity, defaultSize: 'full' as WidgetSize },
-    { id: 'shoe_tracker', label: 'Gear Status', icon: Footprints, defaultSize: 'half' as WidgetSize },
+    { id: 'shoe_tracker', label: 'My Shoes', icon: Footprints, defaultSize: 'half' as WidgetSize },
     { id: 'rotw', label: 'Run of the Week', icon: Star, defaultSize: 'half' as WidgetSize },
     { id: 'streak', label: 'Current Streak', icon: Flame, defaultSize: 'half' as WidgetSize },
     { id: 'records', label: 'Personal Bests', icon: Medal, defaultSize: 'half' as WidgetSize },
@@ -179,7 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
       .map(run => ({
             date: formatDate(run.date),
             distance: run.distance,
-            pace: parseFloat((run.duration / run.distance).toFixed(2)),
+            pace: run.distance > 0 ? parseFloat((run.duration / run.distance).toFixed(2)) : 0,
             hr: run.avgHr,
             cadence: run.cadence || null,
             type: run.type
@@ -272,7 +272,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
       const time = pace * m.distance;
       
       const h = Math.floor(time / 60);
-      const min = Math.floor(time % 60);
+      const min = Math.floor(time / 60) % 60;
       const s = Math.round((time * 60) % 60);
       
       return { 
@@ -321,63 +321,93 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                   </div>
               );
             case 'shoe_tracker':
-                // Find default shoe or the one with most mileage as fallback
-                const defaultShoe = profile?.shoes?.find(s => s.isDefault && !s.isRetired) 
-                    || profile?.shoes?.filter(s => !s.isRetired).sort((a,b) => b.distance - a.distance)[0];
-
-                if (!defaultShoe) {
+                const activeShoes = profile?.shoes?.filter(s => !s.isRetired) || [];
+                
+                if (activeShoes.length === 0) {
                      return (
                         <div className="bg-surface-container rounded-[24px] p-6 h-full shadow-sm border border-outline-variant/20 flex flex-col items-center justify-center text-center">
                             <Footprints size={32} className="text-surface-on-variant opacity-50 mb-2" />
-                            <p className="text-sm text-surface-on-variant font-bold">No active gear found</p>
+                            <p className="text-sm text-surface-on-variant font-bold">No active gear</p>
                             <button onClick={() => onNavigate('profile')} className="text-primary text-xs font-bold mt-2 hover:underline">Add Shoes</button>
                         </div>
                      );
                 }
                 
-                const progress = Math.min(100, (defaultShoe.distance / defaultShoe.maxDistance) * 100);
-                const remaining = Math.max(0, defaultShoe.maxDistance - defaultShoe.distance);
-                let barColor = 'bg-[#06D6A0]';
-                if (progress > 50) barColor = 'bg-[#FFD166]';
-                if (progress > 80) barColor = 'bg-[#EF476F]';
+                // Sort: Primary first, then by mileage desc
+                const sortedShoes = [...activeShoes].sort((a, b) => {
+                    if (a.isDefault && !b.isDefault) return -1;
+                    if (!a.isDefault && b.isDefault) return 1;
+                    return b.distance - a.distance;
+                });
 
                 return (
-                    <div className="bg-surface-container rounded-[24px] p-6 h-full shadow-sm border border-outline-variant/20 flex flex-col justify-between">
-                         <div className="flex justify-between items-start mb-4">
+                    <div className="bg-surface-container rounded-[24px] h-full shadow-sm border border-outline-variant/20 flex flex-col relative overflow-hidden">
+                         <div className="px-6 pt-6 flex justify-between items-start mb-2 shrink-0">
                             <h3 className="text-xl font-bold text-surface-on flex items-center gap-2">
                                 <Footprints className="text-primary" size={24} />
-                                Gear Status
+                                My Shoes
                             </h3>
-                            {defaultShoe.isDefault && (
-                                <span className="bg-primary/10 text-primary text-[10px] font-bold uppercase px-2 py-1 rounded-md">Primary</span>
-                            )}
+                            <button onClick={() => onNavigate('profile')} className="text-surface-on-variant hover:text-primary transition-colors">
+                                <span className="text-xs font-bold bg-surface-container-highest px-2 py-1 rounded-md">{sortedShoes.length} Pair{sortedShoes.length !== 1 ? 's' : ''}</span>
+                            </button>
                         </div>
                         
-                        <div className="flex-1 flex flex-col justify-center">
-                             <h4 className="text-lg font-bold text-surface-on truncate">{defaultShoe.brand}</h4>
-                             <p className="text-sm text-surface-on-variant font-medium truncate mb-4">{defaultShoe.model}</p>
-                             
-                             <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="font-bold text-surface-on">{defaultShoe.distance.toFixed(1)} km</span>
-                                    <span className="text-surface-on-variant text-xs">{defaultShoe.maxDistance} km max</span>
-                                </div>
-                                <div className="relative h-3 bg-surface-container-highest rounded-full overflow-hidden">
-                                     <div 
-                                        className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${barColor}`}
-                                        style={{ width: `${progress}%` }}
-                                    />
-                                </div>
-                                <div className="flex justify-between items-center pt-1">
-                                    <span className="text-xs font-bold text-surface-on-variant">{Math.round(100 - progress)}% Health</span>
-                                    {remaining < 50 && (
-                                        <span className="flex items-center gap-1 text-xs text-[#EF476F] font-bold">
-                                            <AlertTriangle size={10} /> Replace Soon
-                                        </span>
-                                    )}
-                                </div>
-                             </div>
+                        <div className="flex-1 flex overflow-x-auto snap-x snap-mandatory pb-6 px-6 gap-4 items-center no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            {/* Inline style to hide scrollbar for this container only */}
+                            <style dangerouslySetInnerHTML={{__html: `.no-scrollbar::-webkit-scrollbar { display: none; }`}} />
+                            
+                            {sortedShoes.map((shoe) => {
+                                const progress = Math.min(100, (shoe.distance / shoe.maxDistance) * 100);
+                                const remaining = Math.max(0, shoe.maxDistance - shoe.distance);
+                                let barColor = 'bg-[#06D6A0]';
+                                if (progress > 50) barColor = 'bg-[#FFD166]';
+                                if (progress > 80) barColor = 'bg-[#EF476F]';
+                                
+                                return (
+                                    <div key={shoe.id} className="snap-center shrink-0 w-full min-w-full flex flex-col justify-center">
+                                        <div className="flex justify-between items-start mb-2">
+                                             <div className="max-w-[75%]">
+                                                <h4 className="text-lg font-bold text-surface-on truncate leading-tight">{shoe.brand}</h4>
+                                                <p className="text-sm text-surface-on-variant font-medium truncate">{shoe.model}</p>
+                                             </div>
+                                             {shoe.isDefault && (
+                                                <span className="bg-primary/10 text-primary text-[10px] font-bold uppercase px-2 py-1 rounded-md shrink-0">Primary</span>
+                                             )}
+                                        </div>
+
+                                        <div className="space-y-2 mt-2">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="font-bold text-surface-on">{shoe.distance.toFixed(1)} km</span>
+                                                <span className="text-surface-on-variant text-xs">{shoe.maxDistance} km max</span>
+                                            </div>
+                                            <div className="relative h-3 bg-surface-container-highest rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${barColor}`}
+                                                    style={{ width: `${progress}%` }}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between items-center pt-1">
+                                                <span className="text-xs font-bold text-surface-on-variant">{Math.round(100 - progress)}% Health</span>
+                                                {remaining < 50 ? (
+                                                    <span className="flex items-center gap-1 text-xs text-[#EF476F] font-bold">
+                                                        <AlertTriangle size={10} /> Replace
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-surface-on-variant opacity-60">{Math.round(remaining)} km left</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
+                        {sortedShoes.length > 1 && (
+                            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 pointer-events-none pb-1">
+                                {sortedShoes.map((_, i) => (
+                                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-surface-on-variant opacity-20"></div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 );
             case 'rotw':
