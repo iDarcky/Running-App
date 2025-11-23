@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Run, RunType, StravaToken, GoogleToken, UserProfile, Shoe } from '../types';
 import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
-import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Pencil, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map, Trophy, BatteryCharging, Timer, Share2 } from 'lucide-react';
+import { Plus, Zap, Activity, Footprints, Clock, Calendar, Heart, Gauge, Pencil, Trash2, AlertTriangle, ExternalLink, Info, CheckCircle, Loader2, ChevronDown, Feather, Flame, Map as MapIcon, Trophy, BatteryCharging, Timer, Share2 } from 'lucide-react';
 import { getStravaAuthUrl, exchangeStravaToken, getStravaActivities, mapStravaToRun } from '../services/stravaService';
 import { getGoogleAuthUrl, exchangeGoogleToken, getGoogleFitActivities } from '../services/googleFitService';
 import { Modal, Input } from './UIComponents';
@@ -284,7 +283,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
       case RunType.EASY: return <Feather size={size} className="shrink-0" />;
       case RunType.TEMPO: return <Flame size={size} className="shrink-0" />;
       case RunType.INTERVAL: return <Zap size={size} className="shrink-0" />;
-      case RunType.LONG: return <Map size={size} className="shrink-0" />;
+      case RunType.LONG: return <MapIcon size={size} className="shrink-0" />;
       case RunType.RACE: return <Trophy size={size} className="shrink-0" />;
       case RunType.RECOVERY: return <BatteryCharging size={size} className="shrink-0" />;
       default: return <Activity size={size} className="shrink-0" />;

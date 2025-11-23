@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Shoe, Run } from '../types';
 import { ACHIEVEMENTS, SAMPLE_RUNS } from '../constants';
 import { Input } from './UIComponents';
-import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail, AlertTriangle, Trash2, Moon, Sun, Plus, Archive, Trophy, Map, Zap, Sunrise, Flame, Award, Star, Check } from 'lucide-react';
+import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail, AlertTriangle, Trash2, Moon, Sun, Plus, Archive, Trophy, Map as MapIcon, Zap, Sunrise, Flame, Award, Star, Check } from 'lucide-react';
 import { RedLineLogo } from './Logo';
 
 interface ProfileProps {
@@ -17,7 +17,7 @@ interface ProfileProps {
 const getAchievementIcon = (name: string, size: number) => {
     switch(name) {
         case 'Footprints': return <Footprints size={size} />;
-        case 'Map': return <Map size={size} />;
+        case 'Map': return <MapIcon size={size} />;
         case 'Zap': return <Zap size={size} />;
         case 'Sunrise': return <Sunrise size={size} />;
         case 'Flame': return <Flame size={size} />;

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Run, InsightResponse, UserProfile, Race } from '../types';
 
@@ -137,6 +138,47 @@ export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserPr
       console.error(e);
       throw e;
   }
+};
+
+export const generateDailyWorkout = async (runs: Run[], profile?: UserProfile): Promise<{ title: string, description: string, type: string, duration: number }> => {
+    if (!ai) throw new Error("Gemini API Key is missing.");
+
+    const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 7);
+    
+    const prompt = `
+        Based on my last 7 days of running history: ${JSON.stringify(sortedRuns)},
+        Generate a single, specific workout for TODAY.
+        Consider my fatigue (if I ran yesterday or did a hard session recently, suggest recovery).
+        
+        Return strictly JSON with these fields:
+        - title: Short name of workout (e.g., "45min Recovery" or "Threshold Intervals")
+        - description: 2 sentences describing exactly what to do.
+        - type: One of "Easy", "Tempo", "Interval", "Long", "Recovery", "Rest"
+        - duration: estimated duration in minutes (number only)
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING },
+                        description: { type: Type.STRING },
+                        type: { type: Type.STRING },
+                        duration: { type: Type.INTEGER }
+                    }
+                }
+            }
+        });
+        return JSON.parse(response.text || '{}');
+    } catch (e) {
+        console.error("Error generating daily workout", e);
+        throw e;
+    }
 };
 
 export const chatWithRunCoach = async (history: {role: 'user'|'model', text: string}[], newMessage: string, runs: Run[], profile?: UserProfile) => {

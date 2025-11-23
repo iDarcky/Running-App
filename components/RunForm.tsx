@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Run, RunType, UserProfile, Shoe } from '../types';
 import { RUN_TYPE_ORDER, RUN_TYPE_COLORS } from '../constants';
 import { Input, Select } from './UIComponents';
-import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map, Trophy, BatteryCharging, ChevronDown, Check, Save, Plus, AlertCircle, X } from 'lucide-react';
+import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map as MapIcon, Trophy, BatteryCharging, ChevronDown, Check, Save, Plus, AlertCircle, X } from 'lucide-react';
 
 interface RunFormProps {
     initialData?: Partial<Run>;
@@ -97,7 +97,7 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
           case RunType.EASY: return <Feather size={20} />;
           case RunType.TEMPO: return <Flame size={20} />;
           case RunType.INTERVAL: return <Zap size={20} />;
-          case RunType.LONG: return <Map size={20} />;
+          case RunType.LONG: return <MapIcon size={20} />;
           case RunType.RACE: return <Trophy size={20} />;
           case RunType.RECOVERY: return <BatteryCharging size={20} />;
           default: return <Activity size={20} />;
@@ -124,7 +124,7 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, pro
                         type="number" step="0.01"
                         value={formData.distance} 
                         onChange={(e: any) => setFormData({...formData, distance: parseFloat(e.target.value)})} 
-                        icon={Map}
+                        icon={MapIcon}
                         required
                     />
                     <Input 

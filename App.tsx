@@ -67,7 +67,10 @@ const App: React.FC = () => {
 
       let loadedRuns: Run[] = [];
       if (savedRuns) {
-          try { loadedRuns = JSON.parse(savedRuns); } catch(e) { console.error("Error parsing runs", e); }
+          try { 
+              const parsed = JSON.parse(savedRuns);
+              if (Array.isArray(parsed)) loadedRuns = parsed;
+          } catch(e) { console.error("Error parsing runs", e); }
       }
       setRuns(loadedRuns);
 
