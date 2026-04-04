@@ -1,578 +1,274 @@
-import React, { useState, useEffect } from 'react';
-import { UserProfile, Shoe, Run } from '../types';
-import { ACHIEVEMENTS, SAMPLE_RUNS } from '../constants';
-import { Input } from './UIComponents';
-import { User, Ruler, Scale, Calendar, Footprints, Save, CheckCircle, Smile, LogOut, Lock, ChevronRight, Activity, Mail, AlertTriangle, Trash2, Moon, Sun, Plus, Archive, Trophy, Map as MapIcon, Zap, Sunrise, Flame, Award, Star, Check } from 'lucide-react';
-import { RedLineLogo } from './Logo';
+import React, { useState } from 'react';
+import {
+  User,
+  Settings,
+  Shield,
+  Bell,
+  Moon,
+  Sun,
+  LogOut,
+  Trash2,
+  ChevronRight,
+  Smartphone,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  Footprints,
+  Plus,
+  Star,
+  Archive,
+  X
+} from 'lucide-react';
+import { UserProfile, Shoe } from '../types';
+import { Input, Select, Button, Card, Modal } from './UIComponents';
 
 interface ProfileProps {
   profile: UserProfile;
   onSaveProfile: (profile: UserProfile) => void;
   onReset: () => void;
-  theme: 'light' | 'dark';
+  theme: string;
   toggleTheme: () => void;
 }
 
-// Icon Mapper
-const getAchievementIcon = (name: string, size: number) => {
-    switch(name) {
-        case 'Footprints': return <Footprints size={size} />;
-        case 'Map': return <MapIcon size={size} />;
-        case 'Zap': return <Zap size={size} />;
-        case 'Sunrise': return <Sunrise size={size} />;
-        case 'Flame': return <Flame size={size} />;
-        case 'Trophy': return <Trophy size={size} />;
-        default: return <Award size={size} />;
-    }
-};
-
-// Auth Screen Component - Separated to isolate state and rendering
-const AuthScreen = ({ onLogin }: { onLogin: (name: string) => void }) => {
-    const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-    const [loginName, setLoginName] = useState('');
-    const [guestName, setGuestName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (authMode === 'signup' && !loginName.trim()) return;
-        
-        const nameToUse = loginName.trim() || (authMode === 'login' ? "Runner" : "Runner");
-        onLogin(nameToUse);
-    };
-
-    return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in p-4">
-            <div className="w-full max-w-md bg-surface-container rounded-[32px] p-8 shadow-xl relative overflow-hidden border border-outline-variant/20">
-                <div className="text-center mb-8 relative z-10">
-                    <div className="bg-[#090909] w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20">
-                        <RedLineLogo className="w-10 h-10 text-[#D32F2F]" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-surface-on tracking-tight">
-                        {authMode === 'login' ? 'Welcome to RedLine' : 'Join RedLine'}
-                    </h2>
-                    <p className="text-surface-on-variant mt-2">
-                        {authMode === 'login' ? 'Sign in to access your training' : 'Create your athlete profile'}
-                    </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
-                    {authMode === 'signup' && (
-                        <Input 
-                            key="name-input"
-                            label="Name" 
-                            icon={User} 
-                            value={loginName} 
-                            onChange={(e: any) => setLoginName(e.target.value)} 
-                            required 
-                        />
-                    )}
-                    <Input 
-                        key="email-input"
-                        label="Email" 
-                        icon={Mail} 
-                        type="email" 
-                        value={email} 
-                        onChange={(e: any) => setEmail(e.target.value)} 
-                    />
-                    <Input 
-                        key="password-input"
-                        label="Password" 
-                        icon={Lock} 
-                        type="password" 
-                        value={password} 
-                        onChange={(e: any) => setPassword(e.target.value)} 
-                    />
-
-                    <button 
-                        type="submit" 
-                        className="w-full bg-primary text-primary-on py-4 rounded-full font-bold text-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-2 mt-6"
-                    >
-                        {authMode === 'login' ? 'Sign In' : 'Create Account'}
-                        <ChevronRight size={20} />
-                    </button>
-                </form>
-
-                <div className="mt-8 text-center relative z-10">
-                    <button 
-                        type="button"
-                        onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                        className="text-primary font-bold text-sm hover:underline transition-colors"
-                    >
-                        {authMode === 'login' ? "Don't have an account? Sign Up" : "Already a member? Log In"}
-                    </button>
-                    
-                    <div className="my-6 border-t border-outline-variant/30"></div>
-
-                    <div className="flex flex-col gap-2">
-                        <p className="text-xs text-surface-on-variant">Quick Start</p>
-                        <div className="flex gap-2">
-                            <input 
-                                type="text" 
-                                placeholder="Guest Name (Optional)" 
-                                value={guestName}
-                                onChange={(e) => setGuestName(e.target.value)}
-                                className="bg-surface-container-highest px-4 py-2 rounded-xl text-sm flex-1 border-none outline-none focus:ring-1 focus:ring-primary text-surface-on"
-                            />
-                            <button 
-                                type="button"
-                                onClick={() => onLogin(guestName.trim() || 'Guest Runner')}
-                                className="bg-surface-container-high hover:bg-surface-container-highest text-surface-on px-4 py-2 rounded-xl text-sm font-bold transition-colors"
-                            >
-                                Go
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, theme, toggleTheme }) => {
-  const [formData, setFormData] = useState<UserProfile>(profile);
-  const [saved, setSaved] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editProfile, setEditProfile] = useState(profile);
+  const [activeTab, setActiveTab] = useState<'profile' | 'shoes' | 'settings'>('profile');
+
   const [isAddingShoe, setIsAddingShoe] = useState(false);
-  const [newShoe, setNewShoe] = useState<Partial<Shoe>>({ brand: '', model: '', maxDistance: 800 });
-  const [allRuns, setAllRuns] = useState<Run[]>([]);
+  const [newShoe, setNewShoe] = useState<Partial<Shoe>>({
+      brand: '',
+      model: '',
+      maxDistance: 800,
+      isDefault: false,
+      isRetired: false
+  });
 
-  const isLoggedIn = !!profile.name;
-
-  useEffect(() => {
-    // Ensure shoes array exists
-    setFormData({
-        ...profile,
-        shoes: profile.shoes || []
-    });
-
-    // Load runs from storage to calc achievements
-    const savedRuns = localStorage.getItem('redline_runs');
-    if (savedRuns) {
-        try {
-            setAllRuns(JSON.parse(savedRuns));
-        } catch(e) { }
-    }
-  }, [profile]);
-
-  const handleChange = (field: keyof UserProfile, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    setSaved(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    const nameToSave = formData.name.trim() === '' ? 'Runner' : formData.name;
-    onSaveProfile({ ...formData, name: nameToSave });
-    if (formData.name.trim() === '') setFormData(prev => ({ ...prev, name: 'Runner' }));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    onSaveProfile(editProfile);
+    setIsEditing(false);
   };
 
   const handleAddShoe = (e: React.FormEvent) => {
       e.preventDefault();
-      if (!newShoe.brand || !newShoe.model) return;
-      
-      // If it's the first shoe, make it default
-      const isFirst = !formData.shoes || formData.shoes.length === 0;
-
       const shoe: Shoe = {
+          ...newShoe,
           id: Date.now().toString(),
-          brand: newShoe.brand,
-          model: newShoe.model,
           distance: 0,
-          maxDistance: newShoe.maxDistance || 800,
-          isRetired: false,
-          isDefault: isFirst
-      };
+      } as Shoe;
       
-      const updatedShoes = [...(formData.shoes || []), shoe];
-      setFormData(prev => ({ ...prev, shoes: updatedShoes }));
-      onSaveProfile({ ...formData, shoes: updatedShoes });
-      
-      setNewShoe({ brand: '', model: '', maxDistance: 800 });
+      const updatedShoes = [...(profile.shoes || []), shoe];
+      onSaveProfile({ ...profile, shoes: updatedShoes });
       setIsAddingShoe(false);
-  };
-
-  const handleRetireShoe = (id: string) => {
-      const updatedShoes = formData.shoes.map(s => 
-          s.id === id ? { ...s, isRetired: !s.isRetired, isDefault: false } : s
-      );
-      setFormData(prev => ({ ...prev, shoes: updatedShoes }));
-      onSaveProfile({ ...formData, shoes: updatedShoes });
+      setNewShoe({ brand: '', model: '', maxDistance: 800 });
   };
 
   const handleSetDefaultShoe = (id: string) => {
-      const updatedShoes = formData.shoes.map(s => ({
+      const updatedShoes = (profile.shoes || []).map(s => ({
           ...s,
           isDefault: s.id === id
       }));
-      setFormData(prev => ({ ...prev, shoes: updatedShoes }));
-      onSaveProfile({ ...formData, shoes: updatedShoes });
+      onSaveProfile({ ...profile, shoes: updatedShoes });
+  };
+
+  const handleRetireShoe = (id: string) => {
+      const updatedShoes = (profile.shoes || []).map(s => ({
+          ...s,
+          isRetired: s.id === id ? !s.isRetired : s.isRetired,
+          isDefault: s.id === id ? false : s.isDefault
+      }));
+      onSaveProfile({ ...profile, shoes: updatedShoes });
   };
 
   const handleDeleteShoe = (id: string) => {
-      if(!window.confirm("Delete this shoe? This won't affect past runs.")) return;
-      const updatedShoes = formData.shoes.filter(s => s.id !== id);
-      setFormData(prev => ({ ...prev, shoes: updatedShoes }));
-      onSaveProfile({ ...formData, shoes: updatedShoes });
+      if (window.confirm("Delete this shoe? This will remove it from all associated runs.")) {
+          const updatedShoes = (profile.shoes || []).filter(s => s.id !== id);
+          onSaveProfile({ ...profile, shoes: updatedShoes });
+      }
   };
 
-  const handleLoginSuccess = (name: string) => {
-    onSaveProfile({ ...profile, name: name });
-  };
-
-  const handleLogout = () => {
-      onSaveProfile({
-          name: '',
-          height: 0,
-          weight: 0,
-          age: 0,
-          sex: '',
-          shoeModel: '',
-          shoes: []
-      });
-  };
-
-  if (!isLoggedIn) {
-      return <AuthScreen onLogin={handleLoginSuccess} />;
-  }
-
-  const activeShoes = formData.shoes?.filter(s => !s.isRetired) || [];
-  const retiredShoes = formData.shoes?.filter(s => s.isRetired) || [];
+  const activeShoes = (profile.shoes || []).filter(s => !s.isRetired);
+  const retiredShoes = (profile.shoes || []).filter(s => s.isRetired);
 
   return (
-    <div className="w-full animate-fade-in pb-20">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-                <h2 className="text-3xl font-bold text-surface-on tracking-tight">Profile</h2>
-                <p className="text-surface-on-variant text-sm">Manage your personal metrics</p>
-            </div>
-            <div className="flex gap-3">
-                <button 
-                    onClick={toggleTheme}
-                    className="p-3 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-surface-on transition-colors"
-                    title="Toggle Theme"
-                >
-                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                </button>
-                <button 
-                    onClick={handleLogout}
-                    className="px-6 py-3 rounded-full bg-surface-container-high hover:bg-error-container hover:text-error-on-container transition-colors text-sm font-bold flex items-center gap-2"
-                >
-                    <LogOut size={16} /> Sign Out
-                </button>
-            </div>
-        </div>
+    <div className="animate-fade-in pb-10">
+      <div className="mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tighter mb-2">Settings</h2>
+          <p className="text-accents-5 text-base">Manage your profile and preferences.</p>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column */}
-            <div className="space-y-8">
-                {/* Avatar Card */}
-                <div className="bg-surface-container rounded-[32px] p-8 flex flex-col items-center text-center border border-outline-variant/20 shadow-sm">
-                    <div className="w-32 h-32 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center justify-center text-5xl font-bold mb-6 shadow-lg">
-                        {profile.name.charAt(0).toUpperCase()}
-                    </div>
-                    <h3 className="text-2xl font-bold text-surface-on">{profile.name}</h3>
-                    <p className="text-surface-on-variant mt-1">RedLine Athlete</p>
-                    
-                    <div className="mt-8 w-full space-y-2">
-                        <div className="bg-surface-container-low p-3 rounded-xl flex justify-between items-center">
-                            <span className="text-sm text-surface-on-variant font-medium">Status</span>
-                            <span className="text-sm font-bold text-primary">Active</span>
-                        </div>
-                        <div className="bg-surface-container-low p-3 rounded-xl flex justify-between items-center">
-                            <span className="text-sm text-surface-on-variant font-medium">Shoes Tracked</span>
-                            <span className="text-sm font-bold text-surface-on">{formData.shoes?.length || 0}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                {/* Trophy Room */}
-                <div className="bg-surface-container rounded-[32px] p-8 border border-outline-variant/20 shadow-sm">
-                     <h3 className="text-lg font-bold text-surface-on mb-6 flex items-center gap-2">
-                        <Trophy size={20} className="text-[#FFD166]" /> Trophy Room
-                    </h3>
-                    <div className="grid grid-cols-3 gap-3">
-                        {ACHIEVEMENTS.map(achievement => {
-                            const isUnlocked = achievement.condition(allRuns);
-                            return (
-                                <div 
-                                    key={achievement.id} 
-                                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center p-2 transition-all group relative ${
-                                        isUnlocked 
-                                        ? 'bg-primary/10 text-primary' 
-                                        : 'bg-surface-container-highest opacity-40 grayscale'
-                                    }`}
-                                    title={achievement.description}
-                                >
-                                    <div className={`mb-1 ${isUnlocked ? 'text-primary' : 'text-surface-on-variant'}`}>
-                                        {isUnlocked ? getAchievementIcon(achievement.iconName, 24) : <Lock size={24} />}
-                                    </div>
-                                    <span className="text-[10px] font-bold text-center leading-tight hidden md:block">
-                                        {achievement.title}
-                                    </span>
-                                    {/* Tooltip */}
-                                    <div className="absolute bottom-full mb-2 px-3 py-1 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                        {achievement.description}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+      <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar Tabs */}
+          <div className="w-full md:w-64 shrink-0 space-y-1">
+              {[
+                  { id: 'profile', label: 'General', icon: User },
+                  { id: 'shoes', label: 'Gear Locker', icon: Footprints },
+                  { id: 'settings', label: 'Preferences', icon: Settings }
+              ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-3 w-full px-4 py-3 rounded-md text-sm font-semibold transition-colors ${activeTab === tab.id ? 'bg-accents-1 text-foreground' : 'text-accents-5 hover:text-foreground hover:bg-accents-1/50'}`}
+                  >
+                      <tab.icon size={18} />
+                      {tab.label}
+                  </button>
+              ))}
+              <div className="pt-4 mt-4 border-t border-accents-2">
+                  <button
+                    onClick={onReset}
+                    className="flex items-center gap-3 w-full px-4 py-3 rounded-md text-sm font-semibold text-primary hover:bg-primary/5 transition-colors"
+                  >
+                      <Trash2 size={18} />
+                      Reset All Data
+                  </button>
+              </div>
+          </div>
 
-                 {/* Edit Form */}
-                <div className="bg-surface-container rounded-[32px] p-8 border border-outline-variant/20 shadow-sm">
-                    <h3 className="text-lg font-bold text-surface-on mb-6 flex items-center gap-2">
-                        <Activity size={20} className="text-primary" /> Vitals
-                    </h3>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <Input 
-                            label="Display Name" 
-                            type="text" 
-                            value={formData.name || ''} 
-                            onChange={(e: any) => handleChange('name', e.target.value)} 
-                            icon={User}
-                            placeholder="Your Name"
-                        />
+          {/* Content Area */}
+          <div className="flex-1">
+              <Card>
+                  {activeTab === 'profile' && (
+                      <div className="animate-fade-in">
+                          <h3 className="text-xl font-bold text-foreground mb-6 tracking-tight">Athlete Profile</h3>
+                          <form onSubmit={handleSave} className="space-y-6">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <Input label="Display Name" value={editProfile.name} onChange={(e: any) => setEditProfile({...editProfile, name: e.target.value})} />
+                                  <Select label="Gender" value={editProfile.sex} onChange={(e: any) => setEditProfile({...editProfile, sex: e.target.value})} options={[{value: '', label: 'Select...'}, {value: 'M', label: 'Male'}, {value: 'F', label: 'Female'}, {value: 'O', label: 'Other'}]} />
+                                  <Input label="Age" type="number" value={editProfile.age} onChange={(e: any) => setEditProfile({...editProfile, age: parseInt(e.target.value)})} />
+                                  <Input label="Weight (kg)" type="number" value={editProfile.weight} onChange={(e: any) => setEditProfile({...editProfile, weight: parseFloat(e.target.value)})} />
+                              </div>
+                              <div className="flex justify-end pt-4 border-t border-accents-2">
+                                  <Button type="submit">Update Profile</Button>
+                              </div>
+                          </form>
+                      </div>
+                  )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Input 
-                                label="Age" 
-                                type="number" 
-                                value={formData.age || ''} 
-                                onChange={(e: any) => handleChange('age', parseInt(e.target.value))} 
-                                icon={Calendar}
-                            />
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <Smile className="text-surface-on-variant" size={20} />
-                                </div>
-                                <select 
-                                    value={formData.sex}
-                                    onChange={(e) => handleChange('sex', e.target.value)}
-                                    className="block w-full pl-12 pr-4 pt-6 pb-2 bg-surface-container-highest rounded-t-xl border-b border-outline-variant text-surface-on appearance-none focus:border-primary focus:outline-none cursor-pointer font-bold"
-                                >
-                                    <option value="">Select Sex</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                <label className="absolute left-12 top-1 text-[10px] font-bold uppercase tracking-wider text-surface-on-variant pointer-events-none">Sex</label>
-                            </div>
-                            <Input 
-                                label="Height (cm)" 
-                                type="number" 
-                                value={formData.height || ''} 
-                                onChange={(e: any) => handleChange('height', parseInt(e.target.value))} 
-                                icon={Ruler}
-                            />
-                            <Input 
-                                label="Weight (kg)" 
-                                type="number" 
-                                value={formData.weight || ''} 
-                                onChange={(e: any) => handleChange('weight', parseInt(e.target.value))} 
-                                icon={Scale}
-                            />
-                        </div>
+                  {activeTab === 'shoes' && (
+                      <div className="animate-fade-in">
+                          <div className="flex justify-between items-center mb-6">
+                              <h3 className="text-xl font-bold text-foreground tracking-tight">Gear Locker</h3>
+                              <Button variant="secondary" size="sm" onClick={() => setIsAddingShoe(true)}>
+                                  <Plus size={16} className="mr-1" /> Add Shoe
+                              </Button>
+                          </div>
 
-                        <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10">
-                            <button 
-                                type="button"
-                                onClick={onReset}
-                                className="text-error hover:bg-error-container hover:text-error-on-container px-4 py-2 rounded-full transition-colors text-sm font-bold flex items-center gap-2"
-                            >
-                                <Trash2 size={16} /> Reset Data
-                            </button>
+                          <div className="space-y-4">
+                              {activeShoes.length === 0 && (
+                                  <div className="py-12 text-center border-2 border-dashed border-accents-2 rounded-xl">
+                                      <p className="text-accents-5 text-sm">No active shoes in your locker.</p>
+                                  </div>
+                              )}
 
-                            <button 
-                                type="submit"
-                                className="bg-primary text-primary-on px-6 py-3 rounded-full font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform flex items-center gap-2"
-                            >
-                                {saved ? <CheckCircle size={20} /> : <Save size={20} />}
-                                {saved ? 'Saved!' : 'Save'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                              {activeShoes.map(shoe => {
+                                  const progress = Math.min((shoe.distance / shoe.maxDistance) * 100, 100);
+                                  return (
+                                      <div key={shoe.id} className={`p-5 rounded-xl border ${shoe.isDefault ? 'border-foreground bg-accents-1/30 shadow-sm' : 'border-accents-2'}`}>
+                                          <div className="flex justify-between items-start mb-4">
+                                              <div className="flex gap-4 items-start">
+                                                  <button onClick={() => handleSetDefaultShoe(shoe.id)} className={`mt-1 ${shoe.isDefault ? 'text-primary' : 'text-accents-3 hover:text-primary transition-colors'}`}>
+                                                      <Star size={20} fill={shoe.isDefault ? "currentColor" : "none"} />
+                                                  </button>
+                                                  <div>
+                                                      <h4 className="font-bold text-foreground text-lg tracking-tight">{shoe.brand} {shoe.model}</h4>
+                                                      <p className="text-[10px] text-accents-5 font-bold uppercase tracking-widest mt-0.5">
+                                                          {shoe.isDefault ? 'Primary Shoe' : 'Active'}
+                                                      </p>
+                                                  </div>
+                                              </div>
+                                              <div className="flex gap-1">
+                                                  <Button variant="ghost" size="sm" onClick={() => handleRetireShoe(shoe.id)} title="Archive"><Archive size={16} /></Button>
+                                                  <Button variant="ghost" size="sm" onClick={() => handleDeleteShoe(shoe.id)} className="text-primary hover:text-primary"><Trash2 size={16} /></Button>
+                                              </div>
+                                          </div>
 
-            {/* Right Column - Gear Locker */}
-            <div className="lg:col-span-2 bg-surface-container rounded-[32px] p-8 border border-outline-variant/20 shadow-sm flex flex-col h-full">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold text-surface-on flex items-center gap-2">
-                        <Footprints size={20} className="text-primary" /> Gear Locker
-                    </h3>
-                    <button 
-                        onClick={() => setIsAddingShoe(!isAddingShoe)}
-                        className="bg-surface-container-highest hover:bg-surface-container-high text-surface-on p-2 rounded-full transition-colors"
-                    >
-                        {isAddingShoe ? <ChevronRight className="rotate-90" /> : <Plus />}
-                    </button>
-                </div>
+                                          <div className="space-y-2">
+                                              <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+                                                  <span className="text-foreground">{shoe.distance.toFixed(1)} km</span>
+                                                  <span className="text-accents-5">Limit: {shoe.maxDistance} km</span>
+                                              </div>
+                                              <div className="h-1.5 bg-accents-1 rounded-full overflow-hidden border border-accents-2">
+                                                  <div
+                                                      className={`h-full transition-all duration-1000 ${progress > 90 ? 'bg-primary' : progress > 70 ? 'bg-orange-500' : 'bg-foreground'}`}
+                                                      style={{ width: `${progress}%` }}
+                                                  />
+                                              </div>
+                                          </div>
+                                      </div>
+                                  );
+                              })}
+                          </div>
 
-                {isAddingShoe && (
-                    <form onSubmit={handleAddShoe} className="bg-surface-container-low p-6 rounded-[24px] mb-6 animate-slide-down border border-primary/20">
-                        <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4">Add New Kicks</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div className="md:col-span-1">
-                                <Input 
-                                    label="Brand" 
-                                    value={newShoe.brand}
-                                    onChange={(e: any) => setNewShoe({...newShoe, brand: e.target.value})}
-                                    placeholder="e.g. Nike"
-                                    required
-                                />
-                            </div>
-                            <div className="md:col-span-2">
-                                <Input 
-                                    label="Model" 
-                                    value={newShoe.model}
-                                    onChange={(e: any) => setNewShoe({...newShoe, model: e.target.value})}
-                                    placeholder="e.g. Pegasus 41"
-                                    required
-                                />
-                            </div>
-                            <div className="md:col-span-1">
-                                <Input 
-                                    label="Max Distance (km)" 
-                                    type="number"
-                                    value={newShoe.maxDistance}
-                                    onChange={(e: any) => setNewShoe({...newShoe, maxDistance: parseInt(e.target.value)})}
-                                    placeholder="800"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex justify-end">
-                            <button type="submit" className="bg-primary text-primary-on px-6 py-2 rounded-full font-bold text-sm">
-                                Add to Locker
-                            </button>
-                        </div>
-                    </form>
-                )}
+                          {retiredShoes.length > 0 && (
+                              <div className="mt-10 pt-10 border-t border-accents-2">
+                                  <h4 className="text-xs font-bold text-accents-4 uppercase tracking-widest mb-4">Archived Gear</h4>
+                                  <div className="space-y-2 opacity-60">
+                                      {retiredShoes.map(shoe => (
+                                          <div key={shoe.id} className="flex justify-between items-center p-3 bg-accents-1 rounded-md text-sm">
+                                              <span className="font-medium">{shoe.brand} {shoe.model}</span>
+                                              <div className="flex gap-4 items-center">
+                                                  <span className="text-xs">{shoe.distance.toFixed(0)} km</span>
+                                                  <button onClick={() => handleRetireShoe(shoe.id)} className="text-xs font-bold hover:underline">Restore</button>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                              </div>
+                          )}
+                      </div>
+                  )}
 
-                <div className="space-y-4 flex-1 overflow-y-auto max-h-[600px] pr-2">
-                    {activeShoes.length === 0 && !isAddingShoe && (
-                        <div className="text-center py-12 border-2 border-dashed border-outline-variant/20 rounded-2xl">
-                            <Footprints className="mx-auto mb-2 text-surface-on-variant opacity-50" size={32} />
-                            <p className="text-surface-on-variant font-medium">No active shoes.</p>
-                            <button onClick={() => setIsAddingShoe(true)} className="text-primary font-bold text-sm mt-2 hover:underline">Add your running shoes</button>
-                        </div>
-                    )}
+                  {activeTab === 'settings' && (
+                      <div className="animate-fade-in space-y-8">
+                          <div>
+                              <h3 className="text-xl font-bold text-foreground mb-6 tracking-tight">Preferences</h3>
+                              <div className="space-y-4">
+                                  <div className="flex items-center justify-between p-4 bg-accents-1/50 rounded-lg border border-accents-2">
+                                      <div className="flex items-center gap-4">
+                                          <div className="text-foreground"><Moon size={20} /></div>
+                                          <div>
+                                              <p className="text-sm font-bold text-foreground">Dark Mode</p>
+                                              <p className="text-xs text-accents-5">Adjust the interface theme.</p>
+                                          </div>
+                                      </div>
+                                      <button
+                                        onClick={toggleTheme}
+                                        className={`w-12 h-6 rounded-full p-1 transition-colors ${theme === 'dark' ? 'bg-primary' : 'bg-accents-3'}`}
+                                      >
+                                          <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}`} />
+                                      </button>
+                                  </div>
 
-                    {activeShoes.map(shoe => {
-                        const progress = Math.min(100, (shoe.distance / shoe.maxDistance) * 100);
-                        const isNearLimit = progress > 80;
-                        const isOverLimit = progress >= 100;
-                        
-                        // Health Bar Color Logic
-                        let barColor = 'bg-[#06D6A0]'; // Green
-                        if (progress > 50) barColor = 'bg-[#FFD166]'; // Yellow
-                        if (progress > 80) barColor = 'bg-[#EF476F]'; // Red
+                                  <div className="flex items-center justify-between p-4 bg-accents-1/50 rounded-lg border border-accents-2">
+                                      <div className="flex items-center gap-4">
+                                          <div className="text-foreground"><Bell size={20} /></div>
+                                          <div>
+                                              <p className="text-sm font-bold text-foreground">Training Reminders</p>
+                                              <p className="text-xs text-accents-5">Get notified for upcoming runs.</p>
+                                          </div>
+                                      </div>
+                                      <button className="w-12 h-6 bg-primary rounded-full p-1">
+                                          <div className="w-4 h-4 bg-white rounded-full translate-x-6" />
+                                      </button>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+              </Card>
+          </div>
+      </div>
 
-                        return (
-                            <div key={shoe.id} className={`bg-surface-container-low p-5 rounded-2xl border transition-all ${shoe.isDefault ? 'border-primary shadow-md ring-1 ring-primary/20' : 'border-outline-variant/10 hover:border-outline-variant/30'}`}>
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex items-start gap-3">
-                                        <button 
-                                            onClick={() => handleSetDefaultShoe(shoe.id)}
-                                            className={`mt-1 w-6 h-6 rounded-full flex items-center justify-center transition-all ${shoe.isDefault ? 'bg-primary text-primary-on' : 'bg-surface-container-highest text-surface-on-variant hover:bg-primary/20 hover:text-primary'}`}
-                                            title={shoe.isDefault ? "Primary Shoe" : "Set as Primary"}
-                                        >
-                                            {shoe.isDefault ? <Star size={14} fill="currentColor" /> : <Star size={14} />}
-                                        </button>
-                                        <div>
-                                            <h4 className="font-bold text-lg text-surface-on">{shoe.brand} <span className="font-normal opacity-90">{shoe.model}</span></h4>
-                                            <div className="flex gap-2 items-center mt-1">
-                                                <div className="text-xs font-bold uppercase text-surface-on-variant tracking-wider">Active</div>
-                                                {shoe.isDefault && <div className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-md">Primary</div>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => handleRetireShoe(shoe.id)} 
-                                            title="Retire Shoe"
-                                            className="p-2 hover:bg-surface-container-high rounded-full text-surface-on-variant transition-colors"
-                                        >
-                                            <Archive size={18} />
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDeleteShoe(shoe.id)} 
-                                            title="Delete"
-                                            className="p-2 hover:bg-error-container hover:text-error-on-container rounded-full text-surface-on-variant transition-colors"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div className="space-y-2 pl-9">
-                                    <div className="flex justify-between text-sm font-medium">
-                                        <span className="text-surface-on">{shoe.distance.toFixed(1)} km</span>
-                                        <span className={`font-bold ${isOverLimit ? 'text-error' : 'text-surface-on-variant'}`}>
-                                            {Math.round(100 - progress)}% Health
-                                        </span>
-                                    </div>
-                                    {/* Visual Health Bar */}
-                                    <div className="relative h-4 bg-surface-container-highest rounded-full overflow-hidden border border-outline-variant/10">
-                                        <div 
-                                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${barColor}`}
-                                            style={{ width: `${progress}%` }}
-                                        >
-                                            <div className="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]" style={{backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)'}}></div>
-                                        </div>
-                                        {/* Ticks */}
-                                        <div className="absolute inset-0 flex justify-between px-[25%] opacity-20">
-                                            <div className="w-[1px] h-full bg-black/50"></div>
-                                            <div className="w-[1px] h-full bg-black/50"></div>
-                                            <div className="w-[1px] h-full bg-black/50"></div>
-                                        </div>
-                                    </div>
-                                    {isNearLimit && (
-                                        <p className="text-xs font-bold text-[#FFD166] flex items-center gap-1 mt-1">
-                                            <AlertTriangle size={12} /> 
-                                            {isOverLimit ? 'Max mileage reached. High injury risk!' : 'Approaching mileage limit.'}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-
-                    {retiredShoes.length > 0 && (
-                        <div className="pt-6 mt-6 border-t border-outline-variant/10">
-                            <h4 className="text-sm font-bold text-surface-on-variant uppercase tracking-wider mb-4">Retired</h4>
-                            <div className="space-y-3 opacity-60 hover:opacity-100 transition-opacity">
-                                {retiredShoes.map(shoe => (
-                                    <div key={shoe.id} className="flex justify-between items-center p-4 bg-surface-container-highest rounded-xl grayscale">
-                                        <div>
-                                            <div className="font-bold text-surface-on">{shoe.brand} {shoe.model}</div>
-                                            <div className="text-xs text-surface-on-variant">Retired at {shoe.distance.toFixed(1)} km</div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button 
-                                                onClick={() => handleRetireShoe(shoe.id)}
-                                                className="text-xs font-bold text-primary hover:underline"
-                                            >
-                                                Un-retire
-                                            </button>
-                                            <button onClick={() => handleDeleteShoe(shoe.id)} className="text-surface-on-variant hover:text-error">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
+      <Modal isOpen={isAddingShoe} onClose={() => setIsAddingShoe(false)} title="Add Running Gear">
+          <form onSubmit={handleAddShoe} className="space-y-4">
+              <Input label="Brand" value={newShoe.brand} onChange={(e: any) => setNewShoe({...newShoe, brand: e.target.value})} required placeholder="e.g. Nike, Hoka, Saucony" />
+              <Input label="Model" value={newShoe.model} onChange={(e: any) => setNewShoe({...newShoe, model: e.target.value})} required placeholder="e.g. Pegasus 40, Speedgoat 5" />
+              <Input label="Retirement Distance (km)" type="number" value={newShoe.maxDistance} onChange={(e: any) => setNewShoe({...newShoe, maxDistance: parseInt(e.target.value)})} required />
+              <Button type="submit" className="w-full mt-4">Add to Locker</Button>
+          </form>
+      </Modal>
     </div>
   );
 };

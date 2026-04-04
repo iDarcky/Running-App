@@ -1,45 +1,55 @@
 import React, { useState, useEffect } from 'react';
+import {
+  LayoutDashboard,
+  CalendarRange,
+  Sparkles,
+  FlagTriangleRight,
+  User,
+  AlertTriangle
+} from 'lucide-react';
+import Dashboard from './Dashboard';
+import RunLog from './RunLog';
+import CoachInsights from './CoachInsights';
+import RacePrep from './RacePrep';
+import Profile from './Profile';
+import LandingPage from './LandingPage';
+import { NavButton } from './NavButton';
+import { RedLineBrand } from './Logo';
 import { Run, Goal, UserProfile, Race, Shoe } from '../types';
-import { SAMPLE_RUNS, SAMPLE_GOALS } from '../constants';
-import Dashboard from './components/Dashboard';
-import RunLog from './components/RunLog';
-import CoachInsights from './components/CoachInsights';
-import RacePrep from './components/RacePrep';
-import Profile from './components/Profile';
-import { LayoutDashboard, CalendarRange, Sparkles, FlagTriangleRight, User } from 'lucide-react';
-import { RedLineLogo } from './components/Logo';
-import { NavButton } from './components/NavButton';
+import { SAMPLE_RUNS, SAMPLE_GOALS, DEMO_SHOES } from '../constants';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [runs, setRuns] = useState<Run[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [races, setRaces] = useState<Race[]>([]);
   const [profile, setProfile] = useState<UserProfile>({
-    name: '',
-    height: 0,
-    weight: 0,
-    age: 0,
-    sex: '',
-    shoeModel: '',
-    shoes: []
+      name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: []
   });
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState('light');
+  const [showLanding, setShowLanding] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
-  // Load Data
   useEffect(() => {
     const loadData = () => {
       const savedRuns = localStorage.getItem('redline_runs');
       const savedGoals = localStorage.getItem('redline_goals');
-      const savedRaces = localStorage.getItem('redline_races');
       const savedProfile = localStorage.getItem('redline_profile');
+      const savedRaces = localStorage.getItem('redline_races');
       const savedTheme = localStorage.getItem('redline_theme');
+      const onboarded = localStorage.getItem('redline_onboarded');
+      const demoMode = localStorage.getItem('redline_demo_mode');
 
-      let loadedRuns = SAMPLE_RUNS;
+      if (onboarded === 'true') setShowLanding(false);
+      if (demoMode === 'true') setIsDemoMode(true);
+
+      let loadedRuns: Run[] = [];
       if (savedRuns) {
-          try { loadedRuns = JSON.parse(savedRuns); } catch(e) { console.error("Error parsing runs", e); }
+          try { loadedRuns = JSON.parse(savedRuns); setRuns(loadedRuns); } catch(e) { loadedRuns = SAMPLE_RUNS; setRuns(SAMPLE_RUNS); }
+      } else {
+          loadedRuns = SAMPLE_RUNS;
+          setRuns(SAMPLE_RUNS);
       }
-      setRuns(loadedRuns);
 
       if (savedGoals) {
           try { setGoals(JSON.parse(savedGoals)); } catch(e) { setGoals(SAMPLE_GOALS); }
@@ -56,10 +66,8 @@ const App: React.FC = () => {
           try { loadedProfile = JSON.parse(savedProfile); } catch(e) {}
       }
 
-      // Recalculate Shoe Mileage on Load to ensure sync
       if (loadedProfile.shoes) {
-          const updatedShoes = calculateShoeMileage(loadedProfile.shoes, loadedRuns);
-          loadedProfile.shoes = updatedShoes;
+          loadedProfile.shoes = calculateShoeMileage(loadedProfile.shoes, loadedRuns);
       }
       
       setProfile(loadedProfile);
@@ -72,7 +80,6 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // Helper to recalculate mileage for all shoes based on current runs
   const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
       return shoes.map(shoe => {
           const distance = currentRuns
@@ -82,12 +89,9 @@ const App: React.FC = () => {
       });
   };
 
-  // Save Data Helpers
   const saveRuns = (newRuns: Run[]) => {
       setRuns(newRuns);
       localStorage.setItem('redline_runs', JSON.stringify(newRuns));
-      
-      // Update shoe mileage when runs change
       if (profile.shoes && profile.shoes.length > 0) {
           const updatedShoes = calculateShoeMileage(profile.shoes, newRuns);
           const newProfile = { ...profile, shoes: updatedShoes };
@@ -107,7 +111,6 @@ const App: React.FC = () => {
   };
 
   const saveProfile = (newProfile: UserProfile) => {
-      // Ensure we calculate mileage before saving if runs exist
       if (newProfile.shoes) {
           newProfile.shoes = calculateShoeMileage(newProfile.shoes, runs);
       }
@@ -123,10 +126,41 @@ const App: React.FC = () => {
       else document.documentElement.classList.remove('dark');
   };
 
-  // Handlers
+  const handleLogin = (name: string, email: string) => {
+      const newProfile = { ...profile, name: name };
+      saveProfile(newProfile);
+      localStorage.setItem('redline_onboarded', 'true');
+      setShowLanding(false);
+  };
+
+  const handleGuest = (useDemoData: boolean) => {
+      let initialRuns: Run[] = [];
+      let initialShoes: Shoe[] = [];
+
+      if (useDemoData) {
+          initialRuns = SAMPLE_RUNS;
+          initialShoes = calculateShoeMileage(DEMO_SHOES, initialRuns);
+          localStorage.setItem('redline_demo_mode', 'true');
+          setIsDemoMode(true);
+      } else {
+          localStorage.removeItem('redline_demo_mode');
+          setIsDemoMode(false);
+      }
+
+      const newProfile = {
+          ...profile,
+          name: 'Guest Runner',
+          shoes: initialShoes
+      };
+
+      saveProfile(newProfile);
+      saveRuns(initialRuns);
+      localStorage.setItem('redline_onboarded', 'true');
+      setShowLanding(false);
+  };
+
   const handleAddRun = (run: Run) => saveRuns([run, ...runs]);
   const handleAddRuns = (newRuns: Run[]) => {
-      // Avoid duplicates by ID
       const existingIds = new Set(runs.map(r => r.id));
       const uniqueNewRuns = newRuns.filter(r => !existingIds.has(r.id));
       saveRuns([...uniqueNewRuns, ...runs]);
@@ -141,31 +175,49 @@ const App: React.FC = () => {
   const handleUpdateRace = (updatedRace: Race) => saveRaces(races.map(r => r.id === updatedRace.id ? updatedRace : r));
   const handleDeleteRace = (id: string) => saveRaces(races.filter(r => r.id !== id));
 
+  const handleAddShoe = (shoe: Shoe) => {
+      const updatedShoes = [...(profile.shoes || []), shoe];
+      saveProfile({ ...profile, shoes: updatedShoes });
+  };
+
   const handleReset = () => {
       if (window.confirm("Are you sure you want to reset all data? This cannot be undone.")) {
           localStorage.clear();
-          setRuns(SAMPLE_RUNS);
-          setGoals(SAMPLE_GOALS);
-          setRaces([]);
-          setProfile({ name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: [] });
-          setActiveTab('dashboard');
           window.location.reload();
       }
   };
 
+  const handleExitDemo = () => {
+      localStorage.clear();
+      window.location.reload();
+  };
+
+  if (showLanding) {
+      return <LandingPage onLogin={handleLogin} onGuest={handleGuest} />;
+  }
+
   return (
-    <div className={`min-h-screen bg-surface transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-background transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
+        {isDemoMode && (
+            <div className="bg-primary text-white text-[10px] font-bold px-4 py-1.5 flex items-center justify-center gap-4 relative z-[60] tracking-widest uppercase">
+               <div className="flex items-center gap-2">
+                   <AlertTriangle size={12} fill="currentColor" />
+                   <span>Demo Mode</span>
+               </div>
+               <button onClick={handleExitDemo} className="underline hover:text-white/80 transition-colors">
+                   Exit
+               </button>
+            </div>
+        )}
+
         <div className="flex min-h-screen w-full relative">
             {/* Sidebar (Desktop) */}
-            <aside className="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-outline-variant/10 bg-surface/50 backdrop-blur-xl z-10">
-                <div className="flex items-center gap-3 px-4 mb-10">
-                    <div className="w-10 h-10 bg-[#090909] rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                        <RedLineLogo className="w-6 h-6 text-[#D32F2F]" />
-                    </div>
-                    <h1 className="text-2xl font-bold tracking-tighter text-surface-on"><span className="text-primary">Red</span>Line</h1>
+            <aside className={`hidden md:flex flex-col w-64 fixed inset-y-0 left-0 p-6 border-r border-accents-2 bg-background z-10 ${isDemoMode ? 'top-[28px]' : 'top-0'}`}>
+                <div className="mb-8 px-2">
+                    <RedLineBrand />
                 </div>
 
-                <nav className="flex-1 space-y-2">
+                <nav className="flex-1">
                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Dashboard" onClick={setActiveTab} />
                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Training Log" onClick={setActiveTab} />
                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} />
@@ -174,23 +226,21 @@ const App: React.FC = () => {
 
                 <div 
                     onClick={() => setActiveTab('profile')}
-                    className="p-4 bg-surface-container-high rounded-2xl mt-auto cursor-pointer hover:bg-surface-container-highest transition-colors group"
+                    className="p-3 bg-accents-1 rounded-lg mt-auto cursor-pointer hover:bg-accents-2 transition-colors group flex items-center gap-3 border border-transparent hover:border-accents-2"
                 >
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center text-tertiary-on-container font-bold text-xs group-hover:scale-110 transition-transform">
-                             {profile.name ? profile.name.charAt(0).toUpperCase() : 'G'}
-                        </div>
-                        <div className="overflow-hidden">
-                            <p className="text-sm font-bold text-surface-on truncate">{profile.name || 'Guest Runner'}</p>
-                            <p className="text-[10px] text-surface-on-variant truncate group-hover:text-primary transition-colors">View Profile</p>
-                        </div>
+                    <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center font-bold text-xs">
+                         {profile.name ? profile.name.charAt(0).toUpperCase() : 'G'}
+                    </div>
+                    <div className="overflow-hidden">
+                        <p className="text-sm font-semibold text-foreground truncate">{profile.name || 'Guest Runner'}</p>
+                        <p className="text-[10px] text-accents-5 uppercase tracking-wider font-medium">Settings</p>
                     </div>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-6 pb-32 md:pb-8 w-full overflow-x-hidden">
-                <div className="w-full px-4 md:px-8">
+            <main className="flex-1 md:ml-64 p-4 md:p-10 pt-6 pb-24 md:pb-10 w-full overflow-x-hidden">
+                <div className="max-w-6xl mx-auto">
                     {activeTab === 'dashboard' && (
                         <Dashboard 
                             runs={runs} 
@@ -208,6 +258,7 @@ const App: React.FC = () => {
                             onAddRuns={handleAddRuns}
                             onUpdateRun={handleUpdateRun} 
                             onDeleteRun={handleDeleteRun}
+                            onAddShoe={handleAddShoe}
                             profile={profile}
                         />
                     )}
@@ -236,15 +287,13 @@ const App: React.FC = () => {
                 </div>
             </main>
 
-            {/* Floating Bottom Nav (Mobile) - Updated for Safe Area support */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe z-50 flex justify-center pointer-events-none">
-                 <div className="bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 w-full max-w-md pointer-events-auto">
-                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
-                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
-                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
-                     <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race" onClick={setActiveTab} mobile />
-                     <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
-                 </div>
+            {/* Bottom Nav (Mobile) */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-accents-2 z-50 flex items-center justify-around px-2 pb-safe shadow-[0_-1px_0_rgba(0,0,0,0.05)]">
+                 <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
+                 <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
+                 <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
+                 <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race" onClick={setActiveTab} mobile />
+                 <NavButton tab="profile" activeTab={activeTab} icon={User} label="Profile" onClick={setActiveTab} mobile />
             </nav>
         </div>
     </div>

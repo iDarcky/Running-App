@@ -1,85 +1,118 @@
-
 import React from 'react';
 import { X, Info, ChevronDown } from 'lucide-react';
 
 export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <div className={`bg-surface-container rounded-[24px] p-6 shadow-sm border border-outline-variant/20 transition-all hover:shadow-md ${className}`}>
+    <div className={`bg-background rounded-lg p-6 border border-accents-2 transition-all hover:border-accents-3 ${className}`}>
         {children}
     </div>
 );
 
-export const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; colorClass?: string; tooltip?: string }> = ({ title, value, icon, subtext, colorClass = 'bg-primary-container text-primary-on-container', tooltip }) => (
-  <Card className="h-full flex flex-col justify-between min-h-[120px]">
+export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'error', size?: 'sm' | 'md' | 'lg' }> = ({
+    children,
+    variant = 'primary',
+    size = 'md',
+    className = '',
+    ...props
+}) => {
+    const variants = {
+        primary: 'bg-foreground text-background hover:bg-accents-7 border-transparent',
+        secondary: 'bg-background text-foreground border-accents-2 hover:border-foreground',
+        ghost: 'bg-transparent text-accents-5 hover:text-foreground border-transparent',
+        error: 'bg-primary text-white hover:bg-primary/90 border-transparent',
+    };
+
+    const sizes = {
+        sm: 'px-3 py-1.5 text-xs font-medium h-8',
+        md: 'px-4 py-2 text-sm font-medium h-10',
+        lg: 'px-6 py-3 text-base font-medium h-12',
+    };
+
+    return (
+        <button
+            className={`inline-flex items-center justify-center rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-accents-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${sizes[size]} ${className}`}
+            {...props}
+        >
+            {children}
+        </button>
+    );
+};
+
+export const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; subtext?: string; colorClass?: string; tooltip?: string }> = ({ title, value, icon, subtext, colorClass = 'text-primary', tooltip }) => (
+  <Card className="h-full flex flex-col justify-between min-h-[140px]">
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-            <h3 className="text-surface-on-variant text-xs md:text-sm font-bold uppercase tracking-wider truncate">{title}</h3>
+            <h3 className="text-accents-5 text-xs font-medium uppercase tracking-widest truncate">{title}</h3>
             {tooltip && (
                 <div className="group relative flex items-center" title={tooltip}>
-                    <Info size={14} className="text-surface-on-variant/50 hover:text-primary cursor-help transition-colors" />
+                    <Info size={14} className="text-accents-3 hover:text-foreground cursor-help transition-colors" />
                 </div>
             )}
         </div>
-        <div className={`p-2 md:p-3 rounded-full ${colorClass} shadow-sm`}>
-          {React.cloneElement(icon as any, { size: 20 })}
+        <div className={`p-2 ${colorClass}`}>
+          {React.cloneElement(icon as any, { size: 18 })}
         </div>
       </div>
-      <span className="text-2xl md:text-4xl font-bold text-surface-on tracking-tight">{value}</span>
+      <span className="text-3xl font-bold text-foreground tracking-tight">{value}</span>
     </div>
-    {subtext && <span className="text-surface-on-variant text-xs mt-2 block font-medium">{subtext}</span>}
+    {subtext && <span className="text-accents-4 text-xs mt-2 block font-medium">{subtext}</span>}
   </Card>
 );
 
 export const Input: React.FC<any> = ({ label, icon: Icon, type = "text", value, onChange, placeholder, required = false, className = '', ...props }) => (
-    <div className="relative w-full pt-2 group">
-        <div className="absolute top-[26px] left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
-            {Icon && <Icon className="text-surface-on-variant/70 group-focus-within:text-primary transition-colors" size={20} />}
+    <div className="relative w-full group mb-4">
+        {label && <label className="block text-xs font-medium text-accents-5 uppercase tracking-widest mb-1.5 ml-1">{label}</label>}
+        <div className="relative">
+            {Icon && (
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-accents-4">
+                    <Icon size={16} />
+                </div>
+            )}
+            <input
+                type={type}
+                value={value}
+                onChange={onChange}
+                required={required}
+                placeholder={placeholder}
+                className={`
+                    block w-full ${Icon ? 'pl-10' : 'pl-3'} pr-3 py-2
+                    bg-background rounded-md border border-accents-2 focus:border-foreground
+                    text-foreground placeholder-accents-3 focus:outline-none transition-colors text-sm
+                    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                    ${className}
+                `}
+                {...props}
+            />
         </div>
-        <input
-            type={type}
-            value={value}
-            onChange={onChange}
-            required={required}
-            placeholder={placeholder}
-            className={`
-                block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 pt-6 pb-2 
-                bg-surface-container-highest rounded-xl border-b border-outline-variant/30 focus:border-primary 
-                text-surface-on placeholder-surface-on-variant/30 focus:outline-none transition-colors font-semibold
-                [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
-                ${className}
-            `}
-            {...props}
-        />
-        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-2 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-focus-within:text-primary`}>
-            {label}
-        </label>
     </div>
 );
 
 export const Select: React.FC<any> = ({ label, icon: Icon, value, onChange, options, className = '' }) => (
-    <div className="relative w-full pt-2 group">
-         <div className="absolute top-[26px] left-0 pl-4 flex items-center pointer-events-none">
-            {Icon && <Icon className="text-surface-on-variant/70 group-focus-within:text-primary transition-colors" size={20} />}
-        </div>
-        <select 
-            value={value}
-            onChange={onChange}
-            className={`
-                block w-full ${Icon ? 'pl-12' : 'pl-4'} pr-10 pt-6 pb-2 
-                bg-surface-container-highest rounded-xl border-b border-outline-variant/30 text-surface-on 
-                appearance-none focus:border-primary focus:outline-none cursor-pointer font-semibold transition-colors
-                ${className}
-            `}
-        >
-            {options.map((opt: any) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-        </select>
-        <label className={`absolute ${Icon ? 'left-12' : 'left-4'} top-2 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-focus-within:text-primary`}>
-            {label}
-        </label>
-        <div className="absolute top-[26px] right-4 pointer-events-none text-surface-on-variant group-focus-within:text-primary transition-colors">
-            <ChevronDown size={16} />
+    <div className="relative w-full group mb-4">
+        {label && <label className="block text-xs font-medium text-accents-5 uppercase tracking-widest mb-1.5 ml-1">{label}</label>}
+        <div className="relative">
+            {Icon && (
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-accents-4">
+                    <Icon size={16} />
+                </div>
+            )}
+            <select
+                value={value}
+                onChange={onChange}
+                className={`
+                    block w-full ${Icon ? 'pl-10' : 'pl-3'} pr-10 py-2
+                    bg-background rounded-md border border-accents-2 text-foreground
+                    appearance-none focus:border-foreground focus:outline-none cursor-pointer text-sm transition-colors
+                    ${className}
+                `}
+            >
+                {options.map((opt: any) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+            </select>
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-accents-4">
+                <ChevronDown size={14} />
+            </div>
         </div>
     </div>
 );
@@ -87,15 +120,15 @@ export const Select: React.FC<any> = ({ label, icon: Icon, value, onChange, opti
 export const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-surface-container w-full md:max-w-2xl h-[90vh] md:h-auto rounded-t-[32px] md:rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border-t border-white/10 md:border-none">
-            <div className="px-6 py-5 border-b border-outline-variant/20 flex justify-between items-center shrink-0">
-               <h3 className="text-xl font-bold text-surface-on">{title}</h3>
-               <button onClick={onClose} className="p-2 hover:bg-surface-container-highest rounded-full text-surface-on-variant transition-colors">
-                 <X size={24} />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px] animate-fade-in">
+          <div className="bg-background w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-accents-2">
+            <div className="px-6 py-4 border-b border-accents-2 flex justify-between items-center shrink-0">
+               <h3 className="text-base font-semibold text-foreground tracking-tight">{title}</h3>
+               <button onClick={onClose} className="p-1.5 hover:bg-accents-1 rounded-md text-accents-5 transition-colors">
+                 <X size={20} />
                </button>
             </div>
-            <div className="flex-1 overflow-y-auto pb-safe">
+            <div className="flex-1 overflow-y-auto p-6">
                 {children}
             </div>
           </div>

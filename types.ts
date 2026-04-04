@@ -1,12 +1,13 @@
+export type RunType = 'Easy' | 'Intervals' | 'Long Run' | 'Tempo' | 'Race' | 'Recovery';
 
-export enum RunType {
-  EASY = 'Easy Run',
-  TEMPO = 'Tempo Run',
-  INTERVAL = 'Intervals',
-  LONG = 'Long Run',
-  RACE = 'Race',
-  RECOVERY = 'Recovery'
-}
+export const RunType = {
+  EASY: 'Easy' as RunType,
+  INTERVALS: 'Intervals' as RunType,
+  LONG: 'Long Run' as RunType,
+  TEMPO: 'Tempo' as RunType,
+  RACE: 'Race' as RunType,
+  RECOVERY: 'Recovery' as RunType
+};
 
 export type RunSource = 'Manual' | 'Garmin' | 'Strava' | 'Apple Health' | 'Health Connect' | 'Google Fit';
 
@@ -15,42 +16,44 @@ export interface Shoe {
   brand: string;
   model: string;
   nickname?: string;
-  distance: number; // km accumulated
-  maxDistance: number; // km limit (usually 800)
+  distance: number;
+  maxDistance: number;
   isRetired: boolean;
-  isDefault?: boolean; // New: Primary shoe selection
-  image?: string; // Optional URL
+  isDefault?: boolean;
 }
 
 export interface Run {
   id: string;
-  date: string; // ISO date string
-  distance: number; // in km
-  duration: number; // in minutes
+  date: string;
+  distance: number;
+  duration: number;
   type: RunType;
-  avgHr: number; // bpm
-  rpe: number; // 1-10
-  cadence?: number; // spm
-  strideLength?: number; // meters
-  groundContactTime?: number; // ms
+  avgHr: number;
+  pace: string;
+  rpe: number;
+  effort?: number;
+  cadence?: number;
+  strideLength?: number;
+  groundContactTime?: number;
+  elevation?: number;
   source?: RunSource;
   notes?: string;
-  shoeId?: string; // Link to a shoe
+  shoeId?: string;
 }
 
 export interface UserProfile {
   name: string;
-  height: number; // cm
-  weight: number; // kg
+  height: number;
+  weight: number;
   age: number;
-  sex: 'Male' | 'Female' | 'Other' | '';
-  shoeModel: string; // Legacy field, kept for backward compatibility
-  shoes: Shoe[]; // New array of shoes
+  sex: string;
+  shoeModel: string;
+  shoes: Shoe[];
 }
 
-export interface InsightResponse {
+export interface CoachInsights {
   fitnessSummary: string;
-  formScore: number; // 0 to 100
+  formScore: number;
   formAnalysis: string;
   injuryRiskAssessment: string;
   trends: {
@@ -62,22 +65,25 @@ export interface InsightResponse {
   actionableTips: string[];
 }
 
-export type GoalType = 'distance' | 'duration' | 'frequency';
+export type GoalType = 'distance' | 'duration' | 'frequency' | 'runs' | 'elevation';
 export type GoalPeriod = 'weekly' | 'monthly';
 
 export interface Goal {
   id: string;
   type: GoalType;
-  targetValue: number;
-  period: GoalPeriod;
+  target: number;
+  current: number;
+  deadline: string;
+  targetValue?: number;
+  period?: GoalPeriod;
 }
 
 export interface Race {
   id: string;
   name: string;
   date: string;
-  distance: number; // km
-  targetTime?: string; // HH:MM:SS
+  distance: number;
+  targetTime?: string;
   aiPlan?: string;
 }
 
@@ -85,20 +91,20 @@ export interface Achievement {
   id: string;
   title: string;
   description: string;
-  iconName: 'Zap' | 'Trophy' | 'Flame' | 'Mountain' | 'Sunrise' | 'Moon' | 'Award' | 'Footprints' | 'Map';
+  iconName: string;
   condition: (runs: Run[]) => boolean;
 }
 
 export interface StravaToken {
   access_token: string;
   refresh_token: string;
-  expires_at: number; // Unix timestamp
+  expires_at: number;
   athlete?: any;
 }
 
 export interface GoogleToken {
   access_token: string;
   refresh_token?: string;
-  expires_at: number; // Unix timestamp (ms)
+  expires_at: number;
   scope?: string;
 }
