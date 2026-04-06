@@ -58,7 +58,6 @@ export const generateDemoRuns = (): Run[] => {
             effort: 4,
             cadence: 172,
             elevation: 120,
-            location: 'Riverside Park',
             shoeId: 'demo_shoe_1'
         },
         {
@@ -73,7 +72,6 @@ export const generateDemoRuns = (): Run[] => {
             effort: 7,
             cadence: 180,
             elevation: 45,
-            location: 'Track Session',
             shoeId: 'demo_shoe_2'
         }
     ];
