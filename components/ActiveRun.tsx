@@ -21,7 +21,7 @@ L.Icon.Default.mergeOptions({
 });
 
 interface ActiveRunProps {
-  unit: "km" | "mi";
+  unit?: "km" | "mi";
   onFinish: (runData: any) => void;
   onCancel: () => void;
 }
@@ -37,7 +37,7 @@ const MapRecenter = ({ position }: { position: [number, number] }) => {
   return null;
 };
 
-export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel, unit = "km" }) => {
+export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel, unit = "km" as "km" | "mi" }) => {
   const [countdown, setCountdown] = useState<number | null>(COUNTDOWN_TIME);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);

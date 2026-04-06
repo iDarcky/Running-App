@@ -108,8 +108,8 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
           case 'stats':
               return (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-                      <StatCard title="Total Distance" value={`${displayDistance(parseFloat(stats.totalDistance), profile.preferredUnits)} {profile.preferredUnits || 'km'}`} icon={<Activity />} colorClass="text-primary" />
-                      <StatCard title="Avg Pace" value={`${stats.avgPace} /{profile.preferredUnits || 'km'}`} icon={<TrendingUp />} colorClass="text-primary" />
+                      <StatCard title="Total Distance" value={`${displayDistance(parseFloat(stats.totalDistance), profile.preferredUnits)} ${profile.preferredUnits || 'km'}`} icon={<Activity />} colorClass="text-primary" />
+                      <StatCard title="Avg Pace" value={`${stats.avgPace} /${profile.preferredUnits || 'km'}`} icon={<TrendingUp />} colorClass="text-primary" />
                       <StatCard title="Total Runs" value={stats.totalRuns.toString()} icon={<Calendar />} colorClass="text-primary" />
                       <StatCard title="Elevation" value={`${stats.elevationGain} m`} icon={<TrendingUp />} colorClass="text-primary" />
                   </div>

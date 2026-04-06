@@ -10,7 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
-  Loader2,
+  Loader2, Sparkles,
   FlagTriangleRight,
   Target,
   ArrowRight

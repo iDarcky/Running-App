@@ -12,7 +12,7 @@ import RunLog from './RunLog';
 import CoachInsights from './CoachInsights';
 import RacePrep from './RacePrep';
 import Profile from './Profile';
-import LandingPage from './LandingPage';
+import { LandingPage } from './LandingPage';
 import { NavButton } from './NavButton';
 import { RedLineBrand } from './Logo';
 import { Run, Goal, UserProfile, Race, Shoe } from '../types';

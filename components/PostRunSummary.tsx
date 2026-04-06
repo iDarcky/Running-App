@@ -5,7 +5,7 @@ import { formatDuration as formatDurationOriginal, displayDistance, displayPaceF
 const formatDuration = (seconds: number) => formatDurationOriginal(seconds / 60);
 
 interface PostRunSummaryProps {
-  unit: "km" | "mi";
+  unit?: "km" | "mi";
   runData: {
     distance: number;
     duration: number;
@@ -17,7 +17,7 @@ interface PostRunSummaryProps {
   onDiscard: () => void;
 }
 
-export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave, onDiscard, unit = "km" }) => {
+export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave, onDiscard, unit = "km" as "km" | "mi" }) => {
   const [name, setName] = useState('Morning Run');
   const [notes, setNotes] = useState('');
   const [rpe, setRpe] = useState<number>(5);
