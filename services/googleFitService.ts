@@ -50,3 +50,5 @@ export const handleGoogleFitCallback = async (code: string, clientId: string, cl
     notes: s.name
   }));
 };
+
+export const initiateGoogleAuth = syncWithGoogleFit;

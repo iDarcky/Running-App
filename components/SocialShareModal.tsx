@@ -188,3 +188,5 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ run, onClose
     </Modal>
   );
 };
+
+export default SocialShareModal;

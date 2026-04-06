@@ -1,30 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Plus,
   Search,
   Filter,
-  Trash2,
-  Pencil,
+  Plus,
   Calendar,
   Clock,
-  MapPin,
-  Zap,
+  Heart,
   ChevronDown,
-  Activity,
-  AlertTriangle,
-  Info,
+  Trash2,
+  Pencil,
   Share2,
-  ExternalLink,
-  Footprints,
-  Download
+  Zap,
+  Activity,
+  MapPin,
+  Smartphone
 } from 'lucide-react';
-import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { Run, UserProfile, Shoe } from '../types';
+import { Card, Button, Input, Modal } from './UIComponents';
 import RunForm from './RunForm';
-import { Modal, Input, Button, Card } from './UIComponents';
-import { SocialShareModal } from './SocialShareModal';
-import { syncWithStrava, handleStravaCallback } from '../services/stravaService';
-import { syncWithGoogleFit, handleGoogleFitCallback } from '../services/googleFitService';
+import SocialShareModal from './SocialShareModal';
+import { initiateStravaAuth } from '../services/stravaService';
+import { initiateGoogleAuth } from '../services/googleFitService';
 
 interface RunLogProps {
   runs: Run[];
@@ -38,118 +35,54 @@ interface RunLogProps {
 
 const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun, onDeleteRun, onAddShoe, profile }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
-  const [shareRun, setShareRun] = useState<Run | null>(null);
-  
   const [isStravaModalOpen, setIsStravaModalOpen] = useState(false);
-  const [stravaClientId, setStravaClientId] = useState(localStorage.getItem('strava_client_id') || '');
-  const [stravaClientSecret, setStravaClientSecret] = useState(localStorage.getItem('strava_client_secret') || '');
-  const [stravaError, setStravaError] = useState('');
 
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [googleClientId, setGoogleClientId] = useState(localStorage.getItem('google_client_id') || '');
-  const [googleClientSecret, setGoogleClientSecret] = useState(localStorage.getItem('google_client_secret') || '');
-  const [googleError, setGoogleError] = useState('');
+  const [stravaClientId, setStravaClientId] = useState('');
+  const [stravaClientSecret, setStravaClientSecret] = useState('');
+  const [googleClientId, setGoogleClientId] = useState('');
+  const [googleClientSecret, setGoogleClientSecret] = useState('');
 
-  const detectedHostname = window.location.hostname;
-  const detectedOrigin = window.location.origin;
-
-  useEffect(() => {
-    const checkCallbacks = async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-
-        if (code && state === 'strava_auth') {
-            try {
-                const syncedRuns = await handleStravaCallback(code, stravaClientId, stravaClientSecret);
-                if (syncedRuns.length > 0) {
-                    onAddRuns(syncedRuns);
-                    alert(`Successfully synced ${syncedRuns.length} new runs from Strava!`);
-                }
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } catch (err: any) {
-                setStravaError(err.message || 'Failed to sync with Strava');
-                setIsStravaModalOpen(true);
-            }
-        }
-
-        if (code && state === 'google_fit_auth') {
-            try {
-                const syncedRuns = await handleGoogleFitCallback(code, googleClientId, googleClientSecret);
-                if (syncedRuns.length > 0) {
-                    onAddRuns(syncedRuns);
-                    alert(`Successfully synced ${syncedRuns.length} new runs from Google Fit!`);
-                }
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } catch (err: any) {
-                setGoogleError(err.message || 'Failed to sync with Google Fit');
-                setIsGoogleModalOpen(true);
-            }
-        }
-    };
-    checkCallbacks();
-  }, []);
+  const [shareRun, setShareRun] = useState<Run | null>(null);
 
   const filteredRuns = runs.filter(run =>
-    run.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     run.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    run.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     run.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEditClick = (run: Run) => {
-    setEditingId(run.id);
-    setIsFormOpen(true);
+      setEditingId(run.id);
+      setIsFormOpen(true);
   };
 
-  const handleFormSubmit = (run: Run) => {
-    if (editingId) {
-      onUpdateRun({ ...run, id: editingId });
-    } else {
-      onAddRun({ ...run, id: Date.now().toString() });
-    }
-    setIsFormOpen(false);
-    setEditingId(null);
-  };
-
-  const initiateStravaAuth = () => {
-      if (!stravaClientId || !stravaClientSecret) {
-          setStravaError('Please enter both Client ID and Client Secret');
-          return;
+  const handleFormSubmit = (runData: Run) => {
+      if (editingId) {
+          onUpdateRun({ ...runData, id: editingId });
+      } else {
+          onAddRun({ ...runData, id: Date.now().toString() });
       }
-      localStorage.setItem('strava_client_id', stravaClientId);
-      localStorage.setItem('strava_client_secret', stravaClientSecret);
-      syncWithStrava(stravaClientId);
-  };
-
-  const initiateGoogleAuth = () => {
-    if (!googleClientId || !googleClientSecret) {
-        setGoogleError('Please enter both Client ID and Client Secret');
-        return;
-    }
-    localStorage.setItem('google_client_id', googleClientId);
-    localStorage.setItem('google_client_secret', googleClientSecret);
-    syncWithGoogleFit(googleClientId);
+      setIsFormOpen(false);
+      setEditingId(null);
   };
 
   const editingRun = editingId ? runs.find(r => r.id === editingId) : undefined;
 
   return (
-    <div className="animate-fade-in pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+    <div className="animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
          <div>
-             <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tighter mb-2">Training Log</h2>
-             <p className="text-accents-5 text-base">Your complete running history.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">Training Log</h2>
+            <p className="text-accents-5 font-medium">Your running history and performance data.</p>
          </div>
-
-         <div className="flex gap-2 w-full md:w-auto">
-             <Button variant="secondary" size="sm" onClick={() => setIsStravaModalOpen(true)}>
-                 Connect Strava
+         <div className="flex gap-2">
+             <Button variant="secondary" onClick={() => setIsStravaModalOpen(true)}>
+                 Sync Services
              </Button>
-             <Button size="sm" onClick={() => setIsFormOpen(true)}>
-                 <Plus size={16} className="mr-1" /> Log Run
+             <Button onClick={() => setIsFormOpen(true)}>
+                 <Plus size={18} className="mr-1" /> Log Run
              </Button>
          </div>
       </div>
@@ -196,6 +129,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                 <div className="flex items-center gap-4 text-xs text-accents-5 font-medium">
                                     <span className="flex items-center gap-1"><Clock size={12} /> {run.duration}m</span>
                                     {run.avgHr && <span className="flex items-center gap-1"><Heart size={12} className="text-primary" /> {run.avgHr} bpm</span>}
+                                    {run.source === 'RedLine GPS' && <span className="flex items-center gap-1 text-primary"><Smartphone size={12} /> GPS</span>}
                                 </div>
                             </div>
                         </div>
@@ -218,7 +152,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                 </div>
                                 <div className="bg-background p-3 rounded-lg border border-accents-2">
                                     <p className="text-[9px] font-bold text-accents-4 uppercase tracking-widest mb-1">Shoes</p>
-                                    <p className="text-sm font-bold text-foreground truncate">{profile.shoes?.find(s => s.id === run.shoeId)?.name || 'Default'}</p>
+                                    <p className="text-sm font-bold text-foreground truncate">{profile.shoes?.find(s => s.id === run.shoeId)?.brand || 'Default'} {profile.shoes?.find(s => s.id === run.shoeId)?.model || ''}</p>
                                 </div>
                                 <div className="bg-background p-3 rounded-lg border border-accents-2">
                                     <p className="text-[9px] font-bold text-accents-4 uppercase tracking-widest mb-1">Source</p>
@@ -229,6 +163,16 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                     <p className="text-sm font-bold text-foreground">{run.effort || 5}/10</p>
                                 </div>
                             </div>
+
+                            {(run as any).path && (run as any).path.length > 0 && (
+                                <div className="mb-6">
+                                    <p className="text-[9px] font-bold text-accents-4 uppercase tracking-widest mb-2">Route Map</p>
+                                    <div className="h-40 bg-accents-2 rounded-lg flex items-center justify-center text-accents-4 border border-accents-2 overflow-hidden">
+                                        <MapPin size={24} className="mr-2" />
+                                        <span className="text-xs font-bold uppercase tracking-widest">GPS Track Available</span>
+                                    </div>
+                                </div>
+                            )}
 
                             {run.notes && (
                                 <div className="mb-6">

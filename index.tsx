@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { HeroUIProvider } from "@heroui/system";
 import App from './App';
 import { ToastProvider } from './components/Toast';
+import './index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -11,8 +13,10 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <ToastProvider>
-      <App />
-    </ToastProvider>
+    <HeroUIProvider>
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    </HeroUIProvider>
   </React.StrictMode>
 );

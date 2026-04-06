@@ -50,3 +50,5 @@ const calculatePace = (dist: number, time: number) => {
     const seconds = Math.floor(totalSeconds % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
+
+export const initiateStravaAuth = syncWithStrava;

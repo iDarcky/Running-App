@@ -5,18 +5,33 @@ import {
   Sparkles,
   FlagTriangleRight,
   User,
-  AlertTriangle
+  AlertTriangle,
+  LogOut,
+  ChevronRight
 } from 'lucide-react';
+import { Button, Avatar, Chip, Tooltip } from '@heroui/react';
+import { Run, Goal, UserProfile, Shoe, Race } from '../types';
 import Dashboard from './Dashboard';
 import RunLog from './RunLog';
 import CoachInsights from './CoachInsights';
 import RacePrep from './RacePrep';
 import Profile from './Profile';
 import LandingPage from './LandingPage';
-import { NavButton } from './NavButton';
 import { RedLineBrand } from './Logo';
-import { Run, Goal, UserProfile, Race, Shoe } from '../types';
-import { SAMPLE_RUNS, SAMPLE_GOALS, DEMO_SHOES } from '../constants';
+import NavButton from './NavButton';
+import { RunTrackingFAB } from './RunTracking';
+
+const SAMPLE_RUNS: Run[] = [
+  { id: '1', date: '2024-03-20', distance: 12.5, duration: 62, type: 'Long Run', avgHr: 145, pace: '4:58', rpe: 6, location: 'Hyde Park', source: 'Garmin' },
+  { id: '2', date: '2024-03-18', distance: 8.2, duration: 41, type: 'Easy', avgHr: 138, pace: '5:00', rpe: 4, location: 'Thames Path', source: 'Strava' },
+  { id: '3', date: '2024-03-16', distance: 10.1, duration: 48, type: 'Tempo', avgHr: 162, pace: '4:45', rpe: 8, location: 'Battersea Park', source: 'Apple Health' },
+];
+
+const DEMO_SHOES: Shoe[] = [
+    { id: 's1', brand: 'Nike', model: 'Vaporfly 3', nickname: 'Race Day', distance: 120, maxDistance: 400, isRetired: false, isDefault: false },
+    { id: 's2', brand: 'Saucony', model: 'Endorphin Speed 3', distance: 450, maxDistance: 800, isRetired: false, isDefault: true },
+    { id: 's3', brand: 'Asics', model: 'Novablast 4', distance: 85, maxDistance: 800, isRetired: false, isDefault: false }
+];
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -24,10 +39,16 @@ const App: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [races, setRaces] = useState<Race[]>([]);
   const [profile, setProfile] = useState<UserProfile>({
-      name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: []
+      name: '',
+      height: 180,
+      weight: 75,
+      age: 30,
+      sex: 'Male',
+      shoeModel: '',
+      shoes: []
   });
-  const [theme, setTheme] = useState('light');
   const [showLanding, setShowLanding] = useState(true);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
@@ -36,39 +57,25 @@ const App: React.FC = () => {
       const savedGoals = localStorage.getItem('redline_goals');
       const savedProfile = localStorage.getItem('redline_profile');
       const savedRaces = localStorage.getItem('redline_races');
-      const savedTheme = localStorage.getItem('redline_theme');
       const onboarded = localStorage.getItem('redline_onboarded');
+      const savedTheme = localStorage.getItem('redline_theme');
       const demoMode = localStorage.getItem('redline_demo_mode');
 
       if (onboarded === 'true') setShowLanding(false);
       if (demoMode === 'true') setIsDemoMode(true);
-
-      let loadedRuns: Run[] = [];
-      if (savedRuns) {
-          try { loadedRuns = JSON.parse(savedRuns); setRuns(loadedRuns); } catch(e) { loadedRuns = SAMPLE_RUNS; setRuns(SAMPLE_RUNS); }
-      } else {
-          loadedRuns = SAMPLE_RUNS;
-          setRuns(SAMPLE_RUNS);
-      }
-
-      if (savedGoals) {
-          try { setGoals(JSON.parse(savedGoals)); } catch(e) { setGoals(SAMPLE_GOALS); }
-      } else {
-          setGoals(SAMPLE_GOALS);
-      }
+      if (savedRuns) setRuns(JSON.parse(savedRuns));
+      if (savedGoals) setGoals(JSON.parse(savedGoals));
+      if (savedRaces) setRaces(JSON.parse(savedRaces));
       
-      if (savedRaces) {
-          try { setRaces(JSON.parse(savedRaces)); } catch(e) { setRaces([]); }
-      }
-
-      let loadedProfile: UserProfile = { name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: [] };
-      if (savedProfile) {
-          try { loadedProfile = JSON.parse(savedProfile); } catch(e) {}
-      }
-
-      if (loadedProfile.shoes) {
-          loadedProfile.shoes = calculateShoeMileage(loadedProfile.shoes, loadedRuns);
-      }
+      const loadedProfile = savedProfile ? JSON.parse(savedProfile) : {
+          name: '',
+          height: 180,
+          weight: 75,
+          age: 30,
+          sex: 'Male',
+          shoeModel: '',
+          shoes: []
+      };
       
       setProfile(loadedProfile);
 
@@ -217,7 +224,7 @@ const App: React.FC = () => {
                     <RedLineBrand />
                 </div>
 
-                <nav className="flex-1">
+                <nav className="flex-1 space-y-1">
                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Dashboard" onClick={setActiveTab} />
                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Training Log" onClick={setActiveTab} />
                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} />
@@ -228,10 +235,12 @@ const App: React.FC = () => {
                     onClick={() => setActiveTab('profile')}
                     className="p-3 bg-accents-1 rounded-lg mt-auto cursor-pointer hover:bg-accents-2 transition-colors group flex items-center gap-3 border border-transparent hover:border-accents-2"
                 >
-                    <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center font-bold text-xs">
-                         {profile.name ? profile.name.charAt(0).toUpperCase() : 'G'}
-                    </div>
-                    <div className="overflow-hidden">
+                    <Avatar
+                        name={profile.name || 'G'}
+                        size="sm"
+                        className="bg-foreground text-background font-bold"
+                    />
+                    <div className="overflow-hidden flex-1">
                         <p className="text-sm font-semibold text-foreground truncate">{profile.name || 'Guest Runner'}</p>
                         <p className="text-[10px] text-accents-5 uppercase tracking-wider font-medium">Settings</p>
                     </div>
@@ -239,7 +248,7 @@ const App: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-10 pt-6 pb-24 md:pb-10 w-full overflow-x-hidden">
+            <main className="flex-1 md:ml-64 p-4 md:p-10 pt-6 pb-32 md:pb-10 w-full overflow-x-hidden">
                 <div className="max-w-6xl mx-auto">
                     {activeTab === 'dashboard' && (
                         <Dashboard 
@@ -286,6 +295,8 @@ const App: React.FC = () => {
                     )}
                 </div>
             </main>
+
+            <RunTrackingFAB onRunComplete={handleAddRun} />
 
             {/* Bottom Nav (Mobile) */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-accents-2 z-50 flex items-center justify-around px-2 pb-safe shadow-[0_-1px_0_rgba(0,0,0,0.05)]">
