@@ -137,6 +137,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, onSaveProfile, onReset, them
                                   <Input label="Display Name" value={editProfile.name} onChange={(e: any) => setEditProfile({...editProfile, name: e.target.value})} />
                                   <Select label="Gender" value={editProfile.sex} onChange={(e: any) => setEditProfile({...editProfile, sex: e.target.value})} options={[{value: '', label: 'Select...'}, {value: 'M', label: 'Male'}, {value: 'F', label: 'Female'}, {value: 'O', label: 'Other'}]} />
                                   <Input label="Age" type="number" value={editProfile.age} onChange={(e: any) => setEditProfile({...editProfile, age: parseInt(e.target.value)})} />
+                                  <Select label="Units" value={editProfile.preferredUnits || "km"} onChange={(e: any) => setEditProfile({...editProfile, preferredUnits: e.target.value})} options={[{value: "km", label: "Kilometers (km)"}, {value: "mi", label: "Miles (mi)"}]} />
                                   <Input label="Weight (kg)" type="number" value={editProfile.weight} onChange={(e: any) => setEditProfile({...editProfile, weight: parseFloat(e.target.value)})} />
                               </div>
                               <div className="flex justify-end pt-4 border-t border-accents-2">

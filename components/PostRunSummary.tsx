@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { Save, Trash2, MapPin, Clock, Activity, Map as MapIcon } from 'lucide-react';
-import { formatDuration } from '../utils/formatters';
+import { formatDuration as formatDurationOriginal, displayDistance, displayPaceFromStr } from '../utils/formatters';
+
+const formatDuration = (seconds: number) => formatDurationOriginal(seconds / 60);
 
 interface PostRunSummaryProps {
+  unit: "km" | "mi";
   runData: {
     distance: number;
     duration: number;
     positions: any[];
     calories: number;
+    splits?: number[];
   };
   onSave: (runDetails: any) => void;
   onDiscard: () => void;
 }
 
-export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave, onDiscard }) => {
+export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave, onDiscard, unit = "km" }) => {
   const [name, setName] = useState('Morning Run');
   const [notes, setNotes] = useState('');
   const [rpe, setRpe] = useState<number>(5);
@@ -28,7 +32,8 @@ export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave,
       rpe,
       notes,
       name,
-      positions: runData.positions
+      positions: runData.positions,
+      splits: runData.splits
     });
   };
 
@@ -62,7 +67,7 @@ export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave,
              </div>
              <div>
                 <p className="text-surface-on-variant text-sm font-medium">Distance</p>
-                <p className="text-2xl font-bold text-surface-on font-mono">{runData.distance.toFixed(2)} km</p>
+                <p className="text-2xl font-bold text-surface-on font-mono">{displayDistance(runData.distance, unit)} {unit}</p>
              </div>
           </div>
           <div className="bg-surface-container p-4 rounded-2xl flex items-center gap-4">
@@ -80,7 +85,7 @@ export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave,
              </div>
              <div>
                 <p className="text-surface-on-variant text-sm font-medium">Avg Pace</p>
-                <p className="text-2xl font-bold text-surface-on font-mono">{formatDuration(avgPace)} /km</p>
+                <p className="text-2xl font-bold text-surface-on font-mono">{displayPaceFromStr(formatDuration(avgPace), unit)} /{unit}</p>
              </div>
           </div>
           <div className="bg-surface-container p-4 rounded-2xl flex items-center gap-4">
@@ -93,6 +98,22 @@ export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave,
              </div>
           </div>
         </div>
+
+
+        {/* Splits */}
+        {runData.splits && runData.splits.length > 0 && (
+          <div className="mb-12">
+            <h3 className="text-lg font-bold text-surface-on mb-4">Splits ({unit})</h3>
+            <div className="bg-surface-container rounded-2xl overflow-hidden">
+               {runData.splits.map((splitTime, idx) => (
+                 <div key={idx} className="flex justify-between p-4 border-b border-surface-container-high last:border-0">
+                    <span className="font-bold text-surface-on-variant">{idx + 1}</span>
+                    <span className="font-mono font-bold text-surface-on">{formatDurationOriginal ? formatDurationOriginal(splitTime/60) : formatDuration(splitTime)}</span>
+                 </div>
+               ))}
+            </div>
+          </div>
+        )}
 
         {/* Additional Details */}
         <div className="space-y-6 mb-12">

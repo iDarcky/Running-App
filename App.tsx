@@ -209,7 +209,9 @@ const App: React.FC = () => {
       pace: runDetails.pace,
       rpe: runDetails.rpe,
       notes: runDetails.notes,
-      source: 'Manual' as any
+      source: 'Manual' as any,
+      splits: runDetails.splits,
+      positions: runDetails.positions
     };
     handleAddRun(newRun);
     setRunState('idle');
@@ -252,11 +254,11 @@ const App: React.FC = () => {
 
 
   if (runState === 'active') {
-    return <ActiveRun onFinish={handleFinishRun} onCancel={handleCancelRun} />;
+    return <ActiveRun onFinish={handleFinishRun} onCancel={handleCancelRun} unit={profile.preferredUnits || "km"} />;
   }
 
   if (runState === 'summary' && currentRunData) {
-    return <PostRunSummary runData={currentRunData} onSave={handleSaveRun} onDiscard={handleCancelRun} />;
+    return <PostRunSummary runData={currentRunData} onSave={handleSaveRun} onDiscard={handleCancelRun} unit={profile.preferredUnits || "km"} />;
   }
 
   if (showLanding) {

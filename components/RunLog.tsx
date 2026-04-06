@@ -20,6 +20,8 @@ import {
   Download
 } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { MapContainer, TileLayer, Polyline, Marker } from 'react-leaflet';
+import { displayDistance, displayPaceFromStr } from '../utils/formatters';
 import { Run, UserProfile, Shoe } from '../types';
 import RunForm from './RunForm';
 import { Modal, Input, Button, Card } from './UIComponents';
@@ -203,8 +205,8 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
 
                         <div className="flex items-center justify-between md:justify-end gap-10">
                             <div className="text-right">
-                                <p className="text-2xl font-bold text-foreground tracking-tighter leading-none mb-1">{Number(run.distance).toFixed(2)} <span className="text-xs text-accents-4">km</span></p>
-                                <p className="text-xs text-accents-5 font-medium uppercase tracking-widest">{run.pace} /km</p>
+                                <p className="text-2xl font-bold text-foreground tracking-tighter leading-none mb-1">{displayDistance(run.distance, profile.preferredUnits)} <span className="text-xs text-accents-4">{profile.preferredUnits || "km"}</span></p>
+                                <p className="text-xs text-accents-5 font-medium uppercase tracking-widest">{displayPaceFromStr(run.pace, profile.preferredUnits)} /{profile.preferredUnits || 'km'}</p>
                             </div>
                             <ChevronDown size={20} className={`text-accents-3 transition-transform ${expandedRunId === run.id ? 'rotate-180' : ''}`} />
                         </div>
@@ -212,6 +214,39 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
 
                     {expandedRunId === run.id && (
                         <div className="px-5 pb-5 pt-2 border-t border-accents-2 bg-accents-1/30 animate-fade-in">
+
+                            {run.splits && run.splits.length > 0 && (
+                                <div className="mt-6 mb-4">
+                                    <h4 className="text-xs font-bold text-accents-5 uppercase tracking-widest mb-3">Splits</h4>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                        {run.splits.map((split, i) => (
+                                            <div key={i} className="bg-background p-2 rounded border border-accents-2 flex justify-between items-center">
+                                                <span className="text-xs font-bold text-accents-4">{i + 1}</span>
+                                                <span className="text-sm font-mono font-bold">{Math.floor(split/60)}:{(Math.round(split%60)).toString().padStart(2, '0')}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+
+                            {run.positions && run.positions.length > 0 && (
+                                <div className="mb-6 h-48 w-full rounded-xl overflow-hidden border border-accents-2 z-0 relative">
+                                    <MapContainer
+                                      center={[run.positions[0].coords.latitude, run.positions[0].coords.longitude]}
+                                      zoom={14}
+                                      zoomControl={false}
+                                      dragging={false}
+                                      scrollWheelZoom={false}
+                                      doubleClickZoom={false}
+                                      className="w-full h-full"
+                                    >
+                                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                      <Polyline positions={run.positions.map(p => [p.coords.latitude, p.coords.longitude])} color="#EE0000" weight={4} opacity={0.8} />
+                                    </MapContainer>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 mt-4">
                                 <div className="bg-background p-3 rounded-lg border border-accents-2">
                                     <p className="text-[9px] font-bold text-accents-4 uppercase tracking-widest mb-1">Elevation</p>

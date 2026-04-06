@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-
 import 'leaflet/dist/leaflet.css';
 import { Play, Pause, Square, Mic, MicOff, AlertCircle } from 'lucide-react';
 import L from 'leaflet';
-import { formatDuration as formatDurationOriginal } from '../utils/formatters';
+import { formatDuration as formatDurationOriginal, displayDistance, displayPaceFromStr } from '../utils/formatters';
 
 // Our ActiveRun duration is in seconds. The formatter expects minutes.
 const formatDuration = (seconds: number): string => {
@@ -21,6 +21,7 @@ L.Icon.Default.mergeOptions({
 });
 
 interface ActiveRunProps {
+  unit: "km" | "mi";
   onFinish: (runData: any) => void;
   onCancel: () => void;
 }
@@ -36,7 +37,7 @@ const MapRecenter = ({ position }: { position: [number, number] }) => {
   return null;
 };
 
-export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel }) => {
+export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel, unit = "km" }) => {
   const [countdown, setCountdown] = useState<number | null>(COUNTDOWN_TIME);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -45,6 +46,9 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel }) => {
   const [duration, setDuration] = useState(0); // in seconds
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [splits, setSplits] = useState<number[]>([]); // Durations in seconds at each unit mark
+  const lastSplitDistanceRef = useRef(0);
+  const lastSplitTimeRef = useRef(0);
 
   const watchIdRef = useRef<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -89,7 +93,24 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel }) => {
                   lastPos.coords.latitude, lastPos.coords.longitude,
                   position.coords.latitude, position.coords.longitude
                 );
-                setDistance(d => d + newDist);
+                setDistance(d => {
+                const newTotal = d + newDist;
+
+                // Check if we crossed a new unit threshold
+                // Calculate distance in user's preferred unit
+                const KM_TO_MILES = 0.621371;
+                const distInUnit = unit === 'mi' ? (newTotal / 1000) * KM_TO_MILES : (newTotal / 1000);
+                const currentFloor = Math.floor(distInUnit);
+
+                if (currentFloor > lastSplitDistanceRef.current) {
+                   const splitDuration = duration - lastSplitTimeRef.current;
+                   setSplits(prev => [...prev, splitDuration]);
+                   lastSplitDistanceRef.current = currentFloor;
+                   lastSplitTimeRef.current = duration;
+                }
+
+                return newTotal;
+              });
               }
               return newPositions;
             });
@@ -126,7 +147,8 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel }) => {
       distance: distance / 1000, // convert to km
       duration,
       positions,
-      calories: Math.round((distance / 1000) * 60) // Rough estimate
+      calories: Math.round((distance / 1000) * 60),
+      splits // Rough estimate
     };
     onFinish(runData);
   };
@@ -215,7 +237,7 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel }) => {
         <div className="grid grid-cols-2 gap-6 mb-8">
           <div className="text-center">
             <p className="text-surface-on-variant text-sm font-medium uppercase tracking-wider mb-1">Distance</p>
-            <p className="text-4xl font-bold text-surface-on font-mono">{(distance / 1000).toFixed(2)} <span className="text-xl">km</span></p>
+            <p className="text-4xl font-bold text-surface-on font-mono">{displayDistance(distance / 1000, unit)} <span className="text-xl">{unit}</span></p>
           </div>
           <div className="text-center">
             <p className="text-surface-on-variant text-sm font-medium uppercase tracking-wider mb-1">Time</p>
@@ -223,7 +245,7 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel }) => {
           </div>
           <div className="text-center">
             <p className="text-surface-on-variant text-sm font-medium uppercase tracking-wider mb-1">Pace</p>
-            <p className="text-2xl font-bold text-surface-on font-mono">{duration > 0 && distance > 0 ? formatDuration(Math.floor(duration / (distance / 1000))) : '--:--'} <span className="text-base">/km</span></p>
+            <p className="text-2xl font-bold text-surface-on font-mono">{duration > 0 && distance > 0 ? displayPaceFromStr(formatDurationOriginal(duration / (distance / 1000) / 60), unit) : '--:--'} <span className="text-base">/{unit}</span></p>
           </div>
           <div className="text-center">
             <p className="text-surface-on-variant text-sm font-medium uppercase tracking-wider mb-1">Calories</p>

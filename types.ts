@@ -39,6 +39,8 @@ export interface Run {
   source?: RunSource;
   notes?: string;
   shoeId?: string;
+  positions?: any[];
+  splits?: number[];
 }
 
 export interface UserProfile {
@@ -49,6 +51,7 @@ export interface UserProfile {
   sex: string;
   shoeModel: string;
   shoes: Shoe[];
+  preferredUnits?: "km" | "mi";
 }
 
 export interface CoachInsights {
