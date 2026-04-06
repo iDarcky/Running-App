@@ -202,7 +202,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
 
                         <div className="flex items-center justify-between md:justify-end gap-10">
                             <div className="text-right">
-                                <p className="text-2xl font-bold text-foreground tracking-tighter leading-none mb-1">{run.distance} <span className="text-xs text-accents-4">km</span></p>
+                                <p className="text-2xl font-bold text-foreground tracking-tighter leading-none mb-1">{Number(run.distance).toFixed(2)} <span className="text-xs text-accents-4">km</span></p>
                                 <p className="text-xs text-accents-5 font-medium uppercase tracking-widest">{run.pace} /km</p>
                             </div>
                             <ChevronDown size={20} className={`text-accents-3 transition-transform ${expandedRunId === run.id ? 'rotate-180' : ''}`} />
