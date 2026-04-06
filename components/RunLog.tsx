@@ -10,6 +10,7 @@ import {
   MapPin,
   Zap,
   ChevronDown,
+  Heart,
   Activity,
   AlertTriangle,
   Info,
