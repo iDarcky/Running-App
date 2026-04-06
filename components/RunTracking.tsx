@@ -1,23 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Button,
-  Card,
-  CardBody,
-  useDisclosure,
-  RadioGroup,
-  Radio,
-  Divider
-} from '@heroui/react';
+import { Button } from '@heroui/button';
+import { Card, CardBody } from '@heroui/card';
+import { useDisclosure } from '@heroui/use-disclosure';
+import { RadioGroup, Radio } from '@heroui/radio';
+import { Divider } from '@heroui/divider';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/modal';
 import { Play, Square, MapPin, Activity, Zap, Flag, TrendingUp, Trophy, ChevronRight } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
-import { RunType } from '../types';
+import { RunType, Run } from '../types';
 import { RUN_TYPE_ORDER } from '../constants';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 interface RunTrackingProps {
-    onRunComplete: (runData: any) => void;
+    onRunComplete: (runData: Run) => void;
 }
 
 export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) => {
@@ -50,7 +46,7 @@ export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) =>
         }
     };
 
-    // Wake Lock Implementation
+    // Wake Lock
     const requestWakeLock = async () => {
         try {
             if ('wakeLock' in navigator) {
@@ -153,7 +149,7 @@ export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) =>
 
                 // Update Map
                 if (!mapRef.current) {
-                    initMap(latitude, longitude);
+                    setTimeout(() => initMap(latitude, longitude), 100);
                 } else if (mapRef.current) {
                     mapRef.current.setView([latitude, longitude]);
                     if (polylineRef.current) {
@@ -199,11 +195,12 @@ export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) =>
         clearInterval(timerRef.current);
         if (watchIdRef.current) {
             Geolocation.clearWatch({ id: watchIdRef.current });
+            watchIdRef.current = null;
         }
-        releaseWakeLock();
         setIsActive(false);
+        releaseWakeLock();
         setStep('summary');
-        speak("Run completed. Great job.");
+        speak("Workout complete. Well done.");
 
         if (mapRef.current) {
             mapRef.current.remove();
@@ -212,16 +209,14 @@ export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) =>
     };
 
     const saveRun = () => {
-        const runData = {
+        const runData: Run = {
             id: Date.now().toString(),
-            date: new Date().toISOString().split('T')[0],
-            distance: parseFloat(distance.toFixed(2)),
-            duration: Math.floor(time / 60),
+            date: new Date().toISOString(),
+            distance,
+            duration: time,
             type: runType,
-            pace: pace,
-            location: 'GPS Run',
-            source: 'RedLine GPS',
-            path: path
+            route: path.length > 0 ? path : undefined,
+            notes: `GPS Tracked ${runType} run`
         };
         onRunComplete(runData);
         onOpenChange();
@@ -245,6 +240,7 @@ export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) =>
                     className="w-16 h-16 shadow-2xl animate-bounce"
                     onPress={startRunSetup}
                     data-testid="run-fab"
+                    aria-label="Start New Run"
                 >
                     <Play fill="currentColor" size={32} />
                 </Button>
@@ -258,8 +254,7 @@ export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) =>
                 size="full"
                 classNames={{
                     base: "bg-background",
-                    header: "border-b border-accents-2",
-                    body: "p-0",
+                    wrapper: "z-[10000]"
                 }}
             >
                 <ModalContent>
@@ -284,7 +279,7 @@ export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) =>
                                                 <Radio
                                                     key={type}
                                                     value={type}
-                                                    className={`max-w-full inline-flex m-0 bg-accents-1 hover:bg-accents-2 items-center justify-between flex-row-reverse cursor-pointer rounded-xl gap-4 p-4 border-2 border-transparent data-[selected=true]:border-primary`}
+                                                    className="max-w-full inline-flex m-0 bg-accents-1 hover:bg-accents-2 items-center justify-between flex-row-reverse cursor-pointer rounded-xl gap-4 p-4 border-2 border-transparent data-[selected=true]:border-primary"
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <div className="p-2 bg-background rounded-lg text-primary">
@@ -333,7 +328,7 @@ export const RunTrackingFAB: React.FC<RunTrackingProps> = ({ onRunComplete }) =>
                                         </div>
                                     </div>
                                     <div id="tracking-map" className="h-1/3 bg-accents-8 border-t border-accents-2 relative">
-                                        {/* Leaflet Map renders here */}
+                                        {/* Leaflet Map */}
                                     </div>
                                     <div className="p-8 bg-background border-t border-accents-2 flex justify-center">
                                         <Button
