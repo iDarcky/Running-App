@@ -4,7 +4,13 @@ import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-
 import 'leaflet/dist/leaflet.css';
 import { Play, Pause, Square, Mic, MicOff, AlertCircle } from 'lucide-react';
 import L from 'leaflet';
-import { formatDistance, formatDuration, calculatePace } from '../utils/formatters';
+import { formatDuration as formatDurationOriginal } from '../utils/formatters';
+
+// Our ActiveRun duration is in seconds. The formatter expects minutes.
+const formatDuration = (seconds: number): string => {
+  return formatDurationOriginal(seconds / 60);
+};
+
 
 // Fix for default marker icons in React-Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
