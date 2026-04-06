@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
-import { RedLineLogo } from './Logo';
+import { RedLineBrand } from './Logo';
 import { ChevronRight, User, Mail, Lock, Database, PlayCircle } from 'lucide-react';
-import { Input } from './UIComponents';
+import { Input, Button } from './UIComponents';
 
 interface LandingPageProps {
   onLogin: (name: string, email: string) => void;
@@ -15,7 +14,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGuest }) =>
   const [step, setStep] = useState<Step>('welcome');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   
-  // Auth State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,51 +25,50 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGuest }) =>
   };
 
   const renderWelcome = () => (
-    <div className="flex flex-col items-center text-center animate-fade-in max-w-md mx-auto">
-        <div className="mb-8 relative">
-             <div className="absolute inset-0 bg-primary/20 blur-[40px] rounded-full"></div>
-             <div className="bg-[#090909] w-28 h-28 rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/30 relative z-10 border border-white/10">
-                <RedLineLogo className="w-14 h-14 text-[#D32F2F]" />
-             </div>
+    <div className="flex flex-col items-center text-center animate-fade-in max-w-lg mx-auto">
+        <div className="mb-12">
+            <RedLineBrand size="lg" />
         </div>
         
-        <h1 className="text-5xl font-bold text-surface-on tracking-tighter mb-4">
-            Welcome to <span className="text-primary">Red</span>Line
-        </h1>
-        <p className="text-surface-on-variant text-lg mb-12 leading-relaxed">
-            The advanced running tracker that analyzes your training, spots trends, and helps you hit your next PB.
+        <h2 className="text-4xl md:text-6xl font-bold text-foreground tracking-tighter mb-6 leading-[1.1]">
+            Track your runs.<br />
+            <span className="text-accents-5">Beat your best.</span>
+        </h2>
+        <p className="text-accents-5 text-lg mb-12 leading-relaxed max-w-md mx-auto">
+            The minimalist running tracker for athletes who value data over distractions.
         </p>
 
-        <div className="w-full space-y-4">
-            <button 
+        <div className="w-full max-w-sm space-y-4">
+            <Button
                 onClick={() => setStep('auth')}
-                className="w-full bg-primary text-primary-on py-4 rounded-full font-bold text-lg shadow-lg shadow-primary/25 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+                className="w-full text-lg h-14"
             >
-                Get Started <ChevronRight size={20} />
-            </button>
+                Get Started <ChevronRight size={20} className="ml-2" />
+            </Button>
             
-            <button 
+            <Button
+                variant="secondary"
                 onClick={() => setStep('guest-options')}
-                className="w-full bg-surface-container-high text-surface-on py-4 rounded-full font-bold text-lg hover:bg-surface-container-highest transition-colors"
+                className="w-full text-lg h-14"
             >
                 Continue as Guest
-            </button>
+            </Button>
         </div>
     </div>
   );
 
   const renderAuth = () => (
-    <div className="w-full max-w-md mx-auto animate-slide-down">
-        <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-surface-on mb-2">
-                {authMode === 'login' ? 'Welcome Back' : 'Create Account'}
+    <div className="w-full max-w-md mx-auto animate-fade-in">
+        <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-foreground mb-3 tracking-tight">
+                {authMode === 'login' ? 'Welcome back' : 'Create an account'}
             </h2>
-            <p className="text-surface-on-variant">
+            <p className="text-accents-5">
                 {authMode === 'login' ? 'Sign in to sync your training data' : 'Join the RedLine community'}
             </p>
         </div>
 
-        <form onSubmit={handleAuthSubmit} className="bg-surface-container p-8 rounded-[32px] border border-outline-variant/20 shadow-lg space-y-4">
+        <form onSubmit={handleAuthSubmit} className="bg-background p-8 rounded-xl border border-accents-2 shadow-sm space-y-4">
             {authMode === 'signup' && (
                 <Input 
                     label="Name" 
@@ -99,23 +96,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGuest }) =>
                 placeholder="••••••••"
             />
 
-            <button 
+            <Button
                 type="submit"
-                className="w-full bg-primary text-primary-on py-4 rounded-full font-bold text-lg shadow-lg shadow-primary/25 mt-6 hover:scale-[1.02] transition-transform"
+                className="w-full mt-6 h-12"
             >
                 {authMode === 'login' ? 'Sign In' : 'Create Account'}
-            </button>
+            </Button>
         </form>
 
-        <div className="mt-6 text-center space-y-4">
+        <div className="mt-8 text-center space-y-4">
             <button 
                 onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                className="text-primary font-bold hover:underline"
+                className="text-foreground text-sm font-semibold hover:underline"
             >
                 {authMode === 'login' ? "Don't have an account? Sign Up" : "Already have an account? Log In"}
             </button>
             <div>
-                <button onClick={() => setStep('welcome')} className="text-surface-on-variant text-sm font-medium hover:text-surface-on">
+                <button onClick={() => setStep('welcome')} className="text-accents-5 text-xs font-medium hover:text-foreground uppercase tracking-widest">
                     Back to Home
                 </button>
             </div>
@@ -124,54 +121,51 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGuest }) =>
   );
 
   const renderGuestOptions = () => (
-    <div className="w-full max-w-md mx-auto animate-slide-down text-center">
-        <div className="mb-8">
-            <div className="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center mx-auto mb-6 text-surface-on">
-                <User size={32} />
-            </div>
-            <h2 className="text-3xl font-bold text-surface-on mb-3">Guest Access</h2>
-            <p className="text-surface-on-variant">
-                How would you like to start your session?
+    <div className="w-full max-w-md mx-auto animate-fade-in text-center">
+        <div className="mb-10">
+            <h2 className="text-3xl font-bold text-foreground mb-3 tracking-tight">Guest Access</h2>
+            <p className="text-accents-5">
+                Experience RedLine without an account.
             </p>
         </div>
 
         <div className="space-y-4">
             <button 
                 onClick={() => onGuest(false)}
-                className="w-full bg-surface-container p-6 rounded-[24px] border border-outline-variant/20 hover:border-primary hover:shadow-lg transition-all group text-left flex items-center gap-4"
+                className="w-full bg-background p-6 rounded-xl border border-accents-2 hover:border-foreground transition-all group text-left flex items-center gap-5"
             >
-                <div className="bg-surface-container-highest p-3 rounded-full text-surface-on-variant group-hover:bg-primary group-hover:text-primary-on transition-colors">
-                    <PlayCircle size={24} />
+                <div className="text-accents-3 group-hover:text-foreground transition-colors">
+                    <PlayCircle size={28} />
                 </div>
                 <div>
-                    <h3 className="font-bold text-lg text-surface-on">Start Fresh</h3>
-                    <p className="text-sm text-surface-on-variant">Empty dashboard. Ready for your first run.</p>
+                    <h3 className="font-bold text-base text-foreground tracking-tight">Start Fresh</h3>
+                    <p className="text-sm text-accents-5">Empty dashboard. Ready for your first run.</p>
                 </div>
             </button>
 
             <button 
                 onClick={() => onGuest(true)}
-                className="w-full bg-surface-container p-6 rounded-[24px] border border-outline-variant/20 hover:border-primary hover:shadow-lg transition-all group text-left flex items-center gap-4 relative overflow-hidden"
+                className="w-full bg-background p-6 rounded-xl border border-accents-2 hover:border-foreground transition-all group text-left flex items-center gap-5 relative overflow-hidden"
             >   
-                <div className="absolute top-0 right-0 bg-primary text-primary-on text-[10px] font-bold px-2 py-1 rounded-bl-xl">RECOMMENDED</div>
-                <div className="bg-surface-container-highest p-3 rounded-full text-surface-on-variant group-hover:bg-primary group-hover:text-primary-on transition-colors">
-                    <Database size={24} />
+                <div className="absolute top-0 right-0 bg-foreground text-background text-[10px] font-bold px-3 py-1 uppercase tracking-widest">PRO</div>
+                <div className="text-accents-3 group-hover:text-foreground transition-colors">
+                    <Database size={28} />
                 </div>
                 <div>
-                    <h3 className="font-bold text-lg text-surface-on">Load Demo Data</h3>
-                    <p className="text-sm text-surface-on-variant">Pre-populated with 15+ runs & gear stats.</p>
+                    <h3 className="font-bold text-base text-foreground tracking-tight">Demo Mode</h3>
+                    <p className="text-sm text-accents-5">Pre-populated with 15+ runs & gear stats.</p>
                 </div>
             </button>
         </div>
 
-        <button onClick={() => setStep('welcome')} className="mt-8 text-surface-on-variant text-sm font-medium hover:text-surface-on">
+        <button onClick={() => setStep('welcome')} className="mt-10 text-accents-5 text-xs font-medium hover:text-foreground uppercase tracking-widest">
             Back
         </button>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 geist-grid">
         {step === 'welcome' && renderWelcome()}
         {step === 'auth' && renderAuth()}
         {step === 'guest-options' && renderGuestOptions()}

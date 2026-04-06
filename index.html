@@ -3,134 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#D32F2F">
+    <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>RedLine</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23090909'/%3E%3Cpath d='M170 96h100l-50 256h170v80H120V96z' fill='%23D32F2F'/%3E%3C/svg%3E" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23000000'/%3E%3Cpath d='M170 96h100l-50 256h170v80H120V96z' fill='%23EE0000'/%3E%3C/svg%3E" />
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://assets.vercel.com/fonts/font-stack.css">
     <style>
       :root {
-        /* Light Theme - Red & White (Shoe Inspired) */
-        /* Primary Red - like the Adidas stripes */
-        --md-sys-color-primary: #D32F2F;
-        --md-sys-color-on-primary: #FFFFFF;
-        --md-sys-color-primary-container: #FFDAD6;
-        --md-sys-color-on-primary-container: #410002;
+        --geist-background: #ffffff;
+        --geist-foreground: #000000;
+        --geist-selection: #f81ce5;
+        --accents-1: #fafafa;
+        --accents-2: #eaeaea;
+        --accents-3: #999999;
+        --accents-4: #888888;
+        --accents-5: #666666;
+        --accents-6: #444444;
+        --accents-7: #333333;
+        --accents-8: #111111;
         
-        /* Secondary - Cool Gray/Silver like mesh details */
-        --md-sys-color-secondary: #5F6368; 
-        --md-sys-color-on-secondary: #FFFFFF;
-        --md-sys-color-secondary-container: #F2F2F2;
-        --md-sys-color-on-secondary-container: #1D1D1D;
-        
-        /* Tertiary - Black for sharp contrast accents */
-        --md-sys-color-tertiary: #000000;
-        --md-sys-color-on-tertiary: #FFFFFF;
-        --md-sys-color-tertiary-container: #EEEEEE;
-        --md-sys-color-on-tertiary-container: #000000;
-        
-        --md-sys-color-error: #BA1A1A;
-        --md-sys-color-on-error: #FFFFFF;
-        --md-sys-color-error-container: #FFDAD6;
-        --md-sys-color-on-error-container: #410002;
-        
-        /* Backgrounds - Clean White */
-        --md-sys-color-background: #FFFFFF;
-        --md-sys-color-on-background: #191C1C;
-        
-        /* Surfaces - Very subtle off-whites to keep it clean */
-        --md-sys-color-surface: #FFFFFF;
-        --md-sys-color-on-surface: #191C1C;
-        --md-sys-color-surface-variant: #E1E3E3;
-        --md-sys-color-on-surface-variant: #444748;
-        
-        --md-sys-color-outline: #747775;
-        --md-sys-color-outline-variant: #C4C7C5;
-        
-        --md-sys-color-surface-container-low: #F7F9F9;
-        --md-sys-color-surface-container: #F3F5F5;
-        --md-sys-color-surface-container-high: #EDEFF0;
-        --md-sys-color-surface-container-highest: #E7E9EA;
+        --brand-red: #EE0000;
+        --brand-red-light: #FFE5E5;
       }
 
       .dark {
-        /* Dark Theme - Black & Red */
-        --md-sys-color-primary: #FF5449; 
-        --md-sys-color-on-primary: #690005;
-        --md-sys-color-primary-container: #93000A;
-        --md-sys-color-on-primary-container: #FFDAD6;
+        --geist-background: #000000;
+        --geist-foreground: #ffffff;
+        --geist-selection: #f81ce5;
+        --accents-1: #111111;
+        --accents-2: #333333;
+        --accents-3: #444444;
+        --accents-4: #666666;
+        --accents-5: #888888;
+        --accents-6: #999999;
+        --accents-7: #eaeaea;
+        --accents-8: #fafafa;
         
-        --md-sys-color-secondary: #C6C6C6;
-        --md-sys-color-on-secondary: #303030;
-        --md-sys-color-secondary-container: #3F4040;
-        --md-sys-color-on-secondary-container: #E2E2E2;
-        
-        --md-sys-color-tertiary: #FFFFFF;
-        --md-sys-color-on-tertiary: #000000;
-        --md-sys-color-tertiary-container: #444444;
-        --md-sys-color-on-tertiary-container: #FFFFFF;
-        
-        --md-sys-color-error: #FFB4AB;
-        --md-sys-color-on-error: #690005;
-        --md-sys-color-error-container: #93000A;
-        --md-sys-color-on-error-container: #FFDAD6;
-        
-        /* Deep Black Background */
-        --md-sys-color-background: #000000;
-        --md-sys-color-on-background: #E1E3E3;
-        
-        --md-sys-color-surface: #090909;
-        --md-sys-color-on-surface: #E1E3E3;
-        --md-sys-color-surface-variant: #3F484A;
-        --md-sys-color-on-surface-variant: #C4C7C5;
-        
-        --md-sys-color-outline: #8E918F;
-        --md-sys-color-outline-variant: #444748;
-        
-        --md-sys-color-surface-container-low: #101010;
-        --md-sys-color-surface-container: #161616;
-        --md-sys-color-surface-container-high: #202020;
-        --md-sys-color-surface-container-highest: #2A2A2A;
+        --brand-red: #FF3333;
+        --brand-red-light: #330000;
       }
 
       body {
-        font-family: 'Roboto Flex', 'Roboto', sans-serif;
-        background-color: var(--md-sys-color-background);
-        color: var(--md-sys-color-on-background);
+        font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        background-color: var(--geist-background);
+        color: var(--geist-foreground);
         -webkit-tap-highlight-color: transparent;
-        transition: background-color 0.3s ease, color 0.3s ease;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Geist Grid Background */
+      .geist-grid {
+        background-image: radial-gradient(var(--accents-2) 1px, transparent 1px);
+        background-size: 24px 24px;
       }
 
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
-        width: 8px;
+        width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: var(--md-sys-color-surface-container); 
+        background: var(--geist-background);
       }
       ::-webkit-scrollbar-thumb {
-        background: var(--md-sys-color-outline-variant); 
-        border-radius: 4px;
+        background: var(--accents-2);
+        border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: var(--md-sys-color-outline); 
+        background: var(--accents-3);
       }
       
       .animate-fade-in {
-        animation: fadeIn 0.4s cubic-bezier(0.2, 0.0, 0, 1.0);
-      }
-      
-      .animate-slide-down {
-        animation: slideDown 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
+        animation: fadeIn 0.3s ease;
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(8px); }
         to { opacity: 1; transform: translateY(0); }
       }
       
@@ -159,57 +111,33 @@
     theme: {
       extend: {
         colors: {
+          background: 'var(--geist-background)',
+          foreground: 'var(--geist-foreground)',
+          accents: {
+            1: 'var(--accents-1)',
+            2: 'var(--accents-2)',
+            3: 'var(--accents-3)',
+            4: 'var(--accents-4)',
+            5: 'var(--accents-5)',
+            6: 'var(--accents-6)',
+            7: 'var(--accents-7)',
+            8: 'var(--accents-8)',
+          },
           primary: {
-            DEFAULT: 'var(--md-sys-color-primary)',
-            on: 'var(--md-sys-color-on-primary)',
-            container: 'var(--md-sys-color-primary-container)',
-            'on-container': 'var(--md-sys-color-on-primary-container)',
-          },
-          secondary: {
-            DEFAULT: 'var(--md-sys-color-secondary)',
-            on: 'var(--md-sys-color-on-secondary)',
-            container: 'var(--md-sys-color-secondary-container)',
-            'on-container': 'var(--md-sys-color-on-secondary-container)',
-          },
-          tertiary: {
-            DEFAULT: 'var(--md-sys-color-tertiary)',
-            on: 'var(--md-sys-color-on-tertiary)',
-            container: 'var(--md-sys-color-tertiary-container)',
-            'on-container': 'var(--md-sys-color-on-tertiary-container)',
-          },
-          error: {
-            DEFAULT: 'var(--md-sys-color-error)',
-            on: 'var(--md-sys-color-on-error)',
-            container: 'var(--md-sys-color-error-container)',
-            'on-container': 'var(--md-sys-color-on-error-container)',
-          },
-          surface: {
-            DEFAULT: 'var(--md-sys-color-surface)',
-            on: 'var(--md-sys-color-on-surface)',
-            variant: 'var(--md-sys-color-surface-variant)',
-            'on-variant': 'var(--md-sys-color-on-surface-variant)',
-            container: {
-                low: 'var(--md-sys-color-surface-container-low)',
-                DEFAULT: 'var(--md-sys-color-surface-container)',
-                high: 'var(--md-sys-color-surface-container-high)',
-                highest: 'var(--md-sys-color-surface-container-highest)',
-            }
-          },
-          outline: {
-            DEFAULT: 'var(--md-sys-color-outline)',
-            variant: 'var(--md-sys-color-outline-variant)',
+            DEFAULT: 'var(--brand-red)',
+            light: 'var(--brand-red-light)',
           }
         },
-        borderRadius: {
-            '4xl': '2rem',
-            '5xl': '2.5rem',
+        fontFamily: {
+          sans: ['Geist Sans', 'sans-serif'],
+          mono: ['Geist Mono', 'monospace'],
         }
       }
     }
   }
 </script>
 </head>
-  <body>
+  <body class="geist-grid">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

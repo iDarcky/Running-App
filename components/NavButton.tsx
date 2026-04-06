@@ -11,30 +11,33 @@ interface NavButtonProps {
 
 export const NavButton: React.FC<NavButtonProps> = ({ tab, activeTab, icon: Icon, label, onClick, mobile = false }) => {
     const isActive = activeTab === tab;
+
+    if (mobile) {
+        return (
+            <button
+                onClick={() => onClick(tab)}
+                className={`flex flex-col items-center justify-center flex-1 py-2 transition-colors ${isActive ? 'text-primary' : 'text-accents-5 hover:text-foreground'}`}
+            >
+                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-bold mt-1 uppercase tracking-wider">{label}</span>
+            </button>
+        );
+    }
+
     return (
         <button 
             onClick={() => onClick(tab)}
             className={`
-                flex items-center transition-all duration-300 group relative
-                ${mobile 
-                    ? `justify-center flex-col h-16 w-full rounded-2xl ${isActive ? 'text-primary' : 'text-surface-on-variant/60 hover:text-surface-on-variant'}` 
-                    : `justify-start gap-3 w-full px-4 py-3 rounded-full mb-2 ${isActive ? 'bg-primary text-primary-on shadow-lg shadow-primary/25 font-bold' : 'text-surface-on-variant hover:bg-surface-container-highest hover:text-surface-on'}`
+                flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium transition-colors mb-1
+                ${isActive
+                    ? 'bg-accents-1 text-foreground'
+                    : 'text-accents-5 hover:bg-accents-1 hover:text-foreground'
                 }
             `}
         >
-            <div className={`transition-transform duration-300 ${isActive && !mobile ? 'scale-110' : ''} ${mobile && isActive ? '-translate-y-4' : ''}`}>
-                <Icon size={mobile ? 24 : 20} className={isActive ? 'fill-current' : ''} strokeWidth={mobile && isActive ? 2.5 : 2} />
-            </div>
-            
-            {!mobile && <span>{label}</span>}
-            {mobile && (
-                <span className={`text-[10px] font-bold transition-all duration-300 absolute bottom-2 leading-none ${isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-                    {label}
-                </span>
-            )}
-            
-            {!mobile && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>}
-            {mobile && isActive && <div className="absolute top-1.5 w-1 h-1 rounded-full bg-primary"></div>}
+            <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+            <span>{label}</span>
+            {isActive && <div className="ml-auto w-1 h-1 rounded-full bg-primary animate-pulse"></div>}
         </button>
     );
 };

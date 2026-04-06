@@ -1,18 +1,13 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
-import { Run, InsightResponse, UserProfile, Race } from '../types';
+import { Run, UserProfile, Race, CoachInsights } from '../types';
 
-// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
 const apiKey = process.env.API_KEY;
-// Initialize only if key exists, but throw specific errors in functions if it's missing.
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Promise<InsightResponse> => {
+export const generateCoachInsights = async (runs: Run[], profile?: UserProfile): Promise<CoachInsights> => {
   if (!ai) throw new Error("Gemini API Key is missing. Please check your configuration.");
 
-  // Sort runs by date desc
   const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  // Take last 15 runs to avoid token limits if user has thousands
   const recentRuns = sortedRuns.slice(0, 15);
 
   const profileContext = profile ? `
@@ -22,7 +17,6 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
     - Sex: ${profile.sex}
     - Weight: ${profile.weight}kg
     - Height: ${profile.height}cm
-    - Current Shoe: ${profile.shoeModel}
   ` : 'User Profile: Not provided';
 
   const systemInstruction = `
@@ -35,24 +29,23 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
 
   const prompt = `
     Analyze the following running data from my recent training history. 
-    Note that some runs include advanced metrics like Cadence (spm), Stride Length (m), and Ground Contact Time (ms).
     
     Data:
     ${JSON.stringify(recentRuns)}
     
     Provide a comprehensive analysis including:
     1. A summary of my current fitness level.
-    2. A numerical Form Score from 0 to 100 based on cadence, consistency, and efficiency (0 is poor, 100 is elite).
+    2. A numerical Form Score from 0 to 100 based on cadence, consistency, and efficiency.
     3. An analysis of my RUNNING FORM based on cadence and stride length data.
     4. An INJURY RISK assessment based on training load, intensity changes, and biomechanics.
-    5. 3 distinct trends you observe (e.g., pace progression, heart rate drift, consistency issues). Label them as positive, negative, or neutral.
+    5. 3 distinct trends you observe. Label them as positive, negative, or neutral.
     6. A specific primary training focus for the next 4 weeks.
     7. 3 concrete, actionable tips to improve performance or prevent injury.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
         systemInstruction: systemInstruction,
@@ -87,26 +80,22 @@ export const analyzeRunningData = async (runs: Run[], profile?: UserProfile): Pr
 
     const jsonText = response.text;
     if (!jsonText) throw new Error("Received empty response from AI");
-    return JSON.parse(jsonText) as InsightResponse;
+    return JSON.parse(jsonText) as CoachInsights;
   } catch (error) {
     console.error("Error analyzing runs:", error);
     throw error;
   }
 };
 
-export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserProfile): Promise<string | null> => {
-  if (!ai) throw new Error("Gemini API Key is missing. Please check your configuration.");
+export const generateRaceStrategy = async (race: Race, runs: Run[], profile?: UserProfile): Promise<string> => {
+  if (!ai) throw new Error("Gemini API Key is missing.");
 
   const profileContext = profile ? `User: ${profile.name}, Age ${profile.age}, ${profile.weight}kg` : '';
 
   const systemInstruction = `
     You are an expert running coach specializing in race preparation.
     Create personalized, high-level training strategies for specific races.
-    Format your response using strict Markdown for readability:
-    - Use "## " for main sections (e.g. "Current Status", "The Plan", "Key Workouts").
-    - Use "### " for subsections or specific weeks.
-    - Use "- " for bullet points.
-    - Use "**bold**" for emphasis on key workouts or paces.
+    Format your response using Markdown for readability.
     Keep the tone encouraging but realistic.
   `;
 
@@ -121,13 +110,13 @@ export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserPr
 
     Create a personalized training strategy for this race.
     Analyze my recent volume and pace compared to the race distance and goal.
-    Provide a high-level weekly structure (e.g. "Focus on long runs for 2 weeks, then taper").
+    Provide a high-level weekly structure.
     Include specific key workouts.
   `;
 
   try {
       const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
               systemInstruction: systemInstruction
@@ -140,74 +129,32 @@ export const generateRacePlan = async (race: Race, runs: Run[], profile?: UserPr
   }
 };
 
-export const generateDailyWorkout = async (runs: Run[], profile?: UserProfile): Promise<{ title: string, description: string, type: string, duration: number }> => {
+export const getCoachChatResponse = async (message: string, runs: Run[], profile?: UserProfile) => {
     if (!ai) throw new Error("Gemini API Key is missing.");
 
-    const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 7);
-    
-    const prompt = `
-        Based on my last 7 days of running history: ${JSON.stringify(sortedRuns)},
-        Generate a single, specific workout for TODAY.
-        Consider my fatigue (if I ran yesterday or did a hard session recently, suggest recovery).
-        
-        Return strictly JSON with these fields:
-        - title: Short name of workout (e.g., "45min Recovery" or "Threshold Intervals")
-        - description: 2 sentences describing exactly what to do.
-        - type: One of "Easy", "Tempo", "Interval", "Long", "Recovery", "Rest"
-        - duration: estimated duration in minutes (number only)
+    const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
+    const profileStr = profile ? `User Profile: Name: ${profile.name || 'Runner'}, Age ${profile.age}, ${profile.sex}, ${profile.weight}kg, ${profile.height}cm.` : '';
+
+    const systemInstruction = `
+      You are "RedLine Coach", an AI running coach.
+      You have access to the user's recent running data: ${JSON.stringify(sortedRuns)}.
+      ${profileStr}
+      Refer to specific runs to support your answers.
+      Be encouraging but realistic. Focus on longevity, form, and performance.
+      Keep answers concise (under 150 words).
     `;
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
+            model: 'gemini-2.0-flash',
+            contents: message,
             config: {
-                responseMimeType: 'application/json',
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        title: { type: Type.STRING },
-                        description: { type: Type.STRING },
-                        type: { type: Type.STRING },
-                        duration: { type: Type.INTEGER }
-                    }
-                }
+                systemInstruction: systemInstruction,
             }
         });
-        return JSON.parse(response.text || '{}');
+        return response.text;
     } catch (e) {
-        console.error("Error generating daily workout", e);
+        console.error("Error in coach chat:", e);
         throw e;
     }
-};
-
-export const chatWithRunCoach = async (history: {role: 'user'|'model', text: string}[], newMessage: string, runs: Run[], profile?: UserProfile) => {
-    if (!ai) throw new Error("Gemini API Key is missing.");
-
-    const sortedRuns = [...runs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
-    
-    const profileStr = profile ? `User Profile: Name: ${profile.name || 'Runner'}, Age ${profile.age}, ${profile.sex}, ${profile.weight}kg, ${profile.height}cm.` : '';
-
-    const systemInstruction = `
-      You are "RedLine", an AI running coach. 
-      You have access to the user's recent running data including advanced metrics like cadence and stride length: ${JSON.stringify(sortedRuns)}.
-      ${profileStr}
-      Refer to specific runs (dates, distances, paces, cadence) to support your answers.
-      Be encouraging but realistic. Focus on longevity, form, and performance.
-      Keep answers concise (under 150 words) unless asked for a detailed plan.
-    `;
-
-    const chat = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        config: {
-            systemInstruction,
-        },
-        history: history.map(h => ({
-            role: h.role,
-            parts: [{ text: h.text }]
-        }))
-    });
-
-    const result = await chat.sendMessage({ message: newMessage });
-    return result.text;
 };

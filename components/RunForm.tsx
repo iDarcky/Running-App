@@ -1,292 +1,187 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import {
+  Save,
+  X,
+  Plus,
+  MapPin,
+  Clock,
+  Calendar,
+  Footprints,
+  Heart,
+  Zap,
+  Activity,
+  Flag,
+  TrendingUp,
+  Info,
+  History,
+  AlignLeft,
+  Timer,
+  AlertCircle,
+  Gauge
+} from 'lucide-react';
 import { Run, RunType, UserProfile, Shoe } from '../types';
-import { RUN_TYPE_ORDER, RUN_TYPE_COLORS } from '../constants';
-import { Input, Select } from './UIComponents';
-import { Calendar, Activity, Clock, Heart, Footprints, Gauge, AlignLeft, Feather, Flame, Zap, Map as MapIcon, Trophy, BatteryCharging, ChevronDown, Check, Save, Plus, AlertCircle, X } from 'lucide-react';
+import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
+import { Input, Select, Button } from './UIComponents';
 
 interface RunFormProps {
-    initialData?: Partial<Run>;
-    onSubmit: (data: Partial<Run>) => void;
-    isEditing: boolean;
-    profile?: UserProfile;
-    onAddShoe?: (shoe: Shoe) => void;
+  initialData?: Run;
+  onSubmit: (run: Run) => void;
+  isEditing?: boolean;
+  profile?: UserProfile;
+  onAddShoe?: (shoe: Shoe) => void;
 }
 
-const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing, profile, onAddShoe }) => {
-    const [formData, setFormData] = useState<Partial<Run>>({
+const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing = false, profile, onAddShoe }) => {
+    const [formData, setFormData] = useState<Partial<Run>>(initialData || {
         date: new Date().toISOString().split('T')[0],
-        type: RunType.EASY,
-        distance: 5,
-        duration: 30,
-        avgHr: 140,
-        rpe: 5,
-        cadence: 165,
-        strideLength: 1.0,
-        source: 'Manual',
+        distance: 10,
+        duration: 50,
+        pace: '5:00',
+        type: 'Easy',
+        location: '',
         notes: '',
-        shoeId: ''
+        avgHr: 140,
+        effort: 5,
+        cadence: 170,
+        elevation: 50,
+        shoeId: profile?.shoes?.find(s => s.isDefault)?.id || ''
     });
 
-    // Inline Shoe Creation State
     const [isCreatingShoe, setIsCreatingShoe] = useState(false);
     const [newShoeBrand, setNewShoeBrand] = useState('');
     const [newShoeModel, setNewShoeModel] = useState('');
 
-    useEffect(() => {
-        if (initialData) {
-            setFormData(prev => ({ ...prev, ...initialData }));
-        }
-    }, [initialData]);
+    const calculatePace = (dist: number, time: number) => {
+        if (!dist || !time) return '0:00';
+        const totalSeconds = (time * 60) / dist;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
 
-    // Smart Shoe Selection
-    const allShoes = profile?.shoes || [];
-    const activeShoes = allShoes.filter(s => !s.isRetired);
-    // Include retired shoes if one is already selected (e.g. editing an old run)
-    const availableShoes = allShoes.filter(s => !s.isRetired || s.id === formData.shoeId);
-    
-    const defaultShoe = activeShoes.find(s => s.isDefault);
-    const hasShoes = availableShoes.length > 0;
-
-    useEffect(() => {
-        // Only auto-set default if:
-        // 1. We are NOT editing an existing run (we don't want to overwrite historical data)
-        // 2. No shoe is currently selected in the form
-        // 3. We are not currently creating a shoe
-        if (!isEditing && !formData.shoeId && !isCreatingShoe) {
-            if (defaultShoe) {
-                setFormData(prev => ({ ...prev, shoeId: defaultShoe.id }));
-            } else if (activeShoes.length === 1) {
-                // If only one active shoe exists, select it automatically
-                setFormData(prev => ({ ...prev, shoeId: activeShoes[0].id }));
-            }
-        }
-    }, [isEditing, formData.shoeId, activeShoes.length, defaultShoe, isCreatingShoe]);
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         let finalShoeId = formData.shoeId;
-
-        // If inline shoe creation is active and filled
         if (isCreatingShoe && newShoeBrand && newShoeModel && onAddShoe) {
-            const newShoeId = Date.now().toString();
             const newShoe: Shoe = {
-                id: newShoeId,
+                id: Date.now().toString(),
                 brand: newShoeBrand,
                 model: newShoeModel,
                 distance: 0,
                 maxDistance: 800,
-                isRetired: false,
-                isDefault: !hasShoes // Make default if it's the first one
+                isDefault: false,
+                isRetired: false
             };
-            
-            // Create the shoe immediately via callback
             onAddShoe(newShoe);
-            finalShoeId = newShoeId;
+            finalShoeId = newShoe.id;
         }
 
+        const pace = calculatePace(formData.distance || 0, formData.duration || 0);
         onSubmit({
             ...formData,
+            pace,
             shoeId: finalShoeId
-        });
+        } as Run);
     };
 
     const getRunTypeIcon = (type: RunType) => {
-        switch (type) {
-          case RunType.EASY: return <Feather size={20} />;
-          case RunType.TEMPO: return <Flame size={20} />;
-          case RunType.INTERVAL: return <Zap size={20} />;
-          case RunType.LONG: return <MapIcon size={20} />;
-          case RunType.RACE: return <Trophy size={20} />;
-          case RunType.RECOVERY: return <BatteryCharging size={20} />;
-          default: return <Activity size={20} />;
+        switch(type) {
+            case 'Easy': return <Activity size={16} />;
+            case 'Intervals': return <Zap size={16} />;
+            case 'Long Run': return <Flag size={16} />;
+            case 'Tempo': return <TrendingUp size={16} />;
+            case 'Race': return <Trophy size={16} />;
+            default: return <Activity size={16} />;
         }
     };
 
+    const Trophy = ({ size, className }: any) => <Activity size={size} className={className} />;
+
+    const availableShoes = profile?.shoes?.filter(s => !s.isRetired) || [];
+
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            <div className="p-6 space-y-6">
-                {/* Main Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                        <Input 
-                            label="Date" 
-                            type="date" 
-                            value={formData.date} 
-                            onChange={(e: any) => setFormData({...formData, date: e.target.value})} 
-                            icon={Calendar}
-                            required
-                        />
-                    </div>
-                    <Input 
-                        label="Distance (km)" 
-                        type="number" step="0.01"
-                        value={formData.distance} 
-                        onChange={(e: any) => setFormData({...formData, distance: parseFloat(e.target.value)})} 
-                        icon={MapIcon}
-                        required
-                    />
-                    <Input 
-                        label="Time (min)" 
-                        type="number" 
-                        value={formData.duration} 
-                        onChange={(e: any) => setFormData({...formData, duration: parseInt(e.target.value)})} 
-                        icon={Clock}
-                        required
-                    />
-                </div>
+        <form onSubmit={handleFormSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input label="Date" type="date" value={formData.date} onChange={(e: any) => setFormData({...formData, date: e.target.value})} icon={Calendar} required />
+                <Input label="Location" value={formData.location} onChange={(e: any) => setFormData({...formData, location: e.target.value})} icon={MapPin} placeholder="e.g. Regent's Park" />
+                <Input label="Distance (km)" type="number" step="0.01" value={formData.distance} onChange={(e: any) => setFormData({...formData, distance: parseFloat(e.target.value)})} icon={Activity} required />
+                <Input label="Duration (min)" type="number" value={formData.duration} onChange={(e: any) => setFormData({...formData, duration: parseInt(e.target.value)})} icon={Timer} required />
+            </div>
 
-                {/* Type Selection */}
-                <div>
-                    <label className="text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-3 block">Run Type</label>
-                    <div className="grid grid-cols-3 gap-2">
-                        {RUN_TYPE_ORDER.map(type => (
-                            <button
-                                key={type}
-                                type="button"
-                                onClick={() => setFormData({...formData, type: type as RunType})}
-                                className={`
-                                    flex flex-col items-center justify-center p-3 rounded-2xl border transition-all
-                                    ${formData.type === type 
-                                        ? 'bg-surface-container-highest border-primary shadow-sm' 
-                                        : 'bg-surface-container-low border-transparent hover:bg-surface-container-highest'}
-                                `}
-                            >
-                                <div className="mb-1" style={{ color: formData.type === type ? RUN_TYPE_COLORS[type] : 'var(--md-sys-color-on-surface-variant)' }}>
-                                    {getRunTypeIcon(type as RunType)}
-                                </div>
-                                <span className={`text-[10px] font-bold ${formData.type === type ? 'text-surface-on' : 'text-surface-on-variant'}`}>
-                                    {type}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Advanced Metrics */}
-                <div className="grid grid-cols-2 gap-4">
-                     <Input 
-                        label="Avg HR (bpm)" 
-                        type="number" 
-                        value={formData.avgHr} 
-                        onChange={(e: any) => setFormData({...formData, avgHr: parseInt(e.target.value)})} 
-                        icon={Heart}
-                    />
-                    <div className="relative">
-                        <label className="text-xs font-bold text-surface-on-variant uppercase tracking-wider mb-2 block flex items-center gap-2">
-                            <Gauge size={14} /> Effort (RPE)
-                        </label>
-                        <input 
-                            type="range" 
-                            min="1" max="10" 
-                            value={formData.rpe} 
-                            onChange={(e) => setFormData({...formData, rpe: parseInt(e.target.value)})}
-                            className="w-full accent-primary h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer"
-                        />
-                        <div className="flex justify-between text-[10px] font-bold text-surface-on-variant mt-1">
-                            <span>Easy (1)</span>
-                            <span className="text-primary text-base">{formData.rpe}</span>
-                            <span>Max (10)</span>
-                        </div>
-                    </div>
-                     <Input 
-                        label="Cadence (spm)" 
-                        type="number" 
-                        value={formData.cadence} 
-                        onChange={(e: any) => setFormData({...formData, cadence: parseInt(e.target.value)})} 
-                        icon={Footprints}
-                    />
-                    
-                    {/* Shoe Selector Logic */}
-                    {isCreatingShoe ? (
-                         <div className="col-span-1 bg-surface-container-high rounded-2xl p-3 border border-primary/30 animate-fade-in relative">
-                             <button 
-                                type="button" 
-                                onClick={() => setIsCreatingShoe(false)}
-                                className="absolute top-2 right-2 text-surface-on-variant hover:text-surface-on"
-                             >
-                                 <X size={14} />
-                             </button>
-                             <div className="text-[10px] font-bold uppercase text-primary mb-2">New Shoe</div>
-                             <div className="space-y-2">
-                                 <input 
-                                    className="w-full bg-surface-container-highest p-2 rounded-lg text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
-                                    placeholder="Brand (e.g. Nike)"
-                                    value={newShoeBrand}
-                                    onChange={e => setNewShoeBrand(e.target.value)}
-                                    autoFocus
-                                 />
-                                 <input 
-                                    className="w-full bg-surface-container-highest p-2 rounded-lg text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
-                                    placeholder="Model (e.g. Pegasus)"
-                                    value={newShoeModel}
-                                    onChange={e => setNewShoeModel(e.target.value)}
-                                 />
-                             </div>
-                         </div>
-                    ) : !hasShoes && !isCreatingShoe ? (
-                        <div 
-                            className="col-span-1 bg-orange-50 dark:bg-orange-900/20 rounded-2xl p-3 border border-orange-100 dark:border-orange-900/30 flex flex-col justify-between cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => onAddShoe ? setIsCreatingShoe(true) : null}
+            <div>
+                <label className="block text-[10px] font-bold text-accents-5 uppercase tracking-widest mb-3 ml-1">Run Type</label>
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                    {RUN_TYPE_ORDER.map(type => (
+                        <button
+                            key={type}
+                            type="button"
+                            onClick={() => setFormData({...formData, type: type as RunType})}
+                            className={`flex flex-col items-center justify-center p-3 rounded-md border transition-all ${formData.type === type ? 'bg-accents-1 border-foreground' : 'bg-background border-accents-2 hover:bg-accents-1'}`}
                         >
-                             <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                                 <AlertCircle size={16} />
-                                 <span className="text-xs font-bold uppercase">No Gear</span>
-                             </div>
-                             <div className="mt-2 flex items-center gap-2 text-orange-800 dark:text-orange-200 font-bold text-sm">
-                                 <Plus size={16} /> Add Shoe
-                             </div>
-                        </div>
-                    ) : (
-                         <Select 
-                            label="Gear"
-                            icon={Footprints}
-                            value={formData.shoeId || ''}
-                            onChange={(e: any) => {
-                                if (e.target.value === 'NEW') {
-                                    setIsCreatingShoe(true);
-                                } else {
-                                    setFormData({...formData, shoeId: e.target.value});
-                                }
-                            }}
-                            options={[
-                                { value: '', label: 'No Shoe Selected' },
-                                ...availableShoes.map(s => ({ 
-                                    value: s.id, 
-                                    label: `${s.brand} ${s.model}${s.isDefault ? ' (Primary)' : ''}` 
-                                })),
-                                { value: 'NEW', label: '+ Add New Shoe...' }
-                            ]}
-                        />
-                    )}
+                            <div className="mb-1.5" style={{ color: formData.type === type ? 'var(--brand-red)' : 'var(--accents-3)' }}>
+                                {getRunTypeIcon(type as RunType)}
+                            </div>
+                            <span className={`text-[9px] font-bold uppercase tracking-wider ${formData.type === type ? 'text-foreground' : 'text-accents-5'}`}>{type}</span>
+                        </button>
+                    ))}
                 </div>
+            </div>
 
-                <div className="relative group">
-                    <div className="absolute top-[26px] left-0 pl-4 flex items-center pointer-events-none">
-                         <AlignLeft className="text-surface-on-variant/70 group-focus-within:text-primary transition-colors" size={20} />
-                    </div>
-                    <textarea
-                        value={formData.notes}
-                        onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                        placeholder="How did it feel?"
-                        className="block w-full pl-12 pr-4 pt-6 pb-2 bg-surface-container-highest rounded-xl border-b border-outline-variant/30 focus:border-primary text-surface-on placeholder-surface-on-variant/30 focus:outline-none transition-colors font-medium min-h-[100px] resize-none"
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input label="Avg HR" type="number" value={formData.avgHr} onChange={(e: any) => setFormData({...formData, avgHr: parseInt(e.target.value)})} icon={Heart} />
+                <Input label="Cadence" type="number" value={formData.cadence} onChange={(e: any) => setFormData({...formData, cadence: parseInt(e.target.value)})} icon={Footprints} />
+                <Input label="Elevation (m)" type="number" value={formData.elevation} onChange={(e: any) => setFormData({...formData, elevation: parseInt(e.target.value)})} icon={TrendingUp} />
+            </div>
+
+            <div>
+                <label className="block text-[10px] font-bold text-accents-5 uppercase tracking-widest mb-3 ml-1">Effort (1-10)</label>
+                <div className="flex items-center gap-4">
+                    <input
+                        type="range" min="1" max="10" step="1"
+                        value={formData.effort}
+                        onChange={(e) => setFormData({...formData, effort: parseInt(e.target.value)})}
+                        className="flex-1 accent-foreground h-1 bg-accents-2 rounded-full appearance-none cursor-pointer"
                     />
-                    <label className="absolute left-12 top-2 text-surface-on-variant text-[10px] font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-focus-within:text-primary">
-                        Notes
-                    </label>
+                    <span className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center font-bold text-sm">{formData.effort}</span>
                 </div>
             </div>
 
-            <div className="p-6 border-t border-outline-variant/10 mt-auto bg-surface-container">
-                <button 
-                    type="submit"
-                    className="w-full bg-primary text-primary-on py-4 rounded-full font-bold text-lg shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                >
-                    <Save size={20} />
-                    {isEditing ? 'Update Run' : 'Log Run'}
-                </button>
+            {isCreatingShoe ? (
+                <div className="p-4 bg-accents-1 rounded-md border border-accents-2 animate-fade-in relative">
+                    <button type="button" onClick={() => setIsCreatingShoe(false)} className="absolute top-2 right-2 text-accents-4 hover:text-foreground"><X size={14} /></button>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-3">Add New Gear</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <input className="bg-background border border-accents-2 p-2 rounded text-xs outline-none focus:border-foreground" placeholder="Brand" value={newShoeBrand} onChange={e => setNewShoeBrand(e.target.value)} />
+                        <input className="bg-background border border-accents-2 p-2 rounded text-xs outline-none focus:border-foreground" placeholder="Model" value={newShoeModel} onChange={e => setNewShoeModel(e.target.value)} />
+                    </div>
+                </div>
+            ) : (
+                <Select
+                    label="Footwear"
+                    value={formData.shoeId || ''}
+                    onChange={(e: any) => e.target.value === 'NEW' ? setIsCreatingShoe(true) : setFormData({...formData, shoeId: e.target.value})}
+                    options={[
+                        { value: '', label: 'Select Shoe...' },
+                        ...availableShoes.map(s => ({ value: s.id, label: `${s.brand} ${s.model}` })),
+                        { value: 'NEW', label: '+ Add New...' }
+                    ]}
+                />
+            )}
+
+            <div className="relative">
+                <label className="block text-[10px] font-bold text-accents-5 uppercase tracking-widest mb-1.5 ml-1">Session Notes</label>
+                <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                    placeholder="How did it feel?"
+                    className="w-full p-3 bg-background rounded-md border border-accents-2 text-sm focus:border-foreground focus:outline-none transition-colors min-h-[100px] resize-none"
+                />
             </div>
+
+            <Button type="submit" className="w-full h-12">
+                <Save size={18} className="mr-2" /> {isEditing ? 'Update Entry' : 'Log Workout'}
+            </Button>
         </form>
     );
 };
