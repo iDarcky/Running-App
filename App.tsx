@@ -31,6 +31,8 @@ const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
+  const [runState, setRunState] = useState<"idle" | "active" | "summary">("idle");
+  const [currentRunData, setCurrentRunData] = useState<any>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   
   const [runs, setRuns] = useState<Run[]>([]);
@@ -183,6 +185,35 @@ const App: React.FC = () => {
       completeOnboarding(newProfile, initialRuns);
   };
 
+
+
+  const handleStartRun = () => setRunState('active');
+  const handleFinishRun = (data: any) => {
+    setCurrentRunData(data);
+    setRunState('summary');
+  };
+  const handleCancelRun = () => {
+    setRunState('idle');
+    setCurrentRunData(null);
+  };
+  const handleSaveRun = (runDetails: any) => {
+    const newRun = {
+      id: Math.random().toString(36).substr(2, 9),
+      date: new Date().toISOString(),
+      distance: runDetails.distance,
+      duration: runDetails.duration,
+      type: 'Easy' as any,
+      avgHr: 0,
+      pace: runDetails.pace,
+      rpe: runDetails.rpe,
+      notes: runDetails.notes,
+      source: 'Manual' as any
+    };
+    handleAddRun(newRun);
+    setRunState('idle');
+    setCurrentRunData(null);
+  };
+
   // --- CRUD Handlers ---
   const handleAddRun = (run: Run) => saveRuns([run, ...runs]);
   const handleAddRuns = (newRuns: Run[]) => {
@@ -216,6 +247,15 @@ const App: React.FC = () => {
       localStorage.clear();
       window.location.reload();
   };
+
+
+  if (runState === 'active') {
+    return <ActiveRun onFinish={handleFinishRun} onCancel={handleCancelRun} />;
+  }
+
+  if (runState === 'summary' && currentRunData) {
+    return <PostRunSummary runData={currentRunData} onSave={handleSaveRun} onDiscard={handleCancelRun} />;
+  }
 
   if (showLanding) {
       return <LandingPage onLogin={handleLogin} onGuest={handleGuest} />;
@@ -275,6 +315,7 @@ const App: React.FC = () => {
                 <div className="w-full px-4 md:px-8">
                     {activeTab === 'dashboard' && (
                         <Dashboard 
+                            onStartRun={handleStartRun}
                             runs={runs} 
                             goals={goals} 
                             profile={profile} 
