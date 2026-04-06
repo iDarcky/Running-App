@@ -11,6 +11,8 @@ import { LandingPage } from './components/LandingPage';
 import { LayoutDashboard, CalendarRange, Sparkles, FlagTriangleRight, User, AlertTriangle } from 'lucide-react';
 import { RedLineLogo } from './components/Logo';
 import { NavButton } from './components/NavButton';
+import ActiveRun from "./components/ActiveRun";
+import PostRunSummary from "./components/PostRunSummary";
 
 // Pure helper function for robust calculation
 const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
