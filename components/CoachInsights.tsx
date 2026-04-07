@@ -54,7 +54,11 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
       setInsights(newInsights);
       localStorage.setItem('redline_coach_insights', JSON.stringify(newInsights));
     } catch (err: any) {
-      setError(err.message || 'Failed to generate insights');
+      if (err.message && (err.message.includes('429') || err.message.includes('500') || err.message.includes('Quota') || err.message.includes('Edge Function'))) {
+         setError("AI features are currently unavailable (Quota Exceeded). Please try again later.");
+      } else {
+         setError(err.message || 'Failed to generate insights');
+      }
     } finally {
       setLoading(false);
     }
@@ -72,8 +76,8 @@ const CoachInsights: React.FC<CoachInsightsProps> = ({ runs, profile }) => {
     try {
       const response = await getCoachChatResponse(userMessage, runs, profile);
       setMessages(prev => [...prev, { role: 'model', text: response }]);
-    } catch (err) {
-      setMessages(prev => [...prev, { role: 'model', text: "Sorry, I'm having trouble connecting right now. Let's try again in a moment." }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: 'model', text: "AI features are currently unavailable. Please try again later." }]);
     } finally {
       setChatLoading(false);
     }
