@@ -69,7 +69,7 @@ export interface CoachInsights {
 }
 
 export type GoalType = 'distance' | 'duration' | 'frequency' | 'runs' | 'elevation';
-export type GoalPeriod = 'weekly' | 'monthly';
+export type GoalPeriod = 'weekly' | 'monthly' | 'yearly';
 
 export interface Goal {
   id: string;

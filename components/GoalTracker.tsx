@@ -19,29 +19,68 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ runs, goals, onAddGoal, onDel
   });
 
   const goalsWithProgress = useMemo(() => {
+    if (!goals || goals.length === 0) return [];
+
     const now = new Date();
     
-    return (goals || []).map(goal => {
-      let relevantRuns: Run[] = [];
-      
-      if (goal.period === 'weekly') {
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-        const monday = new Date(now.setDate(diff));
-        monday.setHours(0, 0, 0, 0);
-        relevantRuns = runs.filter(r => new Date(r.date) >= monday);
-      } else {
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        relevantRuns = runs.filter(r => new Date(r.date) >= firstDay);
-      }
+    // 1. Identify unique periods and calculate their start thresholds
+    const requiredPeriods = new Set(goals.map(g => g.period || 'weekly'));
+    const periodThresholds: Record<string, number> = {};
 
+    if (requiredPeriods.has('weekly')) {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(now);
+      monday.setDate(diff);
+      monday.setHours(0, 0, 0, 0);
+      periodThresholds['weekly'] = monday.getTime();
+    }
+
+    if (requiredPeriods.has('monthly')) {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      firstDay.setHours(0, 0, 0, 0);
+      periodThresholds['monthly'] = firstDay.getTime();
+    }
+
+    // Future proofing for yearly goals
+    if (requiredPeriods.has('yearly')) {
+      const firstDay = new Date(now.getFullYear(), 0, 1);
+      firstDay.setHours(0, 0, 0, 0);
+      periodThresholds['yearly'] = firstDay.getTime();
+    }
+
+    // 2. Initialize accumulators
+    const aggregations: Record<string, { distance: number; duration: number; frequency: number }> = {};
+    requiredPeriods.forEach(period => {
+      aggregations[period] = { distance: 0, duration: 0, frequency: 0 };
+    });
+
+    // 3. Single pass over runs to aggregate totals
+    for (const run of runs) {
+      const runTime = new Date(run.date).getTime();
+      requiredPeriods.forEach(period => {
+        if (periodThresholds[period] && runTime >= periodThresholds[period]) {
+          aggregations[period].distance += (run.distance || 0);
+          aggregations[period].duration += (run.duration || 0);
+          aggregations[period].frequency += 1;
+        }
+      });
+    }
+
+    // 4. Map goals to pre-aggregated results
+    return goals.map(goal => {
+      const period = goal.period || 'weekly';
+      const agg = aggregations[period];
       let current = 0;
-      if (goal.type === 'distance') {
-        current = relevantRuns.reduce((acc, r) => acc + r.distance, 0);
-      } else if (goal.type === 'duration') {
-        current = relevantRuns.reduce((acc, r) => acc + r.duration, 0);
-      } else if (goal.type === 'frequency') {
-        current = relevantRuns.length;
+
+      if (agg) {
+        if (goal.type === 'distance') {
+          current = agg.distance;
+        } else if (goal.type === 'duration') {
+          current = agg.duration;
+        } else if (goal.type === 'frequency') {
+          current = agg.frequency;
+        }
       }
 
       return {
@@ -115,7 +154,8 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({ runs, goals, onAddGoal, onDel
                         onChange={(e: any) => setNewGoal({...newGoal, period: e.target.value as GoalPeriod})}
                         options={[
                             { value: 'weekly', label: 'Weekly' },
-                            { value: 'monthly', label: 'Monthly' }
+                            { value: 'monthly', label: 'Monthly' },
+                            { value: 'yearly', label: 'Yearly' }
                         ]}
                     />
                 </div>
