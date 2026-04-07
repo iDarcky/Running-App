@@ -17,7 +17,8 @@ import {
   AlignLeft,
   Timer,
   AlertCircle,
-  Gauge
+  Gauge,
+  Trophy
 } from 'lucide-react';
 import { Run, RunType, UserProfile, Shoe } from '../types';
 import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
@@ -95,8 +96,6 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing = fa
             default: return <Activity size={16} />;
         }
     };
-
-    const Trophy = ({ size, className }: any) => <Activity size={size} className={className} />;
 
     const availableShoes = profile?.shoes?.filter(s => !s.isRetired) || [];
 
