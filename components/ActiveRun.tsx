@@ -6,6 +6,11 @@ import { Play, Pause, Square, Mic, MicOff, AlertCircle } from 'lucide-react';
 import L from 'leaflet';
 import { formatDuration as formatDurationOriginal, displayDistance, displayPaceFromStr } from '../utils/formatters';
 
+import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+
 // Our ActiveRun duration is in seconds. The formatter expects minutes.
 const formatDuration = (seconds: number): string => {
   return formatDurationOriginal(seconds / 60);
@@ -15,9 +20,9 @@ const formatDuration = (seconds: number): string => {
 // Fix for default marker icons in React-Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl: iconRetina,
+  iconUrl: iconUrl,
+  shadowUrl: shadowUrl,
 });
 
 interface ActiveRunProps {
