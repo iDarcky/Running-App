@@ -70,11 +70,22 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     return isValid(date) ? format(date, formatStr) : 'Invalid date';
   };
 
+  let totalDistance = 0;
+  let totalPace = 0;
+  let elevationGain = 0;
+
+  for (let i = 0; i < runs.length; i++) {
+      const r = runs[i];
+      totalDistance += r.distance;
+      totalPace += parseFloat(r.pace.replace(':', '.')) || 0;
+      elevationGain += r.elevation || 0;
+  }
+
   const stats = {
-      totalDistance: runs.reduce((acc, r) => acc + r.distance, 0).toFixed(1),
-      avgPace: (runs.reduce((acc, r) => acc + (parseFloat(r.pace.replace(':', '.')) || 0), 0) / (runs.length || 1)).toFixed(2).replace('.', ':'),
+      totalDistance: totalDistance.toFixed(1),
+      avgPace: (totalPace / (runs.length || 1)).toFixed(2).replace('.', ':'),
       totalRuns: runs.length,
-      elevationGain: runs.reduce((acc, r) => acc + (r.elevation || 0), 0)
+      elevationGain: elevationGain
   };
 
   const chartData = runs.slice(0, 10).reverse().map(r => ({
