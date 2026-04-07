@@ -26,8 +26,6 @@ import { Run, UserProfile, Shoe } from '../types';
 import RunForm from './RunForm';
 import { Modal, Input, Button, Card } from './UIComponents';
 import { SocialShareModal } from './SocialShareModal';
-import { syncWithStrava, handleStravaCallback } from '../services/stravaService';
-import { syncWithGoogleFit, handleGoogleFitCallback } from '../services/googleFitService';
 
 interface RunLogProps {
   runs: Run[];
@@ -46,55 +44,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [shareRun, setShareRun] = useState<Run | null>(null);
   
-  const [isStravaModalOpen, setIsStravaModalOpen] = useState(false);
-  const [stravaClientId, setStravaClientId] = useState(localStorage.getItem('strava_client_id') || '');
-  const [stravaClientSecret, setStravaClientSecret] = useState(localStorage.getItem('strava_client_secret') || '');
-  const [stravaError, setStravaError] = useState('');
 
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [googleClientId, setGoogleClientId] = useState(localStorage.getItem('google_client_id') || '');
-  const [googleClientSecret, setGoogleClientSecret] = useState(localStorage.getItem('google_client_secret') || '');
-  const [googleError, setGoogleError] = useState('');
-
-  const detectedHostname = window.location.hostname;
-  const detectedOrigin = window.location.origin;
-
-  useEffect(() => {
-    const checkCallbacks = async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-
-        if (code && state === 'strava_auth') {
-            try {
-                const syncedRuns = await handleStravaCallback(code, stravaClientId, stravaClientSecret);
-                if (syncedRuns.length > 0) {
-                    onAddRuns(syncedRuns);
-                    alert(`Successfully synced ${syncedRuns.length} new runs from Strava!`);
-                }
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } catch (err: any) {
-                setStravaError(err.message || 'Failed to sync with Strava');
-                setIsStravaModalOpen(true);
-            }
-        }
-
-        if (code && state === 'google_fit_auth') {
-            try {
-                const syncedRuns = await handleGoogleFitCallback(code, googleClientId, googleClientSecret);
-                if (syncedRuns.length > 0) {
-                    onAddRuns(syncedRuns);
-                    alert(`Successfully synced ${syncedRuns.length} new runs from Google Fit!`);
-                }
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } catch (err: any) {
-                setGoogleError(err.message || 'Failed to sync with Google Fit');
-                setIsGoogleModalOpen(true);
-            }
-        }
-    };
-    checkCallbacks();
-  }, []);
 
   const filteredRuns = runs.filter(run =>
     run.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,26 +67,6 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
     setEditingId(null);
   };
 
-  const initiateStravaAuth = () => {
-      if (!stravaClientId || !stravaClientSecret) {
-          setStravaError('Please enter both Client ID and Client Secret');
-          return;
-      }
-      localStorage.setItem('strava_client_id', stravaClientId);
-      localStorage.setItem('strava_client_secret', stravaClientSecret);
-      syncWithStrava(stravaClientId);
-  };
-
-  const initiateGoogleAuth = () => {
-    if (!googleClientId || !googleClientSecret) {
-        setGoogleError('Please enter both Client ID and Client Secret');
-        return;
-    }
-    localStorage.setItem('google_client_id', googleClientId);
-    localStorage.setItem('google_client_secret', googleClientSecret);
-    syncWithGoogleFit(googleClientId);
-  };
-
   const editingRun = editingId ? runs.find(r => r.id === editingId) : undefined;
 
   return (
@@ -148,9 +78,6 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
          </div>
 
          <div className="flex gap-2 w-full md:w-auto">
-             <Button variant="secondary" size="sm" onClick={() => setIsStravaModalOpen(true)}>
-                 Connect Strava
-             </Button>
              <Button size="sm" onClick={() => setIsFormOpen(true)}>
                  <Plus size={16} className="mr-1" /> Log Run
              </Button>
@@ -302,40 +229,6 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
       </Modal>
       
       {shareRun && <SocialShareModal run={shareRun} onClose={() => setShareRun(null)} />}
-
-      <Modal isOpen={isStravaModalOpen} onClose={() => setIsStravaModalOpen(false)} title="Sync Services">
-           <div className="space-y-6">
-                <div className="bg-accents-1 p-6 rounded-xl border border-accents-2">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="bg-[#FC4C02] p-2 rounded-lg text-white"><Zap size={24} fill="currentColor" /></div>
-                        <div>
-                            <h4 className="font-bold text-foreground">Strava API</h4>
-                            <p className="text-xs text-accents-5">Connect your athlete account.</p>
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        <Input label="Client ID" value={stravaClientId} onChange={(e: any) => setStravaClientId(e.target.value)} />
-                        <Input label="Client Secret" type="password" value={stravaClientSecret} onChange={(e: any) => setStravaClientSecret(e.target.value)} />
-                        <Button className="w-full bg-[#FC4C02] text-white hover:bg-[#E34402]" onClick={initiateStravaAuth}>Authorize Strava</Button>
-                    </div>
-                </div>
-
-                <div className="bg-accents-1 p-6 rounded-xl border border-accents-2">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="bg-foreground p-2 rounded-lg text-background"><Activity size={24} /></div>
-                        <div>
-                            <h4 className="font-bold text-foreground">Google Fit</h4>
-                            <p className="text-xs text-accents-5">Sync workout data from Google.</p>
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        <Input label="Client ID" value={googleClientId} onChange={(e: any) => setGoogleClientId(e.target.value)} />
-                        <Input label="Client Secret" type="password" value={googleClientSecret} onChange={(e: any) => setGoogleClientSecret(e.target.value)} />
-                        <Button variant="secondary" className="w-full" onClick={initiateGoogleAuth}>Authorize Google Fit</Button>
-                    </div>
-                </div>
-           </div>
-      </Modal>
     </div>
   );
 };
