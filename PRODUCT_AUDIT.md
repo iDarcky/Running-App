@@ -144,3 +144,32 @@ This document contains 100+ points of actionable improvements, evaluated from 13
 5. **Event API:** Build a webhook system allowing physical/virtual race organizers to auto-import user results.
 6. **Gear Affiliates:** Set up official affiliate partnerships with shoe and bike brands to offer discounts to Pro users.
 7. **Live Event Sponsorship:** Sponsor local 5Ks or criteriums with "Live Tracking via RedLine" to acquire mass users simultaneously.
+
+
+## 14. Community Manager / Social Architect 🌐
+**Focus: Social Engagement & Retention (The "Hevy/Strava" Aspect)**
+1. **Feed/Timeline:** Implement a chronological or algorithmic feed of friends' activities to drive daily active users (DAU).
+2. **Kudos/Likes System:** Create a low-friction interaction mechanism (e.g., "Give Kudos" or a custom "Fire" button) to encourage engagement.
+3. **Commenting Thread:** Allow users to comment on specific workouts to build camaraderie and support.
+4. **Follower Mechanics:** Build an asymmetric follow system (like Twitter/Strava) rather than a mutual friend system (like Facebook) to allow influencers to grow an audience.
+5. **Activity Tagging:** Allow users to tag friends they worked out with so the activity appears on both profiles.
+6. **Groups/Clubs:** Create micro-communities based on local geography (e.g., "Austin Runners") or brand affinity.
+7. **Leaderboards:** Implement segment-based or weekly distance leaderboards to introduce friendly competition.
+
+## 15. Legal / Compliance Officer ⚖️
+**Focus: IP, Liability & Copyright Concerns (Strava Precedents)**
+1. **Segment Trademarks:** Strava has famously protected their concept of "Segments" and specific leaderboards. Avoid directly copying their terminology (e.g., use "Sprints" or "Zones" instead of "Segments").
+2. **Kudos IP:** "Kudos" is heavily associated with Strava; while likely not entirely copyrightable as a single word, using a different term (e.g., "Props", "Boosts") avoids trademark friction.
+3. **User-Generated Content (UGC) Liability:** With a social feed and comments, you must implement reporting tools and Terms of Service outlining that you are a host, not a publisher, to avoid liability for user comments (Section 230 protections in the US).
+4. **Location Data Lawsuits:** Strava faced intense scrutiny (and military base exposure issues) due to their global heatmaps. Ensure any public, aggregated data is heavily anonymized and users explicitly consent.
+5. **Map Licensing:** Ensure the map tiles being used (currently Leaflet/OSM) comply with commercial usage terms. Free tiers often strictly prohibit heavy commercial use.
+6. **Physical Injury Liability:** Include robust disclaimers stating the app does not provide medical advice and the company is not liable if a user injures themselves following a generated training plan or competing for a leaderboard spot.
+7. **API Terms of Service:** If building data importers *from* Strava or Garmin, strictly adhere to their API limits and terms to avoid getting blacklisted and sued for scraping.
+
+## Is this too huge?
+While this 15-perspective roadmap looks immense, **it is entirely possible.** The key is **ruthless prioritization.**
+You do not build this all at once. You are currently at Phase 1 (MVP).
+*   **Phase 1 (Now):** Multi-activity tracking, local storage, basic UI overhaul.
+*   **Phase 2:** Cloud sync, user accounts, and data privacy.
+*   **Phase 3:** The Social Feed (Friends, Likes, Comments).
+*   **Phase 4:** Advanced Integrations & Monetization.
