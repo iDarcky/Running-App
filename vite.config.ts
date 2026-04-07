@@ -8,10 +8,6 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    define: {
-      // This ensures process.env.API_KEY is replaced with the actual string value during build
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
-    },
     build: {
       // Increase the warning limit to 1600kb to accommodate large libraries
       chunkSizeWarningLimit: 1600,
