@@ -6,18 +6,31 @@ import { Play, Pause, Square, Mic, MicOff, AlertCircle } from 'lucide-react';
 import L from 'leaflet';
 import { formatDuration as formatDurationOriginal, displayDistance, displayPaceFromStr } from '../utils/formatters';
 
+
+
+
 // Our ActiveRun duration is in seconds. The formatter expects minutes.
 const formatDuration = (seconds: number): string => {
   return formatDurationOriginal(seconds / 60);
 };
 
 
-// Fix for default marker icons in React-Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+// Custom RedLine marker icon
+const redMarkerIcon = L.divIcon({
+  className: 'custom-div-icon',
+  html: `
+    <div style="
+      background-color: #EE0000;
+      box-sizing: border-box;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    "></div>
+  `,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8]
 });
 
 interface ActiveRunProps {
@@ -191,27 +204,24 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel, unit =
   return (
     <div className="fixed inset-0 z-[100] bg-surface flex flex-col">
       {/* Top Bar */}
-      <div className="absolute top-0 left-0 right-0 p-6 z-10 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
-        <button onClick={onCancel} className="p-3 bg-surface/80 backdrop-blur rounded-full text-surface-on shadow-lg">
-          <Square size={24} />
-        </button>
+      <div className="absolute top-0 left-0 right-0 p-6 z-[1000] flex justify-end items-center bg-gradient-to-b from-black/50 to-transparent pointer-events-none">
         <button
           onClick={() => setVoiceEnabled(!voiceEnabled)}
-          className={`p-3 rounded-full shadow-lg backdrop-blur ${voiceEnabled ? 'bg-primary text-white' : 'bg-surface/80 text-surface-on'}`}
+          className={`p-3 rounded-full shadow-lg backdrop-blur pointer-events-auto ${voiceEnabled ? 'bg-primary text-white' : 'bg-surface/80 text-surface-on'}`}
         >
           {voiceEnabled ? <Mic size={24} /> : <MicOff size={24} />}
         </button>
       </div>
 
       {gpsError && (
-        <div className="absolute top-24 left-4 right-4 z-10 bg-orange-500 text-white p-3 rounded-xl flex items-center gap-2 shadow-lg">
+        <div className="absolute top-24 left-4 right-4 z-[1000] bg-orange-500 text-white p-3 rounded-xl flex items-center gap-2 shadow-lg">
           <AlertCircle size={20} />
           <span className="font-semibold text-sm">{gpsError}</span>
         </div>
       )}
 
       {/* Map Area */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative z-0">
         <MapContainer
           center={currentPosition || [0, 0]}
           zoom={16}
@@ -227,7 +237,7 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel, unit =
             <Polyline positions={routeCoordinates} color="#EE0000" weight={5} opacity={0.8} />
           )}
           {currentPosition && (
-            <Marker position={currentPosition} />
+            <Marker position={currentPosition} icon={redMarkerIcon} />
           )}
         </MapContainer>
       </div>
