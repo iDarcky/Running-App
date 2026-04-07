@@ -10,6 +10,7 @@ interface SocialShareModalProps {
 }
 
 const THEMES = [
+  { id: 'transparent', color: 'transparent', text: '#FFFFFF', label: 'Overlay' },
   { id: 'dark', color: '#000000', text: '#FFFFFF', label: 'Classic Black' },
   { id: 'light', color: '#FFFFFF', text: '#000000', label: 'Clean White' },
   { id: 'red', color: '#EE0000', text: '#FFFFFF', label: 'RedLine Red' }
@@ -66,8 +67,12 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ run, onClose
             ctx.fillStyle = 'rgba(0,0,0,0.4)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         } else {
-            ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (theme === 'transparent') {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
         }
 
         // 2. Logo
@@ -97,10 +102,18 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ run, onClose
         ctx.font = '600 24px "Geist Sans", sans-serif';
         ctx.globalAlpha = 0.7;
         ctx.fillText(caption || 'RUN', padding + 140, padding + 95);
+
+        // Draw distance metric text with shadow for better visibility on transparent backgrounds
+
         ctx.globalAlpha = 1.0;
 
         // 4. Main Metric (Distance)
         const mainMetricBaseY = canvas.height / 2 + 100;
+
+        ctx.shadowColor = theme === 'transparent' ? 'rgba(0,0,0,0.5)' : 'transparent';
+        ctx.shadowBlur = theme === 'transparent' ? 5 : 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
         ctx.font = '900 420px "Geist Sans", sans-serif';
         ctx.letterSpacing = "-20px";
         const distanceText = run.distance.toString();
@@ -111,9 +124,88 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ run, onClose
         ctx.font = '900 48px "Geist Sans", sans-serif';
         ctx.fillText('KM', padding + metrics.width + 10, mainMetricBaseY - 40);
 
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+
+        // 4.5 Map Outline
+        if (run.positions && run.positions.length > 0) {
+            const lats = run.positions.map(p => p.coords.latitude);
+            const lons = run.positions.map(p => p.coords.longitude);
+            const minLat = Math.min(...lats);
+            const maxLat = Math.max(...lats);
+            const minLon = Math.min(...lons);
+            const maxLon = Math.max(...lons);
+
+            const mapWidth = 350;
+            const mapHeight = 350;
+            const mapX = canvas.width - mapWidth - padding;
+            const mapY = padding;
+
+            const latRange = maxLat - minLat;
+            const lonRange = maxLon - minLon;
+
+            // Handle edge case where route is too short to form an area
+            if (latRange > 0 && lonRange > 0) {
+                // Determine scale to fit within bounding box while preserving aspect ratio
+                // Note: Longitude needs scaling by cos(latitude) for accurate aspect ratio, but simple scaling is ok for rough outline
+                const centerLat = (minLat + maxLat) / 2;
+                const lonCorrection = Math.cos(centerLat * Math.PI / 180);
+
+                const adjustedLonRange = lonRange * lonCorrection;
+
+                const scaleX = mapWidth / adjustedLonRange;
+                const scaleY = mapHeight / latRange;
+                const scale = Math.min(scaleX, scaleY) * 0.9; // 90% to leave some padding
+
+                const drawRoute = (xOffset, yOffset, strokeColor, lineWidth) => {
+                    ctx.beginPath();
+                    for (let i = 0; i < run.positions.length; i++) {
+                        const p = run.positions[i];
+
+                        // Normalize coordinates (0 to 1)
+                        const normalizedX = (p.coords.longitude - minLon) * lonCorrection / adjustedLonRange;
+                        const normalizedY = 1 - ((p.coords.latitude - minLat) / latRange); // Invert Y as canvas Y goes down
+
+                        // Scale and translate
+                        // Center within the mapWidth/mapHeight box
+                        const routeWidth = adjustedLonRange * scale;
+                        const routeHeight = latRange * scale;
+
+                        const startX = mapX + (mapWidth - routeWidth) / 2;
+                        const startY = mapY + (mapHeight - routeHeight) / 2;
+
+                        const x = startX + normalizedX * routeWidth + xOffset;
+                        const y = startY + normalizedY * routeHeight + yOffset;
+
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = lineWidth;
+                    ctx.lineJoin = 'round';
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                };
+
+                // Draw outline (glow/shadow effect)
+                drawRoute(0, 0, theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.5)', 12);
+
+                // Draw main route line
+                drawRoute(0, 0, theme === 'red' ? '#FFFFFF' : '#EE0000', 6);
+            }
+        }
+
         // 5. Bottom metrics
         const footerY = canvas.height - padding;
         const colWidth = contentWidth / 3;
+
+        // Reset shadow for bottom metrics and map
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
 
         const drawMetric = (label: string, value: string, x: number) => {
             ctx.globalAlpha = 0.5;
@@ -168,7 +260,7 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ run, onClose
                                     key={t.id}
                                     onClick={() => { setTheme(t.id); setBgImage(null); }}
                                     className={`w-8 h-8 rounded-full border-2 transition-all ${theme === t.id && !bgImage ? 'border-primary scale-110 shadow-md' : 'border-accents-2 hover:scale-105'}`}
-                                    style={{ backgroundColor: t.color }}
+                                    style={t.id === 'transparent' ? { backgroundImage: 'conic-gradient(#ccc 25%, white 25%, white 50%, #ccc 50%, #ccc 75%, white 75%, white)', backgroundSize: '8px 8px' } : { backgroundColor: t.color }}
                                 />
                             ))}
                         </div>
