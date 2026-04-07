@@ -1,5 +1,5 @@
 import { Play } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp,
   Target,
@@ -64,26 +64,24 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     deadline: format(new Date(), 'yyyy-MM-dd')
   });
 
-  const formatDateSafely = (dateStr: string, formatStr: string) => {
-    if (!dateStr) return 'No date';
-    const date = parseISO(dateStr);
-    return isValid(date) ? format(date, formatStr) : 'Invalid date';
-  };
 
-  const stats = {
+
+  const stats = useMemo(() => ({
       totalDistance: runs.reduce((acc, r) => acc + r.distance, 0).toFixed(1),
       avgPace: (runs.reduce((acc, r) => acc + (parseFloat(r.pace.replace(':', '.')) || 0), 0) / (runs.length || 1)).toFixed(2).replace('.', ':'),
       totalRuns: runs.length,
       elevationGain: runs.reduce((acc, r) => acc + (r.elevation || 0), 0)
-  };
+  }), [runs]);
 
-  const chartData = runs.slice(0, 10).reverse().map(r => ({
-      date: formatDateSafely(r.date, 'MMM d'),
-      distance: r.distance,
-      pace: parseFloat(r.pace.replace(':', '.')) || 0,
-      hr: r.avgHr || 0,
-      [r.type]: r.distance
-  }));
+  const chartData = useMemo(() => {
+      return runs.slice(0, 10).reverse().map(r => ({
+          date: formatDateSafely(r.date, 'MMM d'),
+          distance: r.distance,
+          pace: parseFloat(r.pace.replace(':', '.')) || 0,
+          hr: r.avgHr || 0,
+          [r.type]: r.distance
+      }));
+  }, [runs]);
 
   const hrZoneData = [
       { name: 'Z1', value: 15, color: '#10B981' },
