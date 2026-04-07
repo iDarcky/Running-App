@@ -204,27 +204,27 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel, unit =
   return (
     <div className="fixed inset-0 z-[100] bg-surface flex flex-col">
       {/* Top Bar */}
-      <div className="absolute top-0 left-0 right-0 p-6 z-10 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
-        <button onClick={onCancel} className="p-3 bg-surface/80 backdrop-blur rounded-full text-surface-on shadow-lg">
+      <div className="absolute top-0 left-0 right-0 p-6 z-[1000] flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent pointer-events-none">
+        <button onClick={onCancel} className="p-3 bg-surface/80 backdrop-blur rounded-full text-surface-on shadow-lg pointer-events-auto">
           <Square size={24} />
         </button>
         <button
           onClick={() => setVoiceEnabled(!voiceEnabled)}
-          className={`p-3 rounded-full shadow-lg backdrop-blur ${voiceEnabled ? 'bg-primary text-white' : 'bg-surface/80 text-surface-on'}`}
+          className={`p-3 rounded-full shadow-lg backdrop-blur pointer-events-auto ${voiceEnabled ? 'bg-primary text-white' : 'bg-surface/80 text-surface-on'}`}
         >
           {voiceEnabled ? <Mic size={24} /> : <MicOff size={24} />}
         </button>
       </div>
 
       {gpsError && (
-        <div className="absolute top-24 left-4 right-4 z-10 bg-orange-500 text-white p-3 rounded-xl flex items-center gap-2 shadow-lg">
+        <div className="absolute top-24 left-4 right-4 z-[1000] bg-orange-500 text-white p-3 rounded-xl flex items-center gap-2 shadow-lg">
           <AlertCircle size={20} />
           <span className="font-semibold text-sm">{gpsError}</span>
         </div>
       )}
 
       {/* Map Area */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative z-0">
         <MapContainer
           center={currentPosition || [0, 0]}
           zoom={16}
