@@ -6,9 +6,7 @@ import { Play, Pause, Square, Mic, MicOff, AlertCircle } from 'lucide-react';
 import L from 'leaflet';
 import { formatDuration as formatDurationOriginal, displayDistance, displayPaceFromStr } from '../utils/formatters';
 
-import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
-import iconUrl from 'leaflet/dist/images/marker-icon.png';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
 
 
 // Our ActiveRun duration is in seconds. The formatter expects minutes.
@@ -17,12 +15,22 @@ const formatDuration = (seconds: number): string => {
 };
 
 
-// Fix for default marker icons in React-Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: iconRetina,
-  iconUrl: iconUrl,
-  shadowUrl: shadowUrl,
+// Custom RedLine marker icon
+const redMarkerIcon = L.divIcon({
+  className: 'custom-div-icon',
+  html: `
+    <div style="
+      background-color: #EE0000;
+      box-sizing: border-box;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    "></div>
+  `,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8]
 });
 
 interface ActiveRunProps {
@@ -232,7 +240,7 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel, unit =
             <Polyline positions={routeCoordinates} color="#EE0000" weight={5} opacity={0.8} />
           )}
           {currentPosition && (
-            <Marker position={currentPosition} />
+            <Marker position={currentPosition} icon={redMarkerIcon} />
           )}
         </MapContainer>
       </div>
