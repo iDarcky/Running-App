@@ -137,10 +137,10 @@ export const SocialShareModal: React.FC<SocialShareModalProps> = ({ run, onClose
             const minLon = Math.min(...lons);
             const maxLon = Math.max(...lons);
 
-            const mapWidth = 500;
-            const mapHeight = 500;
-            const mapX = (canvas.width - mapWidth) / 2;
-            const mapY = padding + 200;
+            const mapWidth = 350;
+            const mapHeight = 350;
+            const mapX = canvas.width - mapWidth - padding;
+            const mapY = padding;
 
             const latRange = maxLat - minLat;
             const lonRange = maxLon - minLon;
