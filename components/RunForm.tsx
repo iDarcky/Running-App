@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Run, RunType, UserProfile, Shoe } from '../types';
 import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
+import { formatPace } from '../utils/formatters';
 import { Input, Select, Button } from './UIComponents';
 
 interface RunFormProps {
@@ -51,14 +52,6 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing = fa
     const [newShoeBrand, setNewShoeBrand] = useState('');
     const [newShoeModel, setNewShoeModel] = useState('');
 
-    const calculatePace = (dist: number, time: number) => {
-        if (!dist || !time) return '0:00';
-        const totalSeconds = (time * 60) / dist;
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    };
-
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -77,7 +70,7 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing = fa
             finalShoeId = newShoe.id;
         }
 
-        const pace = calculatePace(formData.distance || 0, formData.duration || 0);
+        const pace = formatPace(formData.distance || 0, formData.duration || 0);
         onSubmit({
             ...formData,
             pace,

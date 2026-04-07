@@ -25,7 +25,7 @@ const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
               const val = parseFloat(String(r.distance));
               return acc + (isNaN(val) ? 0 : val);
           }, 0);
-          
+
         return { ...shoe, distance: Number(distance.toFixed(2)) };
     });
 };

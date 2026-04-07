@@ -56,7 +56,7 @@ const App: React.FC = () => {
       } else {
           setGoals(SAMPLE_GOALS);
       }
-      
+
       if (savedRaces) {
           try { setRaces(JSON.parse(savedRaces)); } catch(e) { setRaces([]); }
       }
@@ -69,7 +69,7 @@ const App: React.FC = () => {
       if (loadedProfile.shoes) {
           loadedProfile.shoes = calculateShoeMileage(loadedProfile.shoes, loadedRuns);
       }
-      
+
       setProfile(loadedProfile);
 
       if (savedTheme === 'dark') {
@@ -104,7 +104,7 @@ const App: React.FC = () => {
       setGoals(newGoals);
       localStorage.setItem('redline_goals', JSON.stringify(newGoals));
   };
-  
+
   const saveRaces = (newRaces: Race[]) => {
       setRaces(newRaces);
       localStorage.setItem('redline_races', JSON.stringify(newRaces));
@@ -170,7 +170,7 @@ const App: React.FC = () => {
 
   const handleAddGoal = (goal: Goal) => saveGoals([...goals, goal]);
   const handleDeleteGoal = (id: string) => saveGoals(goals.filter(g => g.id !== id));
-  
+
   const handleAddRace = (race: Race) => saveRaces([...races, race]);
   const handleUpdateRace = (updatedRace: Race) => saveRaces(races.map(r => r.id === updatedRace.id ? updatedRace : r));
   const handleDeleteRace = (id: string) => saveRaces(races.filter(r => r.id !== id));
@@ -224,7 +224,7 @@ const App: React.FC = () => {
                     <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race Prep" onClick={setActiveTab} />
                 </nav>
 
-                <div 
+                <div
                     onClick={() => setActiveTab('profile')}
                     className="p-3 bg-accents-1 rounded-lg mt-auto cursor-pointer hover:bg-accents-2 transition-colors group flex items-center gap-3 border border-transparent hover:border-accents-2"
                 >
@@ -242,21 +242,21 @@ const App: React.FC = () => {
             <main className="flex-1 md:ml-64 p-4 md:p-10 pt-6 pb-24 md:pb-10 w-full overflow-x-hidden">
                 <div className="max-w-6xl mx-auto">
                     {activeTab === 'dashboard' && (
-                        <Dashboard 
-                            runs={runs} 
-                            goals={goals} 
-                            profile={profile} 
-                            onAddGoal={handleAddGoal} 
+                        <Dashboard
+                            runs={runs}
+                            goals={goals}
+                            profile={profile}
+                            onAddGoal={handleAddGoal}
                             onDeleteGoal={handleDeleteGoal}
                             onNavigate={setActiveTab}
                         />
                     )}
                     {activeTab === 'log' && (
-                        <RunLog 
-                            runs={runs} 
-                            onAddRun={handleAddRun} 
+                        <RunLog
+                            runs={runs}
+                            onAddRun={handleAddRun}
                             onAddRuns={handleAddRuns}
-                            onUpdateRun={handleUpdateRun} 
+                            onUpdateRun={handleUpdateRun}
                             onDeleteRun={handleDeleteRun}
                             onAddShoe={handleAddShoe}
                             profile={profile}
@@ -266,7 +266,7 @@ const App: React.FC = () => {
                         <CoachInsights runs={runs} profile={profile} />
                     )}
                     {activeTab === 'race' && (
-                        <RacePrep 
+                        <RacePrep
                             races={races}
                             runs={runs}
                             profile={profile}
@@ -276,10 +276,10 @@ const App: React.FC = () => {
                         />
                     )}
                     {activeTab === 'profile' && (
-                        <Profile 
-                            profile={profile} 
-                            onSaveProfile={saveProfile} 
-                            onReset={handleReset} 
+                        <Profile
+                            profile={profile}
+                            onSaveProfile={saveProfile}
+                            onReset={handleReset}
                             theme={theme}
                             toggleTheme={toggleTheme}
                         />
