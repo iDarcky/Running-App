@@ -8,11 +8,15 @@ import CoachInsights from './components/CoachInsights';
 import RacePrep from './components/RacePrep';
 import Profile from './components/Profile';
 import { LandingPage } from './components/LandingPage';
-import { LayoutDashboard, CalendarRange, Sparkles, FlagTriangleRight, User, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, CalendarRange, Sparkles, FlagTriangleRight, User, AlertTriangle, Users } from 'lucide-react';
 import { RedLineLogo } from './components/Logo';
 import { NavButton } from './components/NavButton';
 import ActiveRun from "./components/ActiveRun";
 import PostRunSummary from "./components/PostRunSummary";
+import { CommunityFeed } from './components/CommunityFeed';
+
+import { supabase } from './services/supabase';
+import { Auth } from './components/Auth';
 
 // Pure helper function for robust calculation
 const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
@@ -32,113 +36,164 @@ const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
 
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'feed' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
   const [runState, setRunState] = useState<"idle" | "active" | "summary">("idle");
   const [currentRunData, setCurrentRunData] = useState<any>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  const [session, setSession] = useState<any>(null);
+  const [authChecking, setAuthChecking] = useState(true);
   
   const [runs, setRuns] = useState<Run[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [races, setRaces] = useState<Race[]>([]);
-  const [profile, setProfile] = useState<UserProfile>({
-    name: '',
-    height: 0,
-    weight: 0,
-    age: 0,
-    sex: '',
-    shoeModel: '',
-    shoes: []
-  });
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [profile, setProfile] = useState<UserProfile>({ name: '', preferredUnits: 'km' });
+
+  // Load localStorage data (Demo or Offline)
+  useEffect(() => {
+    const savedRuns = localStorage.getItem('redline_runs');
+    if (savedRuns) {
+      try { setRuns(JSON.parse(savedRuns)); } catch (e) {}
+    }
+  }, []);
+
+  // Initial Auth Check
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthChecking(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+
+  const handleAddRun = async (run: Run) => {
+      setRuns(prev => [run, ...prev]);
+      if (!session?.user?.id) return;
+
+      const timeParts = (run.time || "00:00:00").split(':').map(Number);
+      const movingTimeSeconds = timeParts.length === 3 ? (timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]) : 0;
+
+      const { error } = await supabase.from('activities').insert({
+          user_id: session.user.id,
+          title: run.type || 'Activity',
+          activity_type: run.type,
+          distance_km: run.distance,
+          moving_time: movingTimeSeconds,
+          start_time: run.date,
+          description: run.notes,
+          gear_id: run.shoeId
+      });
+      if (error) console.error(error);
+  };
+
+  const handleAddRuns = (newRuns: Run[]) => {
+      setRuns([...newRuns, ...runs]);
+  };
+
+  const handleUpdateRun = async (updatedRun: Run) => {
+      setRuns(runs.map(r => r.id === updatedRun.id ? updatedRun : r));
+      if (!session?.user?.id) return;
+
+      const timeParts = (updatedRun.time || "00:00:00").split(':').map(Number);
+      const movingTimeSeconds = timeParts.length === 3 ? (timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]) : 0;
+
+      const { error } = await supabase.from('activities').update({
+          title: updatedRun.type || 'Activity',
+          activity_type: updatedRun.type,
+          distance_km: updatedRun.distance,
+          moving_time: movingTimeSeconds,
+          start_time: updatedRun.date,
+          description: updatedRun.notes,
+          gear_id: updatedRun.shoeId
+      }).eq('id', updatedRun.id);
+      if (error) console.error(error);
+  };
+
+  const handleDeleteRun = async (id: string) => {
+      setRuns(runs.filter(r => r.id !== id));
+      if (!session?.user?.id) return;
+      const { error } = await supabase.from('activities').delete().eq('id', id);
+      if (error) console.error(error);
+  };
+
+  const saveProfile = async (newProfile: UserProfile) => {
+      setProfile(newProfile);
+      if (!session?.user?.id) return;
+
+      await supabase.from('profiles').update({
+          full_name: newProfile.name,
+      }).eq('id', session.user.id);
+  };
+
+  // Check local storage for onboarding skip
+  useEffect(() => {
+      const hasOnboarded = localStorage.getItem('redline_onboarded');
+      if (hasOnboarded === 'true') {
+          setShowLanding(false);
+          const demoMode = localStorage.getItem('redline_demo_mode') === 'true';
+          setIsDemoMode(demoMode);
+      }
+  }, []);
 
   // Load Data
   useEffect(() => {
-    const loadData = () => {
-      const savedRuns = localStorage.getItem('redline_runs');
-      const savedGoals = localStorage.getItem('redline_goals');
-      const savedRaces = localStorage.getItem('redline_races');
-      const savedProfile = localStorage.getItem('redline_profile');
-      const savedTheme = localStorage.getItem('redline_theme');
-      const hasOnboarded = localStorage.getItem('redline_onboarded');
-      const demoMode = localStorage.getItem('redline_demo_mode') === 'true';
+    if (!session?.user?.id) return;
 
-      // If user has onboarded before, skip landing
-      if (hasOnboarded === 'true' && savedProfile) {
-          setShowLanding(false);
-      }
-      
-      setIsDemoMode(demoMode);
+    const loadData = async () => {
+      try {
+        const userId = session.user.id;
 
-      let loadedRuns: Run[] = [];
-      if (savedRuns) {
-          try { 
-              const parsed = JSON.parse(savedRuns);
-              if (Array.isArray(parsed)) loadedRuns = parsed;
-          } catch(e) { console.error("Error parsing runs", e); }
-      }
-      setRuns(loadedRuns);
+        const { data: profileData } = await supabase.from('profiles').select('*').eq('id', userId).single();
+        const { data: gearData } = await supabase.from('gear').select('*').eq('user_id', userId);
+        const { data: activitiesData } = await supabase.from('activities').select('*').eq('user_id', userId).order('start_time', { ascending: false });
 
-      if (savedGoals) {
-          try { setGoals(JSON.parse(savedGoals)); } catch(e) { setGoals(SAMPLE_GOALS); }
-      } else {
-          setGoals(SAMPLE_GOALS);
-      }
-      
-      if (savedRaces) {
-          try { setRaces(JSON.parse(savedRaces)); } catch(e) { setRaces([]); }
-      }
+        const mappedRuns = (activitiesData || []).map((a: any) => ({
+          id: a.id,
+          date: a.start_time,
+          distance: a.distance_km,
+          time: new Date(a.moving_time * 1000).toISOString().substr(11, 8),
+          pace: '',
+          notes: a.description,
+          shoeId: a.gear_id,
+          type: a.activity_type
+        }));
 
-      let loadedProfile: UserProfile = { name: '', height: 0, weight: 0, age: 0, sex: '', shoeModel: '', shoes: [] };
-      if (savedProfile) {
-          try { loadedProfile = JSON.parse(savedProfile); } catch(e) {}
-      }
+        const mappedShoes = (gearData || []).map((g: any) => ({
+          id: g.id,
+          name: g.name,
+          brand: g.brand || '',
+          model: g.model || '',
+          distance: g.total_mileage,
+          isRetired: g.retired
+        }));
 
-      // Recalculate Shoe Mileage on Load to ensure sync and data integrity
-      if (loadedProfile.shoes && loadedProfile.shoes.length > 0) {
-          const updatedShoes = calculateShoeMileage(loadedProfile.shoes, loadedRuns);
-          loadedProfile.shoes = updatedShoes;
-      }
-      
-      setProfile(loadedProfile);
+        setRuns(mappedRuns);
 
-      if (savedTheme === 'dark') {
-          setTheme('dark');
-          document.documentElement.classList.add('dark');
+        const newProfile = {
+           name: profileData?.full_name || profileData?.username || 'User',
+           height: 0, weight: 0, age: 0, sex: '', shoeModel: '',
+           shoes: mappedShoes,
+           preferredUnits: 'km' as any
+        };
+        setProfile(newProfile);
+
+        setShowLanding(false);
+      } catch (err) {
+        console.error('Error loading data from Supabase:', err);
       }
     };
+
     loadData();
-  }, []);
-
-  // --- Save Logic ---
-  const saveRuns = (newRuns: Run[]) => {
-      setRuns(newRuns);
-      localStorage.setItem('redline_runs', JSON.stringify(newRuns));
-      if (profile.shoes && profile.shoes.length > 0) {
-          const updatedShoes = calculateShoeMileage(profile.shoes, newRuns);
-          const newProfile = { ...profile, shoes: updatedShoes };
-          setProfile(newProfile);
-          localStorage.setItem('redline_profile', JSON.stringify(newProfile));
-      }
-  };
-
-  const saveGoals = (newGoals: Goal[]) => {
-      setGoals(newGoals);
-      localStorage.setItem('redline_goals', JSON.stringify(newGoals));
-  };
-  
-  const saveRaces = (newRaces: Race[]) => {
-      setRaces(newRaces);
-      localStorage.setItem('redline_races', JSON.stringify(newRaces));
-  };
-
-  const saveProfile = (newProfile: UserProfile) => {
-      if (newProfile.shoes) {
-          newProfile.shoes = calculateShoeMileage(newProfile.shoes, runs);
-      }
-      setProfile(newProfile);
-      localStorage.setItem('redline_profile', JSON.stringify(newProfile));
-  };
-
+  }, [session]);
   const toggleTheme = () => {
       const newTheme = theme === 'light' ? 'dark' : 'light';
       setTheme(newTheme);
@@ -150,8 +205,8 @@ const App: React.FC = () => {
   // --- Onboarding Handlers ---
 
   const completeOnboarding = (newProfile: UserProfile, initialRuns: Run[]) => {
-      saveProfile(newProfile);
-      saveRuns(initialRuns);
+      saveProfile(newProfile); localStorage.setItem('redline_runs', JSON.stringify(initialRuns)); setRuns(initialRuns);
+      setRuns(initialRuns);
       localStorage.setItem('redline_onboarded', 'true');
       setShowLanding(false);
   };
@@ -218,15 +273,6 @@ const App: React.FC = () => {
     setCurrentRunData(null);
   };
 
-  // --- CRUD Handlers ---
-  const handleAddRun = (run: Run) => saveRuns([run, ...runs]);
-  const handleAddRuns = (newRuns: Run[]) => {
-      const existingIds = new Set(runs.map(r => r.id));
-      const uniqueNewRuns = newRuns.filter(r => !existingIds.has(r.id));
-      saveRuns([...uniqueNewRuns, ...runs]);
-  };
-  const handleUpdateRun = (updatedRun: Run) => saveRuns(runs.map(r => r.id === updatedRun.id ? updatedRun : r));
-  const handleDeleteRun = (id: string) => saveRuns(runs.filter(r => r.id !== id));
 
   const handleAddGoal = (goal: Goal) => saveGoals([...goals, goal]);
   const handleDeleteGoal = (id: string) => saveGoals(goals.filter(g => g.id !== id));
@@ -261,6 +307,15 @@ const App: React.FC = () => {
     return <PostRunSummary runData={currentRunData} onSave={handleSaveRun} onDiscard={handleCancelRun} unit={profile.preferredUnits || "km"} />;
   }
 
+
+  if (authChecking) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500">Loading App Auth... If you see this, Supabase might not be connected correctly.</div>;
+  }
+
+  if (!session && !showLanding && !isDemoMode) {
+    return <Auth onSuccess={() => {}} />;
+  }
+
   if (showLanding) {
       return <LandingPage onLogin={handleLogin} onGuest={handleGuest} />;
   }
@@ -293,6 +348,7 @@ const App: React.FC = () => {
 
                 <nav className="flex-1 space-y-2">
                     <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Dashboard" onClick={setActiveTab} />
+                    <NavButton tab="feed" activeTab={activeTab} icon={Users} label="Community" onClick={setActiveTab} />
                     <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Training Log" onClick={setActiveTab} />
                     <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} />
                     <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race Prep" onClick={setActiveTab} />
@@ -328,7 +384,8 @@ const App: React.FC = () => {
                             onNavigate={setActiveTab}
                         />
                     )}
-                    {activeTab === 'log' && (
+                    {activeTab === 'feed' && <CommunityFeed />}
+        {activeTab === 'log' && (
                         <RunLog 
                             runs={runs} 
                             onAddRun={handleAddRun} 
@@ -368,6 +425,7 @@ const App: React.FC = () => {
             <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe z-50 flex justify-center pointer-events-none">
                  <div className="bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 w-full max-w-md pointer-events-auto">
                      <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
+                     <NavButton tab="feed" activeTab={activeTab} icon={Users} label="Social" onClick={setActiveTab} mobile />
                      <NavButton tab="log" activeTab={activeTab} icon={CalendarRange} label="Log" onClick={setActiveTab} mobile />
                      <NavButton tab="coach" activeTab={activeTab} icon={Sparkles} label="Coach" onClick={setActiveTab} mobile />
                      <NavButton tab="race" activeTab={activeTab} icon={FlagTriangleRight} label="Race" onClick={setActiveTab} mobile />

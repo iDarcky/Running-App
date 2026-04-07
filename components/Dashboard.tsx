@@ -56,6 +56,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     { id: 'trends', size: 'full' }
   ]);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [activityFilter, setActivityFilter] = useState('all');
 
   const [newGoal, setNewGoal] = useState<Partial<Goal>>({
     type: 'distance',
@@ -70,14 +71,15 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     return isValid(date) ? format(date, formatStr) : 'Invalid date';
   };
 
+  const filteredRuns = (runs || []).filter(r => activityFilter === 'all' || (r.type && r.type.toLowerCase() === activityFilter.toLowerCase()));
   const stats = {
-      totalDistance: runs.reduce((acc, r) => acc + r.distance, 0).toFixed(1),
-      avgPace: (runs.reduce((acc, r) => acc + (parseFloat(r.pace.replace(':', '.')) || 0), 0) / (runs.length || 1)).toFixed(2).replace('.', ':'),
-      totalRuns: runs.length,
-      elevationGain: runs.reduce((acc, r) => acc + (r.elevation || 0), 0)
+      totalDistance: filteredRuns.reduce((acc, r) => acc + r.distance, 0).toFixed(1),
+      avgPace: (filteredRuns.reduce((acc, r) => acc + (parseFloat(r.pace.replace(':', '.')) || 0), 0) / (filteredRuns.length || 1)).toFixed(2).replace('.', ':'),
+      totalRuns: filteredRuns.length,
+      elevationGain: filteredRuns.reduce((acc, r) => acc + (r.elevation || 0), 0)
   };
 
-  const chartData = runs.slice(0, 10).reverse().map(r => ({
+  const chartData = filteredRuns.slice(0, 10).reverse().map(r => ({
       date: formatDateSafely(r.date, 'MMM d'),
       distance: r.distance,
       pace: parseFloat(r.pace.replace(':', '.')) || 0,
@@ -126,6 +128,8 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                         </Button>
                     </div>
                     <div className="space-y-6">
+
+
                         {goals.length > 0 ? goals.map(goal => {
                             const progress = Math.min((goal.current / goal.target) * 100, 100);
                             return (
@@ -170,7 +174,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                                         cursor={{fill: 'var(--accents-1)'}}
                                         contentStyle={{ backgroundColor: 'var(--background)', borderRadius: '8px', border: '1px solid var(--accents-2)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                     />
-                                    {Object.values(RunType).map((type) => (
+                                    {['recovery', 'base', 'long', 'speed', 'race', 'workout'].map((type) => (
                                         <Bar 
                                             key={type} 
                                             dataKey={type} 
@@ -183,7 +187,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                              </ResponsiveContainer>
                         </div>
                         <div className="flex flex-wrap gap-3 mt-6 justify-center">
-                            {Object.values(RunType).map(type => (
+                            {['recovery', 'base', 'long', 'speed', 'race', 'workout'].map(type => (
                                 <div key={type} className="flex items-center gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: RUN_TYPE_COLORS[type as RunType] }} />
                                     <span className="text-[9px] font-bold text-accents-5 uppercase tracking-wider">{type}</span>

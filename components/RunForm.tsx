@@ -34,11 +34,12 @@ interface RunFormProps {
 
 const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing = false, profile, onAddShoe }) => {
     const [formData, setFormData] = useState<Partial<Run>>(initialData || {
+        type: 'run',
         date: new Date().toISOString().split('T')[0],
         distance: 10,
         duration: 50,
         pace: '5:00',
-        type: 'Easy',
+        // Removed duplicate type
         location: '',
         notes: '',
         avgHr: 140,
@@ -96,6 +97,20 @@ const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing = fa
     return (
         <form onSubmit={handleFormSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <Select
+                    label="Activity Type"
+                    value={formData.type || 'run'}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                    options={[
+                        { value: 'run', label: 'Run' },
+                        { value: 'bike', label: 'Bike' },
+                        { value: 'hike', label: 'Hike' },
+                        { value: 'swim', label: 'Swim' },
+                        { value: 'walk', label: 'Walk' }
+                    ]}
+                />
+
                 <Input label="Date" type="date" value={formData.date} onChange={(e: any) => setFormData({...formData, date: e.target.value})} icon={Calendar} required />
                 <Input label="Location" value={formData.location} onChange={(e: any) => setFormData({...formData, location: e.target.value})} icon={MapPin} placeholder="e.g. Regent's Park" />
                 <Input label="Distance (km)" type="number" step="0.01" value={formData.distance} onChange={(e: any) => setFormData({...formData, distance: parseFloat(e.target.value)})} icon={Activity} required />
