@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   Search,
@@ -41,6 +41,17 @@ interface RunLogProps {
 
 const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun, onDeleteRun, onAddShoe, profile }) => {
   const [searchTerm, setSearchTerm] = useState('');
+
+  const shoeMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (profile.shoes) {
+      profile.shoes.forEach(shoe => {
+        map.set(shoe.id, shoe.name);
+      });
+    }
+    return map;
+  }, [profile.shoes]);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
@@ -254,7 +265,7 @@ const RunLog: React.FC<RunLogProps> = ({ runs, onAddRun, onAddRuns, onUpdateRun,
                                 </div>
                                 <div className="bg-background p-3 rounded-lg border border-accents-2">
                                     <p className="text-[9px] font-bold text-accents-4 uppercase tracking-widest mb-1">Shoes</p>
-                                    <p className="text-sm font-bold text-foreground truncate">{profile.shoes?.find(s => s.id === run.shoeId)?.name || 'Default'}</p>
+                                    <p className="text-sm font-bold text-foreground truncate">{shoeMap.get(run.shoeId || '') || 'Default'}</p>
                                 </div>
                                 <div className="bg-background p-3 rounded-lg border border-accents-2">
                                     <p className="text-[9px] font-bold text-accents-4 uppercase tracking-widest mb-1">Source</p>
