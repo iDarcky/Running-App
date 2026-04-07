@@ -21,12 +21,20 @@ export const handleStravaCallback = async (code: string, clientId: string, clien
     })
   });
 
+  if (!response.ok) {
+    throw new Error(`Failed to exchange token: ${response.statusText}`);
+  }
+
   const data = await response.json();
   const accessToken = data.access_token;
 
   const activitiesRes = await fetch(`${STRAVA_API_BASE}/athlete/activities?per_page=10`, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
+
+  if (!activitiesRes.ok) {
+    throw new Error(`Failed to fetch activities: ${activitiesRes.statusText}`);
+  }
 
   const activities = await activitiesRes.json();
   return (activities || []).filter((a: any) => a.type === 'Run').map((a: any) => ({
