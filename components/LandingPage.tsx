@@ -144,7 +144,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGuest }) =>
             </button>
 
             <button 
-                onClick={() => onGuest(true)}
+                onClick={() => { onGuest(true); }}
                 className="w-full bg-background p-6 rounded-xl border border-accents-2 hover:border-foreground transition-all group text-left flex items-center gap-5 relative overflow-hidden"
             >   
                 <div className="absolute top-0 right-0 bg-foreground text-background text-[10px] font-bold px-3 py-1 uppercase tracking-widest">PRO</div>

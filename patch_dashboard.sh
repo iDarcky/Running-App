@@ -1,2 +1,0 @@
-sed -i 's/value={`${displayDistance(parseFloat(stats.totalDistance), profile.preferredUnits)} {profile.preferredUnits || '\'km\''}`/value={`${displayDistance(parseFloat(stats.totalDistance), profile.preferredUnits)} ${profile.preferredUnits || '\'km\''}`}/g' components/Dashboard.tsx
-sed -i 's/value={`${stats.avgPace} \/{profile.preferredUnits || '\'km\''}`/value={`${stats.avgPace} \/${profile.preferredUnits || '\'km\''}`}/g' components/Dashboard.tsx

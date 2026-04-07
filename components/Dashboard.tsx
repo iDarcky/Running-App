@@ -56,6 +56,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     { id: 'trends', size: 'full' }
   ]);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [activityFilter, setActivityFilter] = useState('all');
 
   const [newGoal, setNewGoal] = useState<Partial<Goal>>({
     type: 'distance',
@@ -70,6 +71,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
     return isValid(date) ? format(date, formatStr) : 'Invalid date';
   };
 
+  const filteredRuns = (runs || []).filter(r => activityFilter === 'all' || (r.type && r.type.toLowerCase() === activityFilter.toLowerCase()));
   const stats = {
       totalDistance: filteredRuns.reduce((acc, r) => acc + r.distance, 0).toFixed(1),
       avgPace: (filteredRuns.reduce((acc, r) => acc + (parseFloat(r.pace.replace(':', '.')) || 0), 0) / (filteredRuns.length || 1)).toFixed(2).replace('.', ':'),
@@ -127,21 +129,6 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                     </div>
                     <div className="space-y-6">
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Dashboard</h2>
-        <Select
-          value={activityFilter}
-          onChange={(e) => setActivityFilter(e.target.value)}
-          options={[
-            { value: 'all', label: 'All Activities' },
-            { value: 'run', label: 'Running' },
-            { value: 'bike', label: 'Cycling' },
-            { value: 'hike', label: 'Hiking' },
-            { value: 'swim', label: 'Swimming' },
-          ]}
-          className="w-48"
-        />
-      </div>
 
                         {goals.length > 0 ? goals.map(goal => {
                             const progress = Math.min((goal.current / goal.target) * 100, 100);
