@@ -18,17 +18,14 @@ import PostRunSummary from "./components/PostRunSummary";
 const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
     if (!shoes || !Array.isArray(shoes)) return [];
     
-    const mileageMap: Record<string, number> = {};
-    for (const run of currentRuns) {
-        if (run.shoeId) {
-            const val = parseFloat(String(run.distance));
-            const distance = isNaN(val) ? 0 : val;
-            mileageMap[run.shoeId] = (mileageMap[run.shoeId] || 0) + distance;
-        }
-    }
-
     return shoes.map(shoe => {
-        const distance = mileageMap[shoe.id] || 0;
+        const distance = currentRuns
+          .filter(r => r.shoeId === shoe.id)
+          .reduce((acc, r) => {
+              const val = parseFloat(String(r.distance));
+              return acc + (isNaN(val) ? 0 : val);
+          }, 0);
+
         return { ...shoe, distance: Number(distance.toFixed(2)) };
     });
 };

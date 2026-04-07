@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import {
   Save,
   X,
+  Plus,
   MapPin,
+  Clock,
   Calendar,
   Footprints,
   Heart,
@@ -10,10 +12,15 @@ import {
   Activity,
   Flag,
   TrendingUp,
-  Timer
+  Info,
+  History,
+  AlignLeft,
+  Timer,
+  AlertCircle,
+  Gauge
 } from 'lucide-react';
 import { Run, RunType, UserProfile, Shoe } from '../types';
-import { RUN_TYPE_ORDER } from '../constants';
+import { RUN_TYPE_COLORS, RUN_TYPE_ORDER } from '../constants';
 import { Input, Select, Button } from './UIComponents';
 
 interface RunFormProps {

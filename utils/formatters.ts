@@ -7,7 +7,7 @@ export const formatDuration = (minutes: number): string => {
 };
 
 export const formatPace = (distance: number, duration: number): string => {
-    if (distance <= 0 || duration <= 0 || Number.isNaN(distance) || Number.isNaN(duration) || !Number.isFinite(distance) || !Number.isFinite(duration)) return "0:00";
+    if (distance <= 0 || duration <= 0) return "0:00";
     const avgPaceDec = duration / distance;
     const paceMin = Math.floor(avgPaceDec);
     const paceSec = Math.round((avgPaceDec - paceMin) * 60);

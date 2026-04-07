@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Run, UserProfile, Race, CoachInsights } from '../types';
 
-const apiKey = undefined;
+const apiKey = process.env.API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generateCoachInsights = async (runs: Run[], profile?: UserProfile): Promise<CoachInsights> => {
