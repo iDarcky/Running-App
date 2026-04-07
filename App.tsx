@@ -13,6 +13,8 @@ import { RedLineLogo } from './components/Logo';
 import { NavButton } from './components/NavButton';
 import ActiveRun from "./components/ActiveRun";
 import PostRunSummary from "./components/PostRunSummary";
+import { CommunityFeed } from './components/CommunityFeed';
+
 
 // Pure helper function for robust calculation
 const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
@@ -32,7 +34,7 @@ const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
 
 const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'feed' | 'log' | 'coach' | 'race' | 'profile'>('dashboard');
   const [runState, setRunState] = useState<"idle" | "active" | "summary">("idle");
   const [currentRunData, setCurrentRunData] = useState<any>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
@@ -109,35 +111,89 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // --- Save Logic ---
-  const saveRuns = (newRuns: Run[]) => {
-      setRuns(newRuns);
-      localStorage.setItem('redline_runs', JSON.stringify(newRuns));
-      if (profile.shoes && profile.shoes.length > 0) {
-          const updatedShoes = calculateShoeMileage(profile.shoes, newRuns);
-          const newProfile = { ...profile, shoes: updatedShoes };
-          setProfile(newProfile);
-          localStorage.setItem('redline_profile', JSON.stringify(newProfile));
+
+  // --- Supabase Save Logic ---
+  const handleAddRun = async (run: Run) => {
+      if (!session?.user?.id) return;
+      const timeParts = (run.time || "00:00:00").split(':').map(Number);
+      const movingTimeSeconds = timeParts.length === 3 ? (timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]) : 0;
+
+      const { data, error } = await supabase.from('activities').insert({
+          user_id: session.user.id,
+          title: run.type || 'Activity',
+          activity_type: run.type || 'run',
+          distance_km: run.distance,
+          moving_time: movingTimeSeconds,
+          start_time: new Date(run.date).toISOString(),
+          description: run.notes || '',
+          gear_id: run.shoeId || null
+      }).select().single();
+
+      if (!error && data) {
+         const newRun: Run = { ...run, id: data.id };
+         setRuns([newRun, ...runs]);
+      } else {
+         console.error(error);
       }
   };
 
-  const saveGoals = (newGoals: Goal[]) => {
+  const handleUpdateRun = async (updatedRun: Run) => {
+      if (!session?.user?.id) return;
+      const timeParts = (updatedRun.time || "00:00:00").split(':').map(Number);
+      const movingTimeSeconds = timeParts.length === 3 ? (timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]) : 0;
+
+      const { error } = await supabase.from('activities').update({
+          title: updatedRun.type || 'Activity',
+          activity_type: updatedRun.type || 'run',
+          distance_km: updatedRun.distance,
+          moving_time: movingTimeSeconds,
+          start_time: new Date(updatedRun.date).toISOString(),
+          description: updatedRun.notes || '',
+          gear_id: updatedRun.shoeId || null
+      }).eq('id', updatedRun.id);
+
+      if (!error) {
+          setRuns(runs.map(r => r.id === updatedRun.id ? updatedRun : r));
+      } else {
+          console.error(error);
+      }
+  };
+
+  const handleDeleteRun = async (id: string) => {
+      if (!session?.user?.id) return;
+      const { error } = await supabase.from('activities').delete().eq('id', id);
+      if (!error) {
+          setRuns(runs.filter(r => r.id !== id));
+      } else {
+          console.error(error);
+      }
+  };
+
+  const handleAddRuns = (newRuns: Run[]) => {
+      // Used by demo, we will skip full implementation for demo data in cloud for now.
+      setRuns([...newRuns, ...runs]);
+  };
+
+  const saveGoals = async (newGoals: Goal[]) => {
+      // In a full implementation, we'd sync this with the goals table
       setGoals(newGoals);
-      localStorage.setItem('redline_goals', JSON.stringify(newGoals));
   };
   
   const saveRaces = (newRaces: Race[]) => {
       setRaces(newRaces);
-      localStorage.setItem('redline_races', JSON.stringify(newRaces));
   };
 
-  const saveProfile = (newProfile: UserProfile) => {
-      if (newProfile.shoes) {
-          newProfile.shoes = calculateShoeMileage(newProfile.shoes, runs);
-      }
-      setProfile(newProfile);
-      localStorage.setItem('redline_profile', JSON.stringify(newProfile));
+  const saveProfile = async (newProfile: UserProfile) => {
+      if (!session?.user?.id) return;
+
+      setProfile(newProfile); // optimistic update
+
+      // Sync user profile data (just basic mapping for MVP)
+      await supabase.from('profiles').update({
+          full_name: newProfile.name
+      }).eq('id', session.user.id);
   };
+
 
   const toggleTheme = () => {
       const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -218,15 +274,6 @@ const App: React.FC = () => {
     setCurrentRunData(null);
   };
 
-  // --- CRUD Handlers ---
-  const handleAddRun = (run: Run) => saveRuns([run, ...runs]);
-  const handleAddRuns = (newRuns: Run[]) => {
-      const existingIds = new Set(runs.map(r => r.id));
-      const uniqueNewRuns = newRuns.filter(r => !existingIds.has(r.id));
-      saveRuns([...uniqueNewRuns, ...runs]);
-  };
-  const handleUpdateRun = (updatedRun: Run) => saveRuns(runs.map(r => r.id === updatedRun.id ? updatedRun : r));
-  const handleDeleteRun = (id: string) => saveRuns(runs.filter(r => r.id !== id));
 
   const handleAddGoal = (goal: Goal) => saveGoals([...goals, goal]);
   const handleDeleteGoal = (id: string) => saveGoals(goals.filter(g => g.id !== id));
@@ -328,7 +375,8 @@ const App: React.FC = () => {
                             onNavigate={setActiveTab}
                         />
                     )}
-                    {activeTab === 'log' && (
+                    {activeTab === 'feed' && <CommunityFeed />}
+        {activeTab === 'log' && (
                         <RunLog 
                             runs={runs} 
                             onAddRun={handleAddRun} 

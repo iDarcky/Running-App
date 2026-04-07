@@ -32,7 +32,7 @@ interface RunFormProps {
   onAddShoe?: (shoe: Shoe) => void;
 }
 
-const RunForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing = false, profile, onAddShoe }) => {
+export const ActivityForm: React.FC<RunFormProps> = ({ initialData, onSubmit, isEditing = false, profile, onAddShoe }) => {
     const [formData, setFormData] = useState<Partial<Run>>(initialData || {
         date: new Date().toISOString().split('T')[0],
         distance: 10,

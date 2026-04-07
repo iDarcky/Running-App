@@ -71,13 +71,13 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
   };
 
   const stats = {
-      totalDistance: runs.reduce((acc, r) => acc + r.distance, 0).toFixed(1),
-      avgPace: (runs.reduce((acc, r) => acc + (parseFloat(r.pace.replace(':', '.')) || 0), 0) / (runs.length || 1)).toFixed(2).replace('.', ':'),
-      totalRuns: runs.length,
-      elevationGain: runs.reduce((acc, r) => acc + (r.elevation || 0), 0)
+      totalDistance: filteredRuns.reduce((acc, r) => acc + r.distance, 0).toFixed(1),
+      avgPace: (filteredRuns.reduce((acc, r) => acc + (parseFloat(r.pace.replace(':', '.')) || 0), 0) / (filteredRuns.length || 1)).toFixed(2).replace('.', ':'),
+      totalRuns: filteredRuns.length,
+      elevationGain: filteredRuns.reduce((acc, r) => acc + (r.elevation || 0), 0)
   };
 
-  const chartData = runs.slice(0, 10).reverse().map(r => ({
+  const chartData = filteredRuns.slice(0, 10).reverse().map(r => ({
       date: formatDateSafely(r.date, 'MMM d'),
       distance: r.distance,
       pace: parseFloat(r.pace.replace(':', '.')) || 0,
@@ -126,6 +126,23 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                         </Button>
                     </div>
                     <div className="space-y-6">
+
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold">Dashboard</h2>
+        <Select
+          value={activityFilter}
+          onChange={(e) => setActivityFilter(e.target.value)}
+          options={[
+            { value: 'all', label: 'All Activities' },
+            { value: 'run', label: 'Running' },
+            { value: 'bike', label: 'Cycling' },
+            { value: 'hike', label: 'Hiking' },
+            { value: 'swim', label: 'Swimming' },
+          ]}
+          className="w-48"
+        />
+      </div>
+
                         {goals.length > 0 ? goals.map(goal => {
                             const progress = Math.min((goal.current / goal.target) * 100, 100);
                             return (
@@ -170,7 +187,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                                         cursor={{fill: 'var(--accents-1)'}}
                                         contentStyle={{ backgroundColor: 'var(--background)', borderRadius: '8px', border: '1px solid var(--accents-2)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                     />
-                                    {Object.values(RunType).map((type) => (
+                                    {['recovery', 'base', 'long', 'speed', 'race', 'workout'].map((type) => (
                                         <Bar 
                                             key={type} 
                                             dataKey={type} 
@@ -183,7 +200,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
                              </ResponsiveContainer>
                         </div>
                         <div className="flex flex-wrap gap-3 mt-6 justify-center">
-                            {Object.values(RunType).map(type => (
+                            {['recovery', 'base', 'long', 'speed', 'race', 'workout'].map(type => (
                                 <div key={type} className="flex items-center gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: RUN_TYPE_COLORS[type as RunType] }} />
                                     <span className="text-[9px] font-bold text-accents-5 uppercase tracking-wider">{type}</span>

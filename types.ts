@@ -1,46 +1,97 @@
-export type RunType = 'Easy' | 'Intervals' | 'Long Run' | 'Tempo' | 'Race' | 'Recovery';
+export type ActivityType = 'run' | 'bike' | 'hike' | 'swim';
+export type GoalPeriod = 'weekly' | 'monthly' | 'yearly';
+export type GoalMetric = 'distance' | 'time' | 'elevation';
+export type Visibility = 'public' | 'followers' | 'private';
 
-export const RunType = {
-  EASY: 'Easy' as RunType,
-  INTERVALS: 'Intervals' as RunType,
-  LONG: 'Long Run' as RunType,
-  TEMPO: 'Tempo' as RunType,
-  RACE: 'Race' as RunType,
-  RECOVERY: 'Recovery' as RunType
-};
-
-export type RunSource = 'Manual' | 'Garmin' | 'Strava' | 'Apple Health' | 'Health Connect' | 'Google Fit';
-
-export interface Shoe {
-  id: string;
-  brand: string;
-  model: string;
-  nickname?: string;
-  distance: number;
-  maxDistance: number;
-  isRetired: boolean;
-  isDefault?: boolean;
+export interface Profile {
+  id: string; // UUID from auth.users
+  username: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  created_at: string;
 }
 
+export interface Gear {
+  id: string;
+  user_id: string;
+  name: string;
+  type: string | null;
+  brand: string | null;
+  model: string | null;
+  initial_mileage: number;
+  total_mileage: number;
+  retired: boolean;
+  created_at: string;
+}
+
+export interface Activity {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  activity_type: ActivityType;
+  distance_km: number;
+  moving_time: number; // in seconds
+  elapsed_time: number | null;
+  elevation_gain: number | null;
+  start_time: string; // Timestamp
+  gear_id: string | null;
+  visibility: Visibility;
+  route_path: any | null; // PostGIS LineString, usually handled as GeoJSON
+  splits: any | null;
+  created_at: string;
+
+  // Virtual properties often joined in UI
+  profile?: Profile;
+  likes_count?: number;
+  comments_count?: number;
+  user_has_liked?: boolean;
+}
+
+export interface Goal {
+  id: string;
+  user_id: string;
+  target_value: number;
+  metric: GoalMetric;
+  period: GoalPeriod;
+  activity_type: ActivityType | null;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+}
+
+export interface Like {
+  user_id: string;
+  activity_id: string;
+  created_at: string;
+}
+
+export interface Comment {
+  id: string;
+  user_id: string;
+  activity_id: string;
+  content: string;
+  created_at: string;
+  profile?: Profile;
+}
+
+export interface Follow {
+  follower_id: string;
+  following_id: string;
+  created_at: string;
+}
+
+// Keep legacy types temporarily to avoid breaking components during refactor
 export interface Run {
   id: string;
   date: string;
   distance: number;
-  duration: number;
-  type: RunType;
-  avgHr: number;
+  time: string;
   pace: string;
-  rpe: number;
-  effort?: number;
-  cadence?: number;
-  strideLength?: number;
-  groundContactTime?: number;
-  elevation?: number;
-  source?: RunSource;
   notes?: string;
   shoeId?: string;
-  positions?: any[];
-  splits?: number[];
+  type?: 'run' | 'bike' | 'hike' | 'swim';
 }
 
 export interface UserProfile {
@@ -51,34 +102,15 @@ export interface UserProfile {
   sex: string;
   shoeModel: string;
   shoes: Shoe[];
-  preferredUnits?: "km" | "mi";
 }
 
-export interface CoachInsights {
-  fitnessSummary: string;
-  formScore: number;
-  formAnalysis: string;
-  injuryRiskAssessment: string;
-  trends: {
-    title: string;
-    description: string;
-    type: 'positive' | 'negative' | 'neutral';
-  }[];
-  trainingFocus: string;
-  actionableTips: string[];
-}
-
-export type GoalType = 'distance' | 'duration' | 'frequency' | 'runs' | 'elevation';
-export type GoalPeriod = 'weekly' | 'monthly';
-
-export interface Goal {
+export interface Shoe {
   id: string;
-  type: GoalType;
-  target: number;
-  current: number;
-  deadline: string;
-  targetValue?: number;
-  period?: GoalPeriod;
+  name: string;
+  brand: string;
+  model: string;
+  distance: number;
+  isRetired: boolean;
 }
 
 export interface Race {
@@ -86,28 +118,7 @@ export interface Race {
   name: string;
   date: string;
   distance: number;
-  targetTime?: string;
-  aiPlan?: string;
+  targetTime: string;
 }
 
-export interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  iconName: string;
-  condition: (runs: Run[]) => boolean;
-}
-
-export interface StravaToken {
-  access_token: string;
-  refresh_token: string;
-  expires_at: number;
-  athlete?: any;
-}
-
-export interface GoogleToken {
-  access_token: string;
-  refresh_token?: string;
-  expires_at: number;
-  scope?: string;
-}
+export type RunType = 'recovery' | 'base' | 'long' | 'speed' | 'race' | 'workout';
