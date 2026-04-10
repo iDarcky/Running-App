@@ -15,3 +15,10 @@ This PR integrates `@capacitor/core` and `@capacitor/android` to wrap the React 
 - Verified `npm test` successfully completed over formatters tests.
 - Verified `npm run build` completes web compilation successfully.
 - Verified `./gradlew assembleDebug` completes android compilation outputting `app-debug.apk` with no errors.
+
+## Recent Updates:
+- Integrated edge-to-edge support for Android using Capacitor's specific css safe-area-inset variables.
+- Added `@capacitor/status-bar` initialization code to `App.tsx` to overlay webview content correctly behind transparent status bar.
+- Updated main application wrappers and bottom navs to correctly pad out system safe areas utilizing `pt-safe` and `pb-safe`.
+- Incremented Android `versionName` to `0.0.1` inside `build.gradle`.
+- Stored newly compiled debug APK into `/apks/0.0.1.apk`.

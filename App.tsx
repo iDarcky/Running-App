@@ -17,6 +17,8 @@ import { CommunityFeed } from './components/CommunityFeed';
 
 import { supabase } from './services/supabase';
 import { Auth } from './components/Auth';
+import { StatusBar } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 
 // Pure helper function for robust calculation
 const calculateShoeMileage = (shoes: Shoe[], currentRuns: Run[]): Shoe[] => {
@@ -49,6 +51,20 @@ const App: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [races, setRaces] = useState<Race[]>([]);
   const [profile, setProfile] = useState<UserProfile>({ name: '', preferredUnits: 'km' });
+
+
+  useEffect(() => {
+    const initApp = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await StatusBar.setOverlaysWebView({ overlay: true });
+        } catch (e) {
+          console.error("Error setting status bar overlay", e);
+        }
+      }
+    };
+    initApp();
+  }, []);
 
   // Load localStorage data (Demo or Offline)
   useEffect(() => {
@@ -321,7 +337,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-surface transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-surface transition-colors duration-300 pt-safe ${theme === 'dark' ? 'dark' : ''}`}>
         {/* Demo Banner */}
         {isDemoMode && (
             <div className="bg-orange-500 text-white text-sm font-bold px-4 py-2 flex items-center justify-center gap-4 relative z-[60] shadow-sm">
