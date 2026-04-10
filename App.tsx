@@ -317,7 +317,7 @@ const App: React.FC = () => {
   }
 
   if (showLanding) {
-      return <LandingPage onLogin={handleLogin} onGuest={handleGuest} />;
+      return <LandingPage onGetStarted={() => setShowLanding(false)} />;
   }
 
   return (
