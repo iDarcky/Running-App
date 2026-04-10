@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
 import { Button, Input, Card } from './UIComponents';
-import { LogIn, UserPlus, Github, Mail } from 'lucide-react';
+import { LogIn, UserPlus, Mail } from 'lucide-react';
 import { RedLineLogo as Logo } from './Logo';
 
 interface AuthProps {
@@ -129,22 +129,14 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-             <Button
-                type="button"
-                variant="secondary"
-                onClick={() => handleOAuthLogin('github')}
-                className="w-full flex justify-center items-center py-2 text-sm"
-              >
-                <Github className="w-4 h-4 mr-2" /> GitHub
-              </Button>
+          <div className="mt-6">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => handleOAuthLogin('google')}
                 className="w-full flex justify-center items-center py-2 text-sm"
               >
-                 <Mail className="w-4 h-4 mr-2" /> Google
+                 <Mail className="w-4 h-4 mr-2" /> Continue with Google
               </Button>
           </div>
         </div>
