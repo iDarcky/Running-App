@@ -10,6 +10,8 @@
     "test": "node --experimental-strip-types --test"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
     "@capacitor/geolocation": "^8.2.0",
     "@google/genai": "^1.30.0",
     "@supabase/supabase-js": "^2.102.1",
@@ -27,6 +29,7 @@
     "vite": "^7.2.4"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
