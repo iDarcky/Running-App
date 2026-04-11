@@ -204,7 +204,7 @@ export const ActiveRun: React.FC<ActiveRunProps> = ({ onFinish, onCancel, unit =
   return (
     <div className="fixed inset-0 z-[100] bg-surface flex flex-col">
       {/* Top Bar */}
-      <div className="absolute top-0 left-0 right-0 p-6 z-[1000] flex justify-end items-center bg-gradient-to-b from-black/50 to-transparent pointer-events-none">
+      <div className="absolute top-0 left-0 right-0 p-6 pt-safe z-[1000] flex justify-end items-center bg-gradient-to-b from-black/50 to-transparent pointer-events-none">
         <button
           onClick={() => setVoiceEnabled(!voiceEnabled)}
           className={`p-3 rounded-full shadow-lg backdrop-blur pointer-events-auto ${voiceEnabled ? 'bg-primary text-white' : 'bg-surface/80 text-surface-on'}`}

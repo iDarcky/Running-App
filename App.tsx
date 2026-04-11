@@ -387,7 +387,7 @@ const App: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-6 pb-32 md:pb-8 w-full overflow-x-hidden">
+            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-[calc(env(safe-area-inset-top)+1.5rem)] md:pt-6 pb-32 md:pb-8 w-full overflow-x-hidden">
                 <div className="w-full px-4 md:px-8">
                     {activeTab === 'dashboard' && (
                         <Dashboard 

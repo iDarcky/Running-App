@@ -38,7 +38,7 @@ export const PostRunSummary: React.FC<PostRunSummaryProps> = ({ runData, onSave,
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-surface overflow-y-auto pb-safe">
+    <div className="fixed inset-0 z-[100] bg-surface overflow-y-auto pb-safe pt-safe">
       {/* Header Image / Map Placeholder */}
       <div className="h-64 bg-surface-container-high relative w-full flex items-center justify-center">
          {/* In a real app we'd render a static map here or keep the interactive one.

@@ -38,3 +38,7 @@ This PR integrates `@capacitor/core` and `@capacitor/android` to wrap the React 
 
 - Adjusted Floating Action Button bottom spacing down to `bottom-28 pb-safe` to sit perfectly just above the navigation bar instead of floating too high.
 - Built app-debug.apk iteration 0.0.5.
+
+- Modified main screen wrapper to utilize `pt-[calc(env(safe-area-inset-top)+1.5rem)]` to sink all primary tab contents below the Android top status bar.
+- Appended explicit `pt-safe` overrides to components utilizing absolute/fixed viewports (`ActiveRun` overlay actions and `PostRunSummary` header containers).
+- Built app-debug.apk iteration 0.0.6.
