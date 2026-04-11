@@ -29,3 +29,6 @@ This PR integrates `@capacitor/core` and `@capacitor/android` to wrap the React 
 - Raised the position of the "Start Activity" FAB on the Dashboard to `bottom-32 pb-safe` to ensure it doesn't overlap the slightly taller floating navigation bar.
 - Incremented build version to `0.0.2` in Android gradle config.
 - Generated new iteration build APK available at `/apks/0.0.2.apk`.
+
+- Removed off-center `ml-1` class padding from the Dashboard floating action Play button to visually center it.
+- Bumped android version to `0.0.3` inside `build.gradle` and built an updated apk in `/apks/0.0.3.apk`.
