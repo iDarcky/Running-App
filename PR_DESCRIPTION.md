@@ -25,3 +25,7 @@ This PR integrates `@capacitor/core` and `@capacitor/android` to wrap the React 
 
 - Added extra margin bottom (`mb-4`) to the mobile floating bottom navigation to give it extra spacing from the safe area edge.
 - Re-built and refreshed APK in `/apks/0.0.1.apk`.
+
+- Raised the position of the "Start Activity" FAB on the Dashboard to `bottom-32 pb-safe` to ensure it doesn't overlap the slightly taller floating navigation bar.
+- Incremented build version to `0.0.2` in Android gradle config.
+- Generated new iteration build APK available at `/apks/0.0.2.apk`.
