@@ -438,7 +438,7 @@ const App: React.FC = () => {
             </main>
 
             {/* Floating Bottom Nav (Mobile) */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe z-50 flex justify-center pointer-events-none">
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 p-4 pb-safe mb-4 z-50 flex justify-center pointer-events-none">
                  <div className="bg-surface-container/90 backdrop-blur-xl border border-outline-variant/10 p-2 flex justify-between items-center rounded-[24px] shadow-2xl shadow-black/20 w-full max-w-md pointer-events-auto">
                      <NavButton tab="dashboard" activeTab={activeTab} icon={LayoutDashboard} label="Home" onClick={setActiveTab} mobile />
                      <NavButton tab="feed" activeTab={activeTab} icon={Users} label="Social" onClick={setActiveTab} mobile />

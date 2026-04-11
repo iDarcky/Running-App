@@ -22,3 +22,6 @@ This PR integrates `@capacitor/core` and `@capacitor/android` to wrap the React 
 - Updated main application wrappers and bottom navs to correctly pad out system safe areas utilizing `pt-safe` and `pb-safe`.
 - Incremented Android `versionName` to `0.0.1` inside `build.gradle`.
 - Stored newly compiled debug APK into `/apks/0.0.1.apk`.
+
+- Added extra margin bottom (`mb-4`) to the mobile floating bottom navigation to give it extra spacing from the safe area edge.
+- Re-built and refreshed APK in `/apks/0.0.1.apk`.
