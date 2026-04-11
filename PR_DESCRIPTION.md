@@ -32,3 +32,6 @@ This PR integrates `@capacitor/core` and `@capacitor/android` to wrap the React 
 
 - Removed off-center `ml-1` class padding from the Dashboard floating action Play button to visually center it.
 - Bumped android version to `0.0.3` inside `build.gradle` and built an updated apk in `/apks/0.0.3.apk`.
+
+- Adjusted layout HTML structure of Dashboard Floating Action Button so `pb-safe` spacing applies correctly to a container rather than internal button padding, resulting in perfect circular symmetry and centering of internal icons.
+- Built app-debug.apk iteration 0.0.4.
