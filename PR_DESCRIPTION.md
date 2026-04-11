@@ -35,3 +35,6 @@ This PR integrates `@capacitor/core` and `@capacitor/android` to wrap the React 
 
 - Adjusted layout HTML structure of Dashboard Floating Action Button so `pb-safe` spacing applies correctly to a container rather than internal button padding, resulting in perfect circular symmetry and centering of internal icons.
 - Built app-debug.apk iteration 0.0.4.
+
+- Adjusted Floating Action Button bottom spacing down to `bottom-28 pb-safe` to sit perfectly just above the navigation bar instead of floating too high.
+- Built app-debug.apk iteration 0.0.5.

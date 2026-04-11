@@ -323,7 +323,7 @@ const Dashboard: React.FC<DashboardProps> = ({ runs, goals, profile, onAddGoal, 
           </form>
       </Modal>
       {onStartRun && (
-        <div className="fixed bottom-32 pb-safe md:bottom-8 right-4 md:right-8 z-50">
+        <div className="fixed bottom-28 pb-safe md:bottom-8 right-4 md:right-8 z-50">
           <button
             onClick={onStartRun}
             className="w-16 h-16 bg-[#EE0000] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#EE0000]/40 hover:scale-105 active:scale-95 transition-all"
