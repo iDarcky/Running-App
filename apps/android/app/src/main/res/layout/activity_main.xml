@@ -42,16 +42,43 @@
         android:text="0:00 /km"
         android:textColor="#666666"
         android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/btnToggleTracking"
+        app:layout_constraintBottom_toTopOf="@+id/tvHistoryLabel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvDistance" />
+
+    <TextView
+        android:id="@+id/tvHistoryLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recent Runs"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginTop="24dp"
+        android:textColor="#000000"
+        app:layout_constraintTop_toBottomOf="@id/tvPace"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/rvHistory"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvHistory"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintTop_toBottomOf="@id/tvHistoryLabel"
+        app:layout_constraintBottom_toTopOf="@id/btnToggleTracking"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnToggleTracking"
         android:layout_width="200dp"
         android:layout_height="64dp"
-        android:layout_marginBottom="64dp"
+        android:layout_marginBottom="32dp"
         android:text="Start Run"
         android:textSize="18sp"
         app:backgroundTint="#EE0000"

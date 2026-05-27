@@ -77,7 +77,7 @@ const App: React.FC = () => {
 
   const handleAddRun = async (run: Run) => {
       setRuns(prev => [run, ...prev]);
-      if (!session?.user?.id) return;
+
 
       const timeParts = (run.time || "00:00:00").split(':').map(Number);
       const movingTimeSeconds = timeParts.length === 3 ? (timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]) : 0;
@@ -101,7 +101,7 @@ const App: React.FC = () => {
 
   const handleUpdateRun = async (updatedRun: Run) => {
       setRuns(runs.map(r => r.id === updatedRun.id ? updatedRun : r));
-      if (!session?.user?.id) return;
+
 
       const timeParts = (updatedRun.time || "00:00:00").split(':').map(Number);
       const movingTimeSeconds = timeParts.length === 3 ? (timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]) : 0;
@@ -120,14 +120,14 @@ const App: React.FC = () => {
 
   const handleDeleteRun = async (id: string) => {
       setRuns(runs.filter(r => r.id !== id));
-      if (!session?.user?.id) return;
+
       const { error } = await supabase.from('activities').delete().eq('id', id);
       if (error) console.error(error);
   };
 
   const saveProfile = async (newProfile: UserProfile) => {
       setProfile(newProfile);
-      if (!session?.user?.id) return;
+
 
       await supabase.from('profiles').update({
           full_name: newProfile.name,
@@ -146,7 +146,7 @@ const App: React.FC = () => {
 
   // Load Data
   useEffect(() => {
-    if (!session?.user?.id) return;
+
 
     const loadData = async () => {
       try {
@@ -307,14 +307,6 @@ const App: React.FC = () => {
     return <PostRunSummary runData={currentRunData} onSave={handleSaveRun} onDiscard={handleCancelRun} unit={profile.preferredUnits || "km"} />;
   }
 
-
-  if (authChecking) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500">Loading App Auth... If you see this, Supabase might not be connected correctly.</div>;
-  }
-
-  if (!session && !showLanding && !isDemoMode) {
-    return <Auth onSuccess={() => {}} />;
-  }
 
   if (showLanding) {
       return <LandingPage onGetStarted={() => setShowLanding(false)} />;

@@ -25,3 +25,5 @@ dist-ssr
 
 apps/android/.gradle
 apps/android/app/build
+redline-android.apk
+patch_app.js

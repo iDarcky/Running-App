@@ -1,6 +1,7 @@
 package com.redline.app
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -10,7 +11,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.location.*
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,6 +30,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvDistance: TextView
     private lateinit var tvPace: TextView
     private lateinit var btnToggleTracking: Button
+    private lateinit var rvHistory: RecyclerView
+    private lateinit var runAdapter: RunAdapter
+
+    private val runHistory = mutableListOf<Run>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +42,13 @@ class MainActivity : AppCompatActivity() {
         tvDistance = findViewById(R.id.tvDistance)
         tvPace = findViewById(R.id.tvPace)
         btnToggleTracking = findViewById(R.id.btnToggleTracking)
+        rvHistory = findViewById(R.id.rvHistory)
+
+        runAdapter = RunAdapter(runHistory)
+        rvHistory.layoutManager = LinearLayoutManager(this)
+        rvHistory.adapter = runAdapter
+
+        loadRunHistory()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -80,6 +96,11 @@ class MainActivity : AppCompatActivity() {
         btnToggleTracking.text = "Start Run"
         btnToggleTracking.setBackgroundColor(android.graphics.Color.parseColor("#EE0000"))
         fusedLocationClient.removeLocationUpdates(locationCallback)
+
+        val distanceKm = totalDistanceMeters / 1000f
+        if (distanceKm > 0.01f) {
+            saveRun(distanceKm, tvPace.text.toString())
+        }
     }
 
     private fun updateLocation(location: Location) {
@@ -104,6 +125,30 @@ class MainActivity : AppCompatActivity() {
             tvPace.text = String.format("%d:%02d /km", minutes, seconds)
         } else {
             tvPace.text = "0:00 /km"
+        }
+    }
+
+    private fun saveRun(distanceKm: Float, pace: String) {
+        val newRun = Run(System.currentTimeMillis(), distanceKm, pace)
+        runHistory.add(0, newRun) // Add to top
+        runAdapter.updateRuns(runHistory)
+
+        val prefs = getSharedPreferences("redline_prefs", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        val json = Gson().toJson(runHistory)
+        editor.putString("run_history", json)
+        editor.apply()
+    }
+
+    private fun loadRunHistory() {
+        val prefs = getSharedPreferences("redline_prefs", Context.MODE_PRIVATE)
+        val json = prefs.getString("run_history", null)
+        if (json != null) {
+            val type = object : TypeToken<List<Run>>() {}.type
+            val savedRuns: List<Run> = Gson().fromJson(json, type)
+            runHistory.clear()
+            runHistory.addAll(savedRuns)
+            runAdapter.updateRuns(runHistory)
         }
     }
 
