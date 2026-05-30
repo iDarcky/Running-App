@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `redline-android.apk` to the repository root for direct user download and installation.
 
 ### Changed
-- Refactor Android GPS tracking UI from MainActivity into a dedicated `RunFragment`.
+- Refactor Android GPS tracking UI to perfectly match the React web app `ActiveRun.tsx` component.
+- Add native OpenStreetMap integration (`osmdroid`) to Android run tracker.
+- Implement native 2x2 stats grid and custom circular Play/Pause/Stop controls for the Android tracker.
 - **Breaking**: Restructure the repository into an npm workspace monorepo (`apps/web` and `apps/android`).
 - Update Vercel deployment requirements (Root Directory must now be set to `apps/web`).
 
